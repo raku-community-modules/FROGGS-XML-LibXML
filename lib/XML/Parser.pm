@@ -71,4 +71,9 @@ class xmlDoc is repr('CStruct') {
 # xmlDocPtr	xmlParseFile		(const char * filename)
 sub xmlParseFile(Str) returns xmlDoc is native('libxml2') { * }
 
+# htmlDocPtr htmlParseFile(const char * filename,
+#                          const char * encoding)
+sub htmlParseFile(Str, Str) returns xmlDoc is native('libxml2') { * }
+
 say xmlParseFile('test.xml');
+say htmlParseFile('index.html', 'utf-8');
