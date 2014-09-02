@@ -25,7 +25,7 @@ use NativeCall;
     #~ XML_XINCLUDE_END = 20
     #~ XML_DOCB_DOCUMENT_NODE = 21
 #~ }
-
+    #
 class xmlDoc is repr('CStruct') {
     has OpaquePointer $._private; # application data
     #~ xmlElementType	type	: XML_DOCUMENT_NODE, must be second !
@@ -68,6 +68,41 @@ class xmlDoc is repr('CStruct') {
     #~ int	properties	: set of xmlDocProperties for this docume
 }
 
+class xmlNode is repr('CStruct') {
+    #void *  _private    : application data
+    has OpaquePointer $._private;
+    #xmlElementType  type    : type number, must be second !
+    has int8 $.type;
+    #const xmlChar * name    : the name of the node, or the entity
+    has Str $.name;
+    #struct _xmlNode *   children    : parent->childs link
+    has xmlNode $.children;
+    #struct _xmlNode *   last    : last child link
+    has xmlNode $.last;
+    #struct _xmlNode *   parent  : child->parent link
+    has xmlNode $.parent;
+    #struct _xmlNode *   next    : next sibling link
+    has xmlNode $.next;
+    #struct _xmlNode *   prev    : previous sibling link
+    has xmlNode $.prev;
+    #struct _xmlDoc *    doc : the containing document End of common p
+    has xmlDoc $.doc;
+    #xmlNs * ns  : pointer to the associated namespace
+    has OpaquePointer $.ns;
+    #xmlChar *   content : the content
+    has Str $.content;
+    #struct _xmlAttr *   properties  : properties list
+    has OpaquePointer $._xmlAttr;
+    #xmlNs * nsDef   : namespace definitions on this node
+    has OpaquePointer $.nsDef;
+    #void *  psvi    : for type/PSVI informations
+    has OpaquePointer $.psvi;
+    #unsigned short  line    : line number
+    has int $.line;
+    #unsigned short  extra   : extra data for XPath/XSLT
+    has int $.extra;
+}
+
 # xmlDocPtr	xmlParseFile		(const char * filename)
 sub xmlParseFile(Str) returns xmlDoc is native('libxml2') { * }
 
@@ -76,4 +111,8 @@ sub xmlParseFile(Str) returns xmlDoc is native('libxml2') { * }
 sub htmlParseFile(Str, Str) returns xmlDoc is native('libxml2') { * }
 
 say xmlParseFile('test.xml');
-say htmlParseFile('index.html', 'utf-8');
+my $html = htmlParseFile('index.html', 'utf-8');
+say $html;
+
+my xmlNode $xmlNode = nativecast(xmlNode, $html.children);
+say $xmlNode.perl;
