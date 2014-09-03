@@ -1,6 +1,7 @@
 use v6;
 
-class XML::LibXML;
+use XML::LibXML::Parser;
+class XML::LibXML is XML::LibXML::Parser;
 
 use NativeCall;
 
