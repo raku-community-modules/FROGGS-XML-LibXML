@@ -23,6 +23,6 @@ submethod BUILD {
 
 method parse-str(Str:D $str) {
     my $doc = xmlCtxtReadDoc($!ctx, $str, Str, Str, 0);
-    return XML::LibXML::Error.get-last($!ctx) unless $doc;
+    return XML::LibXML::Error.get-last($!ctx, :orig($str)) unless $doc;
     $doc
 }

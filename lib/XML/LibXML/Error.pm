@@ -6,8 +6,32 @@ sub xmlSetGenericErrorFunc(OpaquePointer, &cb(OpaquePointer, OpaquePointer, CArr
 sub xmlSetStructuredErrorFunc(OpaquePointer, &cb(OpaquePointer, OpaquePointer))                     is native('libxml2') is export { * }
 
 class X::XML::LibXML::Parser is Exception {
-    has $.text;
-    method message { ">>Parser error: $!text <<" }
+    has $.file;
+    has $.orig;
+    has $.line;
+    has $.char;
+    has $.text is rw;
+    method message {
+        my $msg   = $!text;
+        my $color = %*ENV<RAKUDO_ERROR_COLOR> // $*DISTRO.name ne 'MSWin32';
+        my ($red, $green, $yellow, $clear) = $color
+            ?? ("\e[31m", "\e[32m", "\e[33m", "\e[0m")
+            !! ("", "", "", "");
+        if $!line && $!char {
+            my $line = $!orig.split(/\n/)[$!line - 1];
+            if $color {
+                my $eject = $*DISTRO.name eq 'MSWin32' ?? "<HERE>" !! "\x[23CF]";
+                $msg ~= $green ~ substr($line, 0, $!char - 1) ~ "$yellow$eject$red" ~ substr($line, $!char - 1) ~ $clear
+            }
+            else {
+                # <foo>bar
+                #      ^
+                $msg ~= "$line\n" ~ (' ' x $!char - 1) ~ "^"
+            }
+        }
+        "$red==={$clear}SORRY!$red===$clear Error while parsing {$!file // 'XML document'}\n" ~
+        "XML::LibXML::Parser error: $msg"
+    }
 }
 
 enum XML::LibXML::ErrorLevels   <XML_ERR_NONE XML_ERR_WARNING XML_ERR_ERROR XML_ERR_FATAL>;
@@ -31,10 +55,10 @@ class XML::LibXML::Error is repr('CStruct') {
     sub xmlCtxtGetLastError(OpaquePointer) returns XML::LibXML::Error is native('libxml2') { * }
     sub xmlGetLastError()                  returns XML::LibXML::Error is native('libxml2') { * }
 
-    method get-last($ctx) {
+    method get-last($ctx, :$orig) {
         my $err = xmlCtxtGetLastError($ctx);
         $err    = xmlGetLastError() unless $err;
-        X::XML::LibXML::Parser.new( :text( $err.message ) ) if $err;
+        X::XML::LibXML::Parser.new( :text($err.message), :line($err.line), :char($err.int2), :$orig ) if $err;
     }
 
     method level {
