@@ -129,14 +129,21 @@ for @goodWFStrings, @goodWFNSStrings, @goodWFDTDStrings -> $str {
     isa_ok($doc, XML::LibXML::Document);
 }
 
-#~ eval { my $fail = $parser->parse_string(undef); };
-#~ like($@, qr/^Empty String at/, "parses undef string with an error");
+my $fail;
+try {
+    $fail = $parser.parse-str(Str);
+    CATCH {
+        default {
+            pass 'parses undef string with an error'
+        }
+    }
+}
+flunk 'parses undef string with an error' if $fail;
 
-#~ foreach my $str ( @badWFStrings ) {
-    #~ eval { my $fail = $parser->parse_string($str); };
-
-    #~ ok($@, "Error thrown passing '" . shorten_string($str)  . "'");
-#~ }
+for @badWFStrings -> $str {
+    my $fail = $parser.parse-str($str);
+    isa_ok($fail, X::XML::LibXML::Parser, "Error thrown passing '{shorten_string($str)}'");
+}
 
 
 #~ # 1.1.2 NO KEEP BLANKS
@@ -965,11 +972,10 @@ for @goodWFStrings, @goodWFNSStrings, @goodWFDTDStrings -> $str {
     #~ return [ $doc->findnodes(encodeToUTF8('iso-8859-1',$query)) ];
 #~ }
 
-#~ sub shorten_string { # Used for test naming.
-  #~ my $string = shift;
-  #~ return "'undef'" if(!defined $string);
+sub shorten_string($string is copy) { # Used for test naming.
+  return "'undef'" unless $string.defined;
 
-  #~ $string =~ s/\n/\\n/msg;
-  #~ return $string if(length($string) < 25);
-  #~ return $string = substr($string, 0, 10) . "..." . substr($string, -10);
-#~ }
+  $string ~~ s:g/\n/\\n/;
+  return $string if $string.chars < 25;
+  return $string.substr(0, 10) ~ "..." ~ $string.substr(*-10);
+}
