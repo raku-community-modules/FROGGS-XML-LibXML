@@ -1,9 +1,10 @@
 use v6;
 
+use XML::LibXML::CStructs :types;
 use NativeCall;
 
-sub xmlSetGenericErrorFunc(OpaquePointer, &cb(OpaquePointer, OpaquePointer, CArray[OpaquePointer])) is native('libxml2') is export { * }
-sub xmlSetStructuredErrorFunc(OpaquePointer, &cb(OpaquePointer, OpaquePointer))                     is native('libxml2') is export { * }
+sub xmlSetGenericErrorFunc(CStruct, &cb(OpaquePointer, OpaquePointer, CArray[OpaquePointer])) is native('libxml2') is export { * }
+sub xmlSetStructuredErrorFunc(CStruct, &cb(OpaquePointer, OpaquePointer))                     is native('libxml2') is export { * }
 
 class X::XML::LibXML::Parser is Exception {
     has $.file;
@@ -37,23 +38,9 @@ class X::XML::LibXML::Parser is Exception {
 enum XML::LibXML::ErrorLevels   <XML_ERR_NONE XML_ERR_WARNING XML_ERR_ERROR XML_ERR_FATAL>;
 my  @XML::LibXML::ErrorLevels = (XML_ERR_NONE,XML_ERR_WARNING,XML_ERR_ERROR,XML_ERR_FATAL);
 
-class XML::LibXML::Error is repr('CStruct') {
-    has int32                   $.domain;  # What part of the library raised this error
-    has int32                   $.code;    # The error code, e.g. an xmlParserError
-    has Str                     $.message; # human-readable informative error message
-    has int8                    $!level;   # how consequent is the error
-    has Str                     $.file;    # the filename
-    has int32                   $.line;    # the line number if available
-    has Str                     $.str1;    # extra string information
-    has Str                     $.str2;    # extra string information
-    has Str                     $.str3;    # extra string information
-    has int32                   $.int1;    # extra number information
-    has int32                   $.int2;    # column number of the error or 0 if N/A
-    has OpaquePointer           $.ctxt;    # the parser context if available
-    has OpaquePointer           $.node;    # the node in the tree
-
-    sub xmlCtxtGetLastError(OpaquePointer) returns XML::LibXML::Error is native('libxml2') { * }
-    sub xmlGetLastError()                  returns XML::LibXML::Error is native('libxml2') { * }
+class XML::LibXML::Error is xmlError is repr('CStruct') {
+    sub xmlCtxtGetLastError(CStruct) returns XML::LibXML::Error is native('libxml2') { * }
+    sub xmlGetLastError()                        returns XML::LibXML::Error is native('libxml2') { * }
 
     method get-last($ctx, :$orig) {
         my $err = xmlCtxtGetLastError($ctx);
@@ -62,7 +49,7 @@ class XML::LibXML::Error is repr('CStruct') {
     }
 
     method level {
-        @XML::LibXML::ErrorLevels[$!level]
+        @XML::LibXML::ErrorLevels[$._level]
     }
 }
 

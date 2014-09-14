@@ -142,20 +142,16 @@ flunk 'parses undef string with an error' if $fail;
 
 for @badWFStrings -> $str {
     my $fail = $parser.parse-str($str);
-    isa_ok($fail, X::XML::LibXML::Parser, "Error thrown passing '{shorten_string($str)}'");
+    isa_ok($fail, Failure, "Error thrown passing '{shorten_string($str)}'");
 }
 
 
-#~ # 1.1.2 NO KEEP BLANKS
+# 1.1.2 NO KEEP BLANKS
 
-#~ $parser->keep_blanks(0);
-
-#~ {
-    #~ foreach my $str ( @goodWFStrings,@goodWFNSStrings,@goodWFDTDStrings ) {
-	#~ my $doc = $parser->parse_string($str);
-        #~ isa_ok($doc, 'XML::LibXML::Document');
-    #~ }
-#~ }
+for @goodWFStrings, @goodWFNSStrings, @goodWFDTDStrings -> $str {
+    my $doc = $parser.parse-str($str);
+        isa_ok($doc, XML::LibXML::Document);
+}
 
 #~ eval { my $fail = $parser->parse_string(undef); };
 #~ like($@, qr/^Empty String at/, "parses undef string with an error");
