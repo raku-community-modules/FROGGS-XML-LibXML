@@ -3,8 +3,8 @@ use v6;
 use XML::LibXML::CStructs :types;
 use NativeCall;
 
-sub xmlSetGenericErrorFunc(CStruct, &cb(OpaquePointer, OpaquePointer, CArray[OpaquePointer])) is native('libxml2') is export { * }
-sub xmlSetStructuredErrorFunc(CStruct, &cb(OpaquePointer, OpaquePointer))                     is native('libxml2') is export { * }
+sub xmlSetGenericErrorFunc(CStruct, &cb (OpaquePointer, OpaquePointer, CArray[OpaquePointer])) is native('libxml2') is export { * }
+sub xmlSetStructuredErrorFunc(CStruct, &cb (OpaquePointer, OpaquePointer))                     is native('libxml2') is export { * }
 
 class X::XML::LibXML::Parser is Exception {
     has $.file;
