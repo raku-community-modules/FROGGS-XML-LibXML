@@ -33,8 +33,8 @@ method parse-str(Str:D $str, Str :$url) {
     $doc
 }
 
-method parse-html(Str:D $str) {
-    my $doc = htmlCtxtReadDoc(self, $str, Str, Str, 0);
+method parse-html(Str:D $str, Str :$url) {
+    my $doc = htmlCtxtReadDoc(self, $str, $url, Str, 0);
     fail XML::LibXML::Error.get-last(self, :orig($str)) unless $doc;
     $doc
 }

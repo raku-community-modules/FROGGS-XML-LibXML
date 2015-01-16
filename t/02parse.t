@@ -932,22 +932,21 @@ $parser.keep-blanks = 1;
 }
 
 
-#~ {
+{
 
-   #~ my $parser = XML::LibXML->new();
-
-   #~ my $doc = $parser->parse_html_string('<html><head><base href="foo.html"></head><body></body></html>',{ URI => "bar.html" });
-   #~ my $el = $doc->documentElement;
-   #~ is( $doc->URI, "bar.html" );
-   #~ is( $doc->baseURI, "foo.html" );
-   #~ is( $el->baseURI, "foo.html" );
+   my $parser = XML::LibXML.new();
+   my $doc    = $parser.parse-html('<html><head><base href="foo.html"></head><body></body></html>', :url<bar.html>);
+   my $el     = $doc.root-element;
+   is( $doc.url, "bar.html" );
+   #~ is( $doc.base-uri, "foo.html" );
+   #~ is( $el.base-uri, "foo.html" );
 
    #~ $doc->setURI( "baz.html" );
    #~ is( $doc->URI, "baz.html" );
    #~ is( $doc->baseURI, "foo.html" );
    #~ is( $el->baseURI, "foo.html" );
 
-#~ }
+}
 
 #~ {
     #~ my $parser = XML::LibXML->new();
