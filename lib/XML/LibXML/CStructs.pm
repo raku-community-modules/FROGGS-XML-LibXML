@@ -71,7 +71,7 @@ my class xmlParserCtxt is repr('CStruct') is export(:types) {
     has CArray[Str]                $.nameTab; # array of nodes
     has int                        $.nbChars; # number of xmlChar processed
     has int                     $.checkIndex; # used by progressive parsing lookup
-    has int32                   $!keepBlanks; # ugly but ...
+    has int32                   $.keepBlanks; # ugly but ...
     has int32                   $.disableSAX; # SAX callbacks are disabled
     has int32                     $.inSubset; # Parsing is in int 1/ext 2 subset
     has Str                     $.intSubName; # name of subset

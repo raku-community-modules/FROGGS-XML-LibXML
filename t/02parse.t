@@ -148,25 +148,42 @@ for @badWFStrings -> $str {
 
 # 1.1.2 NO KEEP BLANKS
 
+$parser.keep-blanks = 0;
+
 for @goodWFStrings, @goodWFNSStrings, @goodWFDTDStrings -> $str {
     my $doc = $parser.parse-str($str);
         isa_ok($doc, XML::LibXML::Document);
 }
 
-#~ eval { my $fail = $parser->parse_string(undef); };
-#~ like($@, qr/^Empty String at/, "parses undef string with an error");
+my $fail;
+try {
+    $fail = $parser.parse-str(Str);
+    CATCH {
+        default {
+            pass 'parses undef string with an error'
+        }
+    }
+}
+flunk 'parses undef string with an error' if $fail;
 
-#~ foreach my $str ( @badWFStrings ) {
-    #~ eval { my $fail = $parser->parse_string($str); };
+for @badWFStrings -> $str {
+    my $fail = $parser.parse-str($str);
+    isa_ok($fail, Failure, "Error thrown passing '{shorten_string($str)}'");
+}
 
-    #~ ok($@, "Error thrown passing '" . shorten_string($str)  . "'");
-#~ }
-
-#~ $parser->keep_blanks(1);
+$parser.keep-blanks = 1;
 
 #~ # 1.1.3 EXPAND ENTITIES
 
-#~ $parser->expand_entities(0);
+#~ $parser.expand-entities = 0;
+#~ # implementation:
+#~ sub expand_entities {
+    #~ my $self = shift;
+    #~ if (scalar(@_) and $_[0]) {
+      #~ return $self->__parser_option(XML_PARSE_NOENT | XML_PARSE_DTDLOAD,1);
+    #~ }
+    #~ return $self->__parser_option(XML_PARSE_NOENT,@_);
+#~ }
 
 #~ {
     #~ foreach my $str ( @goodWFStrings,@goodWFNSStrings,@goodWFDTDStrings ) {
