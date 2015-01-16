@@ -6,7 +6,9 @@ class XML::LibXML::Parser is xmlParserCtxt is repr('CStruct');
 
 use NativeCall;
 use XML::LibXML::Document;
+use XML::LibXML::Node;
 use XML::LibXML::Error;
+use XML::LibXML::XPathExpression;
 
 sub xmlInitParser()                                                                        is native('libxml2') { * }
 sub xmlCtxtReadDoc(XML::LibXML::Parser, Str, Str, Str, Int)  returns XML::LibXML::Document is native('libxml2') { * }
@@ -25,8 +27,8 @@ method new {
     $self
 }
 
-method parse-str(Str:D $str) {
-    my $doc = xmlCtxtReadDoc(self, $str, Str, Str, 0);
+method parse-str(Str:D $str, Str :$url) {
+    my $doc = xmlCtxtReadDoc(self, $str, $url, Str, 0);
     fail XML::LibXML::Error.get-last(self, :orig($str)) unless $doc;
     $doc
 }

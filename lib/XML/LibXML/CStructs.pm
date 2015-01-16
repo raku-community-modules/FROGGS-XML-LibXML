@@ -6,10 +6,13 @@ my class CStruct is repr('CStruct') is export(:types) { }
 my class  xmlAttrPtr           is repr('CPointer') { }
 my native xmlChar              is repr('P6int') is Int is nativesize(8) is unsigned { }
 my class  xmlDictPtr           is repr('CPointer') { }
-my class  xmlDocPtr            is repr('CPointer') { }
+my class  xmlDtdPtr            is repr('CPointer') { }
+my class  xmlDoc               is repr('CStruct')  { ... }
 my class  xmlError             is repr('CStruct')  { ... }
 my class  xmlHashTablePtr      is repr('CPointer') { }
+my class  xmlNode              is repr('CStruct')  { ... }
 my class  xmlNodePtr           is repr('CPointer') { }
+my class  xmlNsPtr             is repr('CPointer') { }
 my class  xmlParserCtxt        is repr('CStruct')  { ... }
 my class  xmlParserInputPtr    is repr('CPointer') { }
 my native xmlParserInputState  is repr('P6int') is Int is nativesize(64) { }
@@ -18,6 +21,33 @@ my class  xmlParserNodeInfo    is repr('CStruct')  { ... }
 my class  xmlParserNodeInfoSeq is repr('CStruct')  { ... }
 my class  xmlSAXHandler        is repr('CPointer') { }
 my class  xmlValidCtxt         is repr('CPointer') { }
+
+my class xmlDoc is repr('CStruct') is export(:types) {
+    has OpaquePointer $._private; # application data
+    has int8              $.type; # (xmlElementType) XML_DOCUMENT_NODE, must be second !
+    has Str               $.name; # name/filename/URI of the document
+    has xmlNodePtr    $.children; # the document tree
+    has xmlNodePtr        $.last; # last child link
+    has xmlNodePtr      $.parent; # child->parent link
+    has xmlNodePtr        $.next; # next sibling link
+    has xmlNodePtr        $.prev; # previous sibling link
+    has xmlDoc             $.doc; # autoreference to itself End of common p
+    has int32      $.compression; # level of zlib compression
+    has int32       $.standalone;  # standalone document (no external refs)
+    has xmlDtdPtr    $.intSubset; # the document internal subset
+    has xmlDtdPtr    $.extSubset; # the document external subset
+    has xmlNsPtr         $.oldNs; # Global namespace, the old way
+    has Str            $.version; # the XML version string
+    has Str           $.encoding; # external initial encoding, if any
+    has OpaquePointer      $.ids; # Hash table for ID attributes if any
+    has OpaquePointer     $.refs; # Hash table for IDREFs attributes if any
+    has Str                $.url; # The URI for that document
+    #~ int	charset	: encoding of the in-memory content actua
+    #~ struct _xmlDict *	dict	: dict used to allocate names or NULL
+    #~ void *	psvi	: for type/PSVI informations
+    #~ int	parseFlags	: set of xmlParserOption used to parse th
+    #~ int	properties	: set of xmlDocProperties for this docume
+}
 
 my class xmlError is repr('CStruct') is export(:types) {
     has int32       $.domain; # What part of the library raised this error
@@ -35,10 +65,29 @@ my class xmlError is repr('CStruct') is export(:types) {
     has OpaquePointer $.node; # the node in the tree
 }
 
+my class xmlNode is repr('CStruct') is export(:types) {
+    has OpaquePointer $._private; # application data
+    has int8              $.type; # (xmlElementType) type number, must be second !
+    has Str               $.name; # name/filename/URI of the document
+    has xmlNodePtr    $.children; # the document tree
+    has xmlNodePtr        $.last; # last child link
+    has xmlNodePtr      $.parent; # child->parent link
+    has xmlNodePtr        $.next; # next sibling link
+    has xmlNodePtr        $.prev; # previous sibling link
+    has xmlDoc             $.doc; # autoreference to itself End of common p
+    has xmlNsPtr            $.ns; # pointer to the associated namespace
+    has Str            $.content; # the content
+    #~ struct _xmlAttr *	properties	: properties list
+    #~ xmlNs *	nsDef	: namespace definitions on this node
+    #~ has OpaquePointer $.psvi	: for type/PSVI informations
+    #~ unsigned short	line	: line number
+    #~ unsigned short	extra	: extra data for XPath/XSLT
+}
+
 my class xmlParserCtxt is repr('CStruct') is export(:types) {
     has xmlSAXHandler                  $.sax; # The SAX handler
     has OpaquePointer             $.userData; # For SAX interface only, used by DOM build
-    has xmlDocPtr                    $.myDoc; # the document being built
+    has xmlDoc                       $.myDoc; # the document being built
     has int32                   $.wellFormed; # is the document well formed
     has int32              $.replaceEntities; # shall we replace entities ?
     has Str                        $.version; # the XML version string

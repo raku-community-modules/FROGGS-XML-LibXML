@@ -905,15 +905,14 @@ $parser.keep-blanks = 1;
         #~ isnt($@, '', "error parsing example/article_external_bad.xml");
 #~ }
 
-#~ {
+{
 
-   #~ my $parser = XML::LibXML->new();
-
-   #~ my $doc = $parser->parse_string('<foo xml:base="foo.xml"/>',"bar.xml");
-   #~ my $el = $doc->documentElement;
-   #~ is( $doc->URI, "bar.xml" );
-   #~ is( $doc->baseURI, "bar.xml" );
-   #~ is( $el->baseURI, "foo.xml" );
+   my $parser = XML::LibXML.new();
+   my $doc    = $parser.parse-str('<foo xml:base="foo.xml"/>',:url<bar.xml>);
+   my $el     = $doc.root-element;
+   is( $doc.url, "bar.xml" );
+   is( $doc.base-uri, "bar.xml" );
+   is( $el.base-uri, "foo.xml" );
 
    #~ $doc->setURI( "baz.xml" );
    #~ is( $doc->URI, "baz.xml" );
@@ -930,7 +929,7 @@ $parser.keep-blanks = 1;
    #~ is( $doc->baseURI, "bag.xml" );
    #~ is( $el->baseURI, "bam.xml" );
 
-#~ }
+}
 
 
 #~ {
