@@ -124,24 +124,20 @@ use XML::LibXML::Enums;
         #~ is($node->nodeValue, "foo", ' TODO : Add test name' );
     #~ }
 
-    #~ {
-        #~ my $node = $doc->createComment( "foo" );
-        #~ # TEST
-        #~ ok($node, ' TODO : Add test name');
-        #~ # TEST
-        #~ is($node->nodeType, XML_COMMENT_NODE, ' TODO : Add test name' );
-        #~ # TEST
-        #~ is($node->nodeValue, "foo", ' TODO : Add test name' );
-        #~ # TEST
-        #~ is($node->toString, "<!--foo-->", ' TODO : Add test name');
-    #~ }
+    {
+        my $node = $doc.new-comment( "foo" );
+        ok($node, ' TODO : Add test name');
+        is($node.type, XML_COMMENT_NODE, ' TODO : Add test name' );
+        is($node.content, "foo", ' TODO : Add test name' );
+        is($node.Str, "<!--foo-->", ' TODO : Add test name');
+    }
 
     {
         my $node = $doc.new-cdata-block( "foo" );
         ok($node, ' TODO : Add test name');
         is($node.type, XML_CDATA_SECTION_NODE, ' TODO : Add test name' );
-        #~ is($node->nodeValue, "foo", ' TODO : Add test name' );
-        #~ is($node->toString, "<![CDATA[foo]]>", ' TODO : Add test name');
+        is($node.content, "foo", ' TODO : Add test name' );
+        is($node.Str, "<![CDATA[foo]]>", ' TODO : Add test name');
     }
 
     #~ # -> Create Attributes
@@ -175,7 +171,7 @@ use XML::LibXML::Enums;
         #~ }
 
     #~ }
-    #~ {
+    {
       #~ my $elem = $doc->createElement('foo');
       #~ my $attr = $doc->createAttribute(attr => 'e & f');
       #~ $elem->addChild($attr);
@@ -186,7 +182,7 @@ use XML::LibXML::Enums;
       #~ $elem->addChild($attr);
       #~ # TEST
       #~ ok ($elem->toString() eq '<foo attr2="a &amp; b"/>', ' TODO : Add test name');
-    #~ }
+    }
     #~ {
         #~ eval {
             #~ my $attr = $doc->createAttributeNS("http://kungfoo", "kung:foo","bar");

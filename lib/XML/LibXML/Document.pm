@@ -7,18 +7,36 @@ class XML::LibXML::Document is xmlDoc is repr('CStruct');
 use NativeCall;
 use XML::LibXML::Node;
 
-sub xmlNewDoc(Str)                        returns XML::LibXML::Document  is native('libxml2') { * }
-sub xmlNodeGetBase(xmlDoc, xmlDoc)        returns Str                    is native('libxml2') { * }
-sub xmlDocGetRootElement(xmlDoc)          returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlParseCharEncoding(Str)             returns int8                   is native('libxml2') { * }
-sub xmlGetCharEncodingName(int8)          returns Str                    is native('libxml2') { * }
-sub xmlNewCDataBlock(xmlDoc, Str, int32)  returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlStrlen(Str)                        returns int32                  is native('libxml2') { * }
+sub xmlNewDoc(Str)                            returns XML::LibXML::Document  is native('libxml2') { * }
+sub xmlNodeGetBase(xmlDoc, xmlDoc)            returns Str                    is native('libxml2') { * }
+sub xmlDocGetRootElement(xmlDoc)              returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlParseCharEncoding(Str)                 returns int8                   is native('libxml2') { * }
+sub xmlGetCharEncodingName(int8)              returns Str                    is native('libxml2') { * }
+sub xmlNewDocComment(xmlDoc, Str)             returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlNewCDataBlock(xmlDoc, Str, int32)      returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlAddChild(xmlDoc, xmlDoc)               returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlStrlen(Str)                            returns int32                  is native('libxml2') { * }
+sub xmlDocDumpMemory(xmlDoc, CArray, CArray)                                 is native('libxml2') { * }
+sub xmlNewDocFragment(xmlDoc)                 returns xmlNode                is native('libxml2') { * }
 
 method new(:$version = '1.0', :$encoding) {
     my $doc       = xmlNewDoc(~$version);
     $doc.encoding = $encoding if $encoding;
     $doc
+}
+
+method Str() {
+    my $result = CArray[Str].new();
+    my $len = CArray[int32].new();
+    $result[0] = "";
+    $result[1] = "";
+    $len[0] = 0;
+    $len[1] = 0;
+    xmlDocDumpMemory(self, $result, $len);
+    say $len[0];
+    say $len[1];
+    $result[0] ~
+    $result[1]
 }
 
 method root {
@@ -87,6 +105,14 @@ method base-uri() {
     )
 }
 
+method new-comment(Str $comment) {
+    my $node = xmlNewDocComment( self, $comment );
+    nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
+    $node
+}
+
 method new-cdata-block(Str $cdata) {
-    xmlNewCDataBlock( self, $cdata, xmlStrlen($cdata) );
+    my $node = xmlNewCDataBlock( self, $cdata, xmlStrlen($cdata) );
+    nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
+    $node
 }

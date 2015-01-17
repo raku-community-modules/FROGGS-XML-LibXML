@@ -4,6 +4,7 @@ use NativeCall;
 my class CStruct is repr('CStruct') is export(:types) { }
 
 my class  xmlAttrPtr           is repr('CPointer') { }
+my class  xmlBuffer            is repr('CStruct')  { ... }
 my native xmlChar              is repr('P6int') is Int is nativesize(8) is unsigned { }
 my class  xmlDictPtr           is repr('CPointer') { }
 my class  xmlDtdPtr            is repr('CPointer') { }
@@ -21,6 +22,14 @@ my class  xmlParserNodeInfo    is repr('CStruct')  { ... }
 my class  xmlParserNodeInfoSeq is repr('CStruct')  { ... }
 my class  xmlSAXHandler        is repr('CPointer') { }
 my class  xmlValidCtxt         is repr('CPointer') { }
+
+my class xmlBuffer is repr('CStruct') is export(:types) {
+    has Str     $.content; # The buffer content UTF8
+    #~ unsigned int	use	: The buffer size used
+    #~ unsigned int	size	: The buffer size
+    #~ xmlBufferAllocationScheme	alloc	: The realloc method
+    #~ xmlChar *	contentIO	: in IO mode we may have a different base
+}
 
 my class xmlDoc is repr('CStruct') is export(:types) {
     has OpaquePointer $._private; # application data
