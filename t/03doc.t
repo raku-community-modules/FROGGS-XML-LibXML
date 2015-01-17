@@ -112,15 +112,12 @@ use XML::LibXML::Enums;
 
     #~ }
 
-    #~ {
-        #~ my $node = $doc->createTextNode( "foo" );
-        #~ # TEST
-        #~ ok($node, ' TODO : Add test name');
-        #~ # TEST
-        #~ is($node->nodeType, XML_TEXT_NODE, ' TODO : Add test name' );
-        #~ # TEST
-        #~ is($node->nodeValue, "foo", ' TODO : Add test name' );
-    #~ }
+    {
+        my $node = $doc.new-text( "foo" );
+        ok($node, ' TODO : Add test name');
+        is($node.type, XML_TEXT_NODE, ' TODO : Add test name' );
+        is($node.content, "foo", ' TODO : Add test name' );
+    }
 
     {
         my $node = $doc.new-comment( "foo" );

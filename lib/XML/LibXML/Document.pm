@@ -12,6 +12,7 @@ sub xmlNodeGetBase(xmlDoc, xmlDoc)            returns Str                    is 
 sub xmlDocGetRootElement(xmlDoc)              returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlParseCharEncoding(Str)                 returns int8                   is native('libxml2') { * }
 sub xmlGetCharEncodingName(int8)              returns Str                    is native('libxml2') { * }
+sub xmlNewText(Str)                           returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlNewDocComment(xmlDoc, Str)             returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlNewCDataBlock(xmlDoc, Str, int32)      returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlAddChild(xmlDoc, xmlDoc)               returns XML::LibXML::Node      is native('libxml2') { * }
@@ -102,6 +103,12 @@ method base-uri() {
 
 method new-doc-fragment() {
     my $node = xmlNewDocFragment( self );
+    nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
+    $node
+}
+
+method new-text(Str $text) {
+    my $node = xmlNewText( $text );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
     $node
 }
