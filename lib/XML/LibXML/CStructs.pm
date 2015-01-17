@@ -33,7 +33,7 @@ my class xmlDoc is repr('CStruct') is export(:types) {
     has xmlNodePtr        $.prev; # previous sibling link
     has xmlDoc             $.doc; # autoreference to itself End of common p
     has int32      $.compression; # level of zlib compression
-    has int32       $.standalone;  # standalone document (no external refs)
+    has int32       $.standalone; # standalone document (no external refs)
     has xmlDtdPtr    $.intSubset; # the document internal subset
     has xmlDtdPtr    $.extSubset; # the document external subset
     has xmlNsPtr         $.oldNs; # Global namespace, the old way

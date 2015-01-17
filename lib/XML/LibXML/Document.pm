@@ -14,13 +14,9 @@ sub xmlParseCharEncoding(Str)       returns int8                   is native('li
 sub xmlGetCharEncodingName(int8)    returns Str                    is native('libxml2') { * }
 
 method new(:$version = '1.0', :$encoding) {
-    my $doc       = xmlNewDoc($version);
+    my $doc       = xmlNewDoc(~$version);
     $doc.encoding = $encoding if $encoding;
     $doc
-}
-
-method base-uri() {
-    xmlNodeGetBase(self.doc, self)
 }
 
 method root {
@@ -47,8 +43,45 @@ method version() {
             Version.new(nqp::getattr(nqp::decont(self), xmlDoc, '$!version'))
         },
         STORE => -> $, $new {
-            nqp::bindattr(nqp::decont(self), xmlDoc, '$!version', ~$new);
+            nqp::bindattr(nqp::decont(self), xmlDoc, '$!version', nqp::unbox_s(~$new));
             $new
         }
     )
 }
+
+method standalone() {
+    Proxy.new(
+        FETCH => -> $ {
+            nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlDoc, '$!standalone'))
+        },
+        STORE => -> $, int32 $new {
+            nqp::bindattr_i(nqp::decont(self), xmlDoc, '$!standalone', $new);
+            $new
+        }
+    )
+}
+
+method uri() {
+    Proxy.new(
+        FETCH => -> $ {
+            nqp::getattr(nqp::decont(self), xmlDoc, '$!uri')
+        },
+        STORE => -> $, $new {
+            nqp::bindattr(nqp::decont(self), xmlDoc, '$!uri', nqp::unbox_s(~$new));
+            $new
+        }
+    )
+}
+
+method base-uri() {
+    Proxy.new(
+        FETCH => -> $ {
+            xmlNodeGetBase(self.doc, self)
+        },
+        STORE => -> $, $new {
+            nqp::bindattr(nqp::decont(self), xmlDoc, '$!uri', nqp::unbox_s(~$new));
+            $new
+        }
+    )
+}
+

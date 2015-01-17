@@ -33,22 +33,18 @@ use XML::LibXML::Common; # qw(:libxml);
     $doc.version = v12.5;
     is( $doc.version, v12.5, 'Version was set.' );
 
-    #~ $doc->setStandalone(1);
-    #~ # TEST
-    #~ is( $doc->standalone, 1, 'Standalone was set.' );
+    $doc.standalone = 1;
+    is( $doc.standalone, 1, 'Standalone was set.' );
 
-    #~ $doc->setBaseURI( "localhost/here.xml" );
-    #~ # TEST
-    #~ is( $doc->URI, "localhost/here.xml", 'URI is set.' );
+    $doc.base-uri = "localhost/here.xml";
+    is( $doc.uri, "localhost/here.xml", 'URI is set.' );
 
-    #~ my $doc2 = XML::LibXML::Document->createDocument("1.1", "iso-8859-2");
-    #~ # TEST
-    #~ is( $doc2->encoding, "iso-8859-2", 'doc2 encoding was set.' );
-    #~ # TEST
-    #~ is( $doc2->version,  "1.1", 'doc2 version was set.' );
-    #~ # TEST
-    #~ is( $doc2->standalone,  -1, 'doc2 standalone' );
+    my $doc2 = XML::LibXML::Document.new(:version(v1.1), :encoding<iso-8859-2>);
+    is( $doc2.encoding, "iso-8859-2", 'doc2 encoding was set.' );
+    is( $doc2.version,  "1.1", 'doc2 version was set.' );
+    is( $doc2.standalone,  -1, 'doc2 standalone' );
 }
+
 =finish
 {
     # 2. Creating Elements
