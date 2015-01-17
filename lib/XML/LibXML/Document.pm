@@ -17,7 +17,7 @@ sub xmlNewCDataBlock(xmlDoc, Str, int32)      returns XML::LibXML::Node      is 
 sub xmlAddChild(xmlDoc, xmlDoc)               returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlStrlen(Str)                            returns int32                  is native('libxml2') { * }
 sub xmlDocDumpMemory(xmlDoc, CArray, CArray)                                 is native('libxml2') { * }
-sub xmlNewDocFragment(xmlDoc)                 returns xmlNode                is native('libxml2') { * }
+sub xmlNewDocFragment(xmlDoc)                 returns XML::LibXML::Node      is native('libxml2') { * }
 
 method new(:$version = '1.0', :$encoding) {
     my $doc       = xmlNewDoc(~$version);
@@ -103,6 +103,12 @@ method base-uri() {
             $new
         }
     )
+}
+
+method new-doc-fragment() {
+    my $node = xmlNewDocFragment( self );
+    nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
+    $node
 }
 
 method new-comment(Str $comment) {

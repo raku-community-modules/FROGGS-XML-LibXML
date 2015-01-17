@@ -48,13 +48,11 @@ use XML::LibXML::Enums;
 {
     # 2. Creating Elements
     my $doc = XML::LibXML::Document.new();
-    #~ {
-        #~ my $node = $doc->createDocumentFragment();
-        #~ # TEST
-        #~ ok($node, ' TODO : Add test name');
-        #~ # TEST
-        #~ is($node->nodeType, XML_DOCUMENT_FRAG_NODE, ' TODO : Add test name');
-    #~ }
+    {
+        my $node = $doc.new-doc-fragment();
+        ok($node, ' TODO : Add test name');
+        is($node.type, XML_DOCUMENT_FRAG_NODE, ' TODO : Add test name');
+    }
 
     #~ # TEST*$_check_created_element
     #~ _check_created_element($doc, 'foo', 'foo', 'Simple Element');
