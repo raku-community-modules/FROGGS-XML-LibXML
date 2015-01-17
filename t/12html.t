@@ -4,15 +4,13 @@ use XML::LibXML;
 
 plan 43;
 
-# TEST
 ok(1, ' TODO : Add test name');
 
 my $html = "example/test.html";
 
 my $parser = XML::LibXML.new();
 {
-    say my $doc = $parser.parse-html($html);
-    # TEST
+    my $doc = $parser.parse-html($html);
     ok($doc, ' TODO : Add test name');
 }
 
