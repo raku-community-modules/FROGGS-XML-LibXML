@@ -11,7 +11,7 @@ use Test;
 plan *;
 
 use XML::LibXML;
-use XML::LibXML::Common; # qw(:libxml);
+use XML::LibXML::Enums;
 
 {
     # Document Attributes
@@ -45,231 +45,226 @@ use XML::LibXML::Common; # qw(:libxml);
     is( $doc2.standalone,  -1, 'doc2 standalone' );
 }
 
-=finish
 {
     # 2. Creating Elements
-    my $doc = XML::LibXML::Document->new();
+    my $doc = XML::LibXML::Document.new();
+    #~ {
+        #~ my $node = $doc->createDocumentFragment();
+        #~ # TEST
+        #~ ok($node, ' TODO : Add test name');
+        #~ # TEST
+        #~ is($node->nodeType, XML_DOCUMENT_FRAG_NODE, ' TODO : Add test name');
+    #~ }
+
+    #~ # TEST*$_check_created_element
+    #~ _check_created_element($doc, 'foo', 'foo', 'Simple Element');
+
+    #~ {
+        #~ # document with encoding
+        #~ my $encdoc = XML::LibXML::Document->new( "1.0" );
+        #~ $encdoc->setEncoding( "iso-8859-1" );
+
+        #~ # TEST*$_check_created_element
+        #~ _check_created_element(
+            #~ $encdoc, 'foo', 'foo', 'Encdoc Element creation'
+        #~ );
+
+        #~ # SAX style document with encoding
+        #~ my $node_def = {
+            #~ Name => "object",
+            #~ LocalName => "object",
+            #~ Prefix => "",
+            #~ NamespaceURI => "",
+                       #~ };
+
+        #~ # TEST*$_check_created_element
+        #~ _check_created_element(
+            #~ $encdoc, $node_def->{Name}, 'object',
+            #~ 'Encdoc element creation based on node_def->{name}',
+        #~ );
+    #~ }
+
+    #~ {
+        #~ # namespaced element test
+        #~ my $node = $doc->createElementNS( "http://kungfoo", "foo:bar" );
+        #~ # TEST
+        #~ ok($node, ' TODO : Add test name');
+        #~ # TEST
+        #~ is($node->nodeType, XML_ELEMENT_NODE, ' TODO : Add test name');
+        #~ # TEST
+        #~ is($node->nodeName, "foo:bar", ' TODO : Add test name');
+        #~ # TEST
+        #~ is($node->prefix, "foo", ' TODO : Add test name');
+        #~ # TEST
+        #~ is($node->localname, "bar", ' TODO : Add test name');
+        #~ # TEST
+        #~ is($node->namespaceURI, "http://kungfoo", ' TODO : Add test name');
+    #~ }
+
+    #~ {
+        #~ # bad element creation
+        #~ # TEST:$badnames_count=5;
+        #~ my @badnames = ( ";", "&", "<><", "/", "1A");
+
+        #~ foreach my $name ( @badnames ) {
+            #~ my $node = eval {$doc->createElement( $name );};
+            #~ # TEST*$badnames_count
+            #~ ok( !(defined $node), ' TODO : Add test name' );
+        #~ }
+
+    #~ }
+
+    #~ {
+        #~ my $node = $doc->createTextNode( "foo" );
+        #~ # TEST
+        #~ ok($node, ' TODO : Add test name');
+        #~ # TEST
+        #~ is($node->nodeType, XML_TEXT_NODE, ' TODO : Add test name' );
+        #~ # TEST
+        #~ is($node->nodeValue, "foo", ' TODO : Add test name' );
+    #~ }
+
+    #~ {
+        #~ my $node = $doc->createComment( "foo" );
+        #~ # TEST
+        #~ ok($node, ' TODO : Add test name');
+        #~ # TEST
+        #~ is($node->nodeType, XML_COMMENT_NODE, ' TODO : Add test name' );
+        #~ # TEST
+        #~ is($node->nodeValue, "foo", ' TODO : Add test name' );
+        #~ # TEST
+        #~ is($node->toString, "<!--foo-->", ' TODO : Add test name');
+    #~ }
+
     {
-        my $node = $doc->createDocumentFragment();
-        # TEST
+        my $node = $doc.new-cdata-block( "foo" );
         ok($node, ' TODO : Add test name');
-        # TEST
-        is($node->nodeType, XML_DOCUMENT_FRAG_NODE, ' TODO : Add test name');
+        is($node.type, XML_CDATA_SECTION_NODE, ' TODO : Add test name' );
+        #~ is($node->nodeValue, "foo", ' TODO : Add test name' );
+        #~ is($node->toString, "<![CDATA[foo]]>", ' TODO : Add test name');
     }
 
-    # TEST*$_check_created_element
-    _check_created_element($doc, 'foo', 'foo', 'Simple Element');
+    #~ # -> Create Attributes
+    #~ {
+        #~ my $attr = $doc->createAttribute("foo", "bar");
+        #~ # TEST
+        #~ ok($attr, ' TODO : Add test name');
+        #~ # TEST
+        #~ is($attr->nodeType, XML_ATTRIBUTE_NODE, ' TODO : Add test name' );
+        #~ # TEST
+        #~ is($attr->name, "foo", ' TODO : Add test name');
+        #~ # TEST
+        #~ is($attr->value, "bar", ' TODO : Add test name' );
+        #~ # TEST
+        #~ is($attr->hasChildNodes, 0, ' TODO : Add test name');
+        #~ my $content = $attr->firstChild;
+        #~ # TEST
+        #~ ok( $content, ' TODO : Add test name' );
+        #~ # TEST
+        #~ is( $content->nodeType, XML_TEXT_NODE, ' TODO : Add test name' );
+    #~ }
+    #~ {
+        #~ # bad attribute creation
+        #~ # TEST:$badnames_count=5;
+        #~ my @badnames = ( ";", "&", "<><", "/", "1A");
 
-    {
-        # document with encoding
-        my $encdoc = XML::LibXML::Document->new( "1.0" );
-        $encdoc->setEncoding( "iso-8859-1" );
+        #~ foreach my $name ( @badnames ) {
+            #~ my $node = eval {$doc->createAttribute( $name, "bar" );};
+            #~ # TEST*$badnames_count
+            #~ ok( !defined($node), ' TODO : Add test name' );
+        #~ }
 
-        # TEST*$_check_created_element
-        _check_created_element(
-            $encdoc, 'foo', 'foo', 'Encdoc Element creation'
-        );
+    #~ }
+    #~ {
+      #~ my $elem = $doc->createElement('foo');
+      #~ my $attr = $doc->createAttribute(attr => 'e & f');
+      #~ $elem->addChild($attr);
+      #~ # TEST
+      #~ ok ($elem->toString() eq '<foo attr="e &amp; f"/>', ' TODO : Add test name');
+      #~ $elem->removeAttribute('attr');
+      #~ $attr = $doc->createAttributeNS(undef,'attr2' => 'a & b');
+      #~ $elem->addChild($attr);
+      #~ # TEST
+      #~ ok ($elem->toString() eq '<foo attr2="a &amp; b"/>', ' TODO : Add test name');
+    #~ }
+    #~ {
+        #~ eval {
+            #~ my $attr = $doc->createAttributeNS("http://kungfoo", "kung:foo","bar");
+        #~ };
+        #~ # TEST
+        #~ ok($@, ' TODO : Add test name');
 
-        # SAX style document with encoding
-        my $node_def = {
-            Name => "object",
-            LocalName => "object",
-            Prefix => "",
-            NamespaceURI => "",
-                       };
+        #~ my $root = $doc->createElement( "foo" );
+        #~ $doc->setDocumentElement( $root );
 
-        # TEST*$_check_created_element
-        _check_created_element(
-            $encdoc, $node_def->{Name}, 'object',
-            'Encdoc element creation based on node_def->{name}',
-        );
-    }
+        #~ my $attr;
+        #~ eval {
+           #~ $attr = $doc->createAttributeNS("http://kungfoo", "kung:foo","bar");
+        #~ };
+        #~ # TEST
+        #~ ok($attr, ' TODO : Add test name');
+        #~ # TEST
+        #~ is($attr->nodeName, "kung:foo", ' TODO : Add test name');
+        #~ # TEST
+        #~ is($attr->name,"foo", ' TODO : Add test name' );
+        #~ # TEST
+        #~ is($attr->value, "bar", ' TODO : Add test name' );
 
-    {
-        # namespaced element test
-        my $node = $doc->createElementNS( "http://kungfoo", "foo:bar" );
-        # TEST
-        ok($node, ' TODO : Add test name');
-        # TEST
-        is($node->nodeType, XML_ELEMENT_NODE, ' TODO : Add test name');
-        # TEST
-        is($node->nodeName, "foo:bar", ' TODO : Add test name');
-        # TEST
-        is($node->prefix, "foo", ' TODO : Add test name');
-        # TEST
-        is($node->localname, "bar", ' TODO : Add test name');
-        # TEST
-        is($node->namespaceURI, "http://kungfoo", ' TODO : Add test name');
-    }
+        #~ $attr->setValue( q(bar&amp;) );
+        #~ # TEST
+        #~ is($attr->getValue, q(bar&amp;), ' TODO : Add test name' );
+    #~ }
+    #~ {
+        #~ # bad attribute creation
+        #~ # TEST:$badnames_count=5;
+        #~ my @badnames = ( ";", "&", "<><", "/", "1A");
 
-    {
-        # bad element creation
-        # TEST:$badnames_count=5;
-        my @badnames = ( ";", "&", "<><", "/", "1A");
+        #~ foreach my $name ( @badnames ) {
+            #~ my $node = eval {$doc->createAttributeNS( undef, $name, "bar" );};
+            #~ # TEST*$badnames_count
+            #~ ok( (!defined $node), ' TODO : Add test name' );
+        #~ }
 
-        foreach my $name ( @badnames ) {
-            my $node = eval {$doc->createElement( $name );};
-            # TEST*$badnames_count
-            ok( !(defined $node), ' TODO : Add test name' );
-        }
+    #~ }
 
-    }
+    #~ # -> Create PIs
+    #~ {
+        #~ my $pi = $doc->createProcessingInstruction( "foo", "bar" );
+        #~ # TEST
+        #~ ok($pi, ' TODO : Add test name');
+        #~ # TEST
+        #~ is($pi->nodeType, XML_PI_NODE, ' TODO : Add test name');
+        #~ # TEST
+        #~ is($pi->nodeName, "foo", ' TODO : Add test name');
+        #~ # TEST
+        #~ is($pi->textContent, "bar", ' TODO : Add test name');
+        #~ # TEST
+        #~ is($pi->getData, "bar", ' TODO : Add test name');
+    #~ }
 
-    {
-        my $node = $doc->createTextNode( "foo" );
-        # TEST
-        ok($node, ' TODO : Add test name');
-        # TEST
-        is($node->nodeType, XML_TEXT_NODE, ' TODO : Add test name' );
-        # TEST
-        is($node->nodeValue, "foo", ' TODO : Add test name' );
-    }
-
-    {
-        my $node = $doc->createComment( "foo" );
-        # TEST
-        ok($node, ' TODO : Add test name');
-        # TEST
-        is($node->nodeType, XML_COMMENT_NODE, ' TODO : Add test name' );
-        # TEST
-        is($node->nodeValue, "foo", ' TODO : Add test name' );
-        # TEST
-        is($node->toString, "<!--foo-->", ' TODO : Add test name');
-    }
-
-    {
-        my $node = $doc->createCDATASection( "foo" );
-        # TEST
-        ok($node, ' TODO : Add test name');
-        # TEST
-        is($node->nodeType, XML_CDATA_SECTION_NODE, ' TODO : Add test name' );
-        # TEST
-        is($node->nodeValue, "foo", ' TODO : Add test name' );
-        # TEST
-        is($node->toString, "<![CDATA[foo]]>", ' TODO : Add test name');
-    }
-
-    # -> Create Attributes
-    {
-        my $attr = $doc->createAttribute("foo", "bar");
-        # TEST
-        ok($attr, ' TODO : Add test name');
-        # TEST
-        is($attr->nodeType, XML_ATTRIBUTE_NODE, ' TODO : Add test name' );
-        # TEST
-        is($attr->name, "foo", ' TODO : Add test name');
-        # TEST
-        is($attr->value, "bar", ' TODO : Add test name' );
-        # TEST
-        is($attr->hasChildNodes, 0, ' TODO : Add test name');
-        my $content = $attr->firstChild;
-        # TEST
-        ok( $content, ' TODO : Add test name' );
-        # TEST
-        is( $content->nodeType, XML_TEXT_NODE, ' TODO : Add test name' );
-    }
-    {
-        # bad attribute creation
-        # TEST:$badnames_count=5;
-        my @badnames = ( ";", "&", "<><", "/", "1A");
-
-        foreach my $name ( @badnames ) {
-            my $node = eval {$doc->createAttribute( $name, "bar" );};
-            # TEST*$badnames_count
-            ok( !defined($node), ' TODO : Add test name' );
-        }
-
-    }
-    {
-      my $elem = $doc->createElement('foo');
-      my $attr = $doc->createAttribute(attr => 'e & f');
-      $elem->addChild($attr);
-      # TEST
-      ok ($elem->toString() eq '<foo attr="e &amp; f"/>', ' TODO : Add test name');
-      $elem->removeAttribute('attr');
-      $attr = $doc->createAttributeNS(undef,'attr2' => 'a & b');
-      $elem->addChild($attr);
-      # TEST
-      ok ($elem->toString() eq '<foo attr2="a &amp; b"/>', ' TODO : Add test name');
-    }
-    {
-        eval {
-            my $attr = $doc->createAttributeNS("http://kungfoo", "kung:foo","bar");
-        };
-        # TEST
-        ok($@, ' TODO : Add test name');
-
-        my $root = $doc->createElement( "foo" );
-        $doc->setDocumentElement( $root );
-
-        my $attr;
-        eval {
-           $attr = $doc->createAttributeNS("http://kungfoo", "kung:foo","bar");
-        };
-        # TEST
-        ok($attr, ' TODO : Add test name');
-        # TEST
-        is($attr->nodeName, "kung:foo", ' TODO : Add test name');
-        # TEST
-        is($attr->name,"foo", ' TODO : Add test name' );
-        # TEST
-        is($attr->value, "bar", ' TODO : Add test name' );
-
-        $attr->setValue( q(bar&amp;) );
-        # TEST
-        is($attr->getValue, q(bar&amp;), ' TODO : Add test name' );
-    }
-    {
-        # bad attribute creation
-        # TEST:$badnames_count=5;
-        my @badnames = ( ";", "&", "<><", "/", "1A");
-
-        foreach my $name ( @badnames ) {
-            my $node = eval {$doc->createAttributeNS( undef, $name, "bar" );};
-            # TEST*$badnames_count
-            ok( (!defined $node), ' TODO : Add test name' );
-        }
-
-    }
-
-    # -> Create PIs
-    {
-        my $pi = $doc->createProcessingInstruction( "foo", "bar" );
-        # TEST
-        ok($pi, ' TODO : Add test name');
-        # TEST
-        is($pi->nodeType, XML_PI_NODE, ' TODO : Add test name');
-        # TEST
-        is($pi->nodeName, "foo", ' TODO : Add test name');
-        # TEST
-        is($pi->textContent, "bar", ' TODO : Add test name');
-        # TEST
-        is($pi->getData, "bar", ' TODO : Add test name');
-    }
-
-    {
-        my $pi = $doc->createProcessingInstruction( "foo" );
-        # TEST
-        ok($pi, ' TODO : Add test name');
-        # TEST
-        is($pi->nodeType, XML_PI_NODE, ' TODO : Add test name');
-        # TEST
-        is($pi->nodeName, "foo", ' TODO : Add test name');
-        my $data = $pi->textContent;
-        # undef or "" depending on libxml2 version
-        # TEST
-        ok( is_empty_str($data), ' TODO : Add test name' );
-        $data = $pi->getData;
-        # TEST
-        ok( is_empty_str($data), ' TODO : Add test name' );
-        $pi->setData(q(bar&amp;));
-        # TEST
-        is( $pi->getData, q(bar&amp;), ' TODO : Add test name');
-        # TEST
-        is($pi->textContent, q(bar&amp;), ' TODO : Add test name');
-    }
+    #~ {
+        #~ my $pi = $doc->createProcessingInstruction( "foo" );
+        #~ # TEST
+        #~ ok($pi, ' TODO : Add test name');
+        #~ # TEST
+        #~ is($pi->nodeType, XML_PI_NODE, ' TODO : Add test name');
+        #~ # TEST
+        #~ is($pi->nodeName, "foo", ' TODO : Add test name');
+        #~ my $data = $pi->textContent;
+        #~ # undef or "" depending on libxml2 version
+        #~ # TEST
+        #~ ok( is_empty_str($data), ' TODO : Add test name' );
+        #~ $data = $pi->getData;
+        #~ # TEST
+        #~ ok( is_empty_str($data), ' TODO : Add test name' );
+        #~ $pi->setData(q(bar&amp;));
+        #~ # TEST
+        #~ is( $pi->getData, q(bar&amp;), ' TODO : Add test name');
+        #~ # TEST
+        #~ is($pi->textContent, q(bar&amp;), ' TODO : Add test name');
+    #~ }
 }
-
+=finish
 {
     # Document Manipulation
     # -> Document Elements
