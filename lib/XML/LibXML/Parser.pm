@@ -27,14 +27,14 @@ method new {
     $self
 }
 
-method parse-str(Str:D $str, Str :$url) {
-    my $doc = xmlCtxtReadDoc(self, $str, $url, Str, 0);
+method parse-str(Str:D $str, Str :$uri) {
+    my $doc = xmlCtxtReadDoc(self, $str, $uri, Str, 0);
     fail XML::LibXML::Error.get-last(self, :orig($str)) unless $doc;
     $doc
 }
 
-method parse-html(Str:D $str, Str :$url) {
-    my $doc = htmlCtxtReadDoc(self, $str, $url, Str, 0);
+method parse-html(Str:D $str, Str :$uri) {
+    my $doc = htmlCtxtReadDoc(self, $str, $uri, Str, 0);
     fail XML::LibXML::Error.get-last(self, :orig($str)) unless $doc;
     $doc
 }

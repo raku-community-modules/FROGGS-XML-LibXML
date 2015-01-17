@@ -41,8 +41,8 @@ my class xmlDoc is repr('CStruct') is export(:types) {
     has Str           $.encoding; # external initial encoding, if any
     has OpaquePointer      $.ids; # Hash table for ID attributes if any
     has OpaquePointer     $.refs; # Hash table for IDREFs attributes if any
-    has Str                $.url; # The URI for that document
-    #~ int	charset	: encoding of the in-memory content actua
+    has Str                $.uri; # The URI for that document
+    has int32          $.charset; # encoding of the in-memory content actua
     #~ struct _xmlDict *	dict	: dict used to allocate names or NULL
     #~ void *	psvi	: for type/PSVI informations
     #~ int	parseFlags	: set of xmlParserOption used to parse th
