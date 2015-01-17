@@ -7,11 +7,13 @@ class XML::LibXML::Document is xmlDoc is repr('CStruct');
 use NativeCall;
 use XML::LibXML::Node;
 
-sub xmlNewDoc(Str)                  returns XML::LibXML::Document  is native('libxml2') { * }
-sub xmlNodeGetBase(xmlDoc, xmlDoc)  returns Str                    is native('libxml2') { * }
-sub xmlDocGetRootElement(xmlDoc)    returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlParseCharEncoding(Str)       returns int8                   is native('libxml2') { * }
-sub xmlGetCharEncodingName(int8)    returns Str                    is native('libxml2') { * }
+sub xmlNewDoc(Str)                        returns XML::LibXML::Document  is native('libxml2') { * }
+sub xmlNodeGetBase(xmlDoc, xmlDoc)        returns Str                    is native('libxml2') { * }
+sub xmlDocGetRootElement(xmlDoc)          returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlParseCharEncoding(Str)             returns int8                   is native('libxml2') { * }
+sub xmlGetCharEncodingName(int8)          returns Str                    is native('libxml2') { * }
+sub xmlNewCDataBlock(xmlDoc, Str, int32)  returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlStrlen(Str)                        returns int32                  is native('libxml2') { * }
 
 method new(:$version = '1.0', :$encoding) {
     my $doc       = xmlNewDoc(~$version);
@@ -85,3 +87,6 @@ method base-uri() {
     )
 }
 
+method new-cdata-block(Str $cdata) {
+    xmlNewCDataBlock( self, $cdata, xmlStrlen($cdata) );
+}
