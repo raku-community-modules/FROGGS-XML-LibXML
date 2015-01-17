@@ -14,6 +14,6 @@ method base-uri() {
     xmlNodeGetBase(self.doc, self)
 }
 
-method root-element {
+method root {
     xmlDocGetRootElement(self)
 }

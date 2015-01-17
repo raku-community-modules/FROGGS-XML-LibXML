@@ -909,7 +909,7 @@ $parser.keep-blanks = 1;
 
    my $parser = XML::LibXML.new();
    my $doc    = $parser.parse-str('<foo xml:base="foo.xml"/>',:url<bar.xml>);
-   my $el     = $doc.root-element;
+   my $el     = $doc.root;
    is( $doc.url, "bar.xml" );
    is( $doc.base-uri, "bar.xml" );
    is( $el.base-uri, "foo.xml" );
@@ -936,7 +936,7 @@ $parser.keep-blanks = 1;
 
    my $parser = XML::LibXML.new();
    my $doc    = $parser.parse-html('<html><head><base href="foo.html"></head><body></body></html>', :url<bar.html>);
-   my $el     = $doc.root-element;
+   my $el     = $doc.root;
    is( $doc.url, "bar.html" );
    #~ is( $doc.base-uri, "foo.html" );
    #~ is( $el.base-uri, "foo.html" );
