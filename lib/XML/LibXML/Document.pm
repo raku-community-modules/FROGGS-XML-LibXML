@@ -12,6 +12,7 @@ sub xmlNodeGetBase(xmlDoc, xmlDoc)            returns Str                    is 
 sub xmlDocGetRootElement(xmlDoc)              returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlParseCharEncoding(Str)                 returns int8                   is native('libxml2') { * }
 sub xmlGetCharEncodingName(int8)              returns Str                    is native('libxml2') { * }
+sub xmlNewNode(xmlDoc, Str)                   returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlNewText(Str)                           returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlNewDocComment(xmlDoc, Str)             returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlNewCDataBlock(xmlDoc, Str, int32)      returns XML::LibXML::Node      is native('libxml2') { * }
@@ -19,6 +20,8 @@ sub xmlAddChild(xmlDoc, xmlDoc)               returns XML::LibXML::Node      is 
 sub xmlStrlen(Str)                            returns int32                  is native('libxml2') { * }
 sub xmlDocDumpMemory(xmlDoc, CArray, CArray)                                 is native('libxml2') { * }
 sub xmlNewDocFragment(xmlDoc)                 returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlNewDocProp(xmlDoc, Str, Str)           returns xmlAttr                is native('libxml2') { * }
+sub xmlEncodeEntitiesReentrant(xmlDoc, Str)   returns Str                    is native('libxml2') { * }
 
 method new(:$version = '1.0', :$encoding) {
     my $doc       = xmlNewDoc(~$version);
@@ -105,6 +108,22 @@ method new-doc-fragment() {
     my $node = xmlNewDocFragment( self );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
     $node
+}
+
+method new-elem(Str $elem) {
+    my $node = xmlNewNode( self, $elem );
+    nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
+    $node
+}
+
+multi method new-attr(Pair $kv) {
+    my $buffer = xmlEncodeEntitiesReentrant(self, $kv.value);
+    my $attr   = xmlNewDocProp(self, $kv.key, $buffer);
+    nqp::bindattr(nqp::decont($attr), xmlAttr, '$!doc', nqp::decont(self));
+    $attr
+}
+multi method new-attr(*%kv where *.elems == 1) {
+    callwith %kv.list[0].kv
 }
 
 method new-text(Str $text) {

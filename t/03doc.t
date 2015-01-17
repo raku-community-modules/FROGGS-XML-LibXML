@@ -167,8 +167,9 @@ use XML::LibXML::Enums;
 
     #~ }
     {
-      #~ my $elem = $doc->createElement('foo');
-      #~ my $attr = $doc->createAttribute(attr => 'e & f');
+      my $elem = $doc.new-elem('foo');
+      my $attr = $doc.new-attr('attr' => 'e & f');
+      #~ my $attr = $doc.new-attr(:attr('e & f'));
       #~ $elem->addChild($attr);
       #~ # TEST
       #~ ok ($elem->toString() eq '<foo attr="e &amp; f"/>', ' TODO : Add test name');

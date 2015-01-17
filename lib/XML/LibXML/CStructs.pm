@@ -3,6 +3,7 @@ use NativeCall;
 
 my class CStruct is repr('CStruct') is export(:types) { }
 
+my class  xmlAttr              is repr('CStruct')  { ... }
 my class  xmlAttrPtr           is repr('CPointer') { }
 my class  xmlBuffer            is repr('CStruct')  { ... }
 my native xmlChar              is repr('P6int') is Int is nativesize(8) is unsigned { }
@@ -22,6 +23,21 @@ my class  xmlParserNodeInfo    is repr('CStruct')  { ... }
 my class  xmlParserNodeInfoSeq is repr('CStruct')  { ... }
 my class  xmlSAXHandler        is repr('CPointer') { }
 my class  xmlValidCtxt         is repr('CPointer') { }
+
+my class xmlAttr is repr('CStruct') is export(:types) {
+    has OpaquePointer $._private; # application data
+    has int8              $.type; # (xmlElementType) XML_ATTRIBUTE_NODE, must be second !
+    has Str               $.name; # the name of the property
+    has xmlNodePtr    $.children; # the value of the property
+    has xmlNodePtr        $.last; # NULL
+    has xmlNodePtr      $.parent; # child->parent link
+    has xmlAttrPtr        $.next; # next sibling link
+    has xmlAttrPtr        $.prev; # previous sibling link
+    has xmlDoc             $.doc; # the containing document
+    #~ xmlNs *	ns	: pointer to the associated namespace
+    #~ xmlAttributeType	atype	: the attribute type if validating
+    #~ void *	psvi	: for type/PSVI informations
+}
 
 my class xmlBuffer is repr('CStruct') is export(:types) {
     has Str     $.content; # The buffer content UTF8
