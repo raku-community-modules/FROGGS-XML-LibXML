@@ -16,7 +16,6 @@ sub xmlNewNode(xmlDoc, Str)                   returns XML::LibXML::Node      is 
 sub xmlNewText(Str)                           returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlNewDocComment(xmlDoc, Str)             returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlNewCDataBlock(xmlDoc, Str, int32)      returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlAddChild(xmlDoc, xmlDoc)               returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlStrlen(Str)                            returns int32                  is native('libxml2') { * }
 sub xmlDocDumpMemory(xmlDoc, CArray, CArray)                                 is native('libxml2') { * }
 sub xmlNewDocFragment(xmlDoc)                 returns XML::LibXML::Node      is native('libxml2') { * }
@@ -123,7 +122,7 @@ multi method new-attr(Pair $kv) {
     $attr
 }
 multi method new-attr(*%kv where *.elems == 1) {
-    callwith %kv.list[0].kv
+    self.new-attr(%kv.list[0])
 }
 
 method new-text(Str $text) {

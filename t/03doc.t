@@ -167,17 +167,20 @@ use XML::LibXML::Enums;
 
     #~ }
     {
-      my $elem = $doc.new-elem('foo');
-      my $attr = $doc.new-attr('attr' => 'e & f');
-      #~ my $attr = $doc.new-attr(:attr('e & f'));
-      #~ $elem->addChild($attr);
-      #~ # TEST
-      #~ ok ($elem->toString() eq '<foo attr="e &amp; f"/>', ' TODO : Add test name');
-      #~ $elem->removeAttribute('attr');
-      #~ $attr = $doc->createAttributeNS(undef,'attr2' => 'a & b');
-      #~ $elem->addChild($attr);
-      #~ # TEST
-      #~ ok ($elem->toString() eq '<foo attr2="a &amp; b"/>', ' TODO : Add test name');
+        my $elem = $doc.new-elem('foo');
+        my $attr = $doc.new-attr('attr' => 'e & f');
+        $elem.push: $attr;
+        is($elem.Str, '<foo attr="e &amp; f"/>', ' TODO : Add test name');
+        $elem.remove-attr('attr');
+        is($elem.Str, '<foo/>', ' TODO : Add test name');
+        $attr = $doc.new-attr(:attr2('foo bar baz'));
+        $elem.push: $attr;
+        is($elem.Str, '<foo attr2="foo bar baz"/>', ' TODO : Add test name');
+        $elem.remove-attr('attr2');
+        #~ $attr = $doc.new-attr-ns('attr2' => 'a & b');
+        #~ $elem->addChild($attr);
+        #~ # TEST
+        #~ ok ($elem->toString() eq '<foo attr2="a &amp; b"/>', ' TODO : Add test name');
     }
     #~ {
         #~ eval {
