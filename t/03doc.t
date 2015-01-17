@@ -192,9 +192,8 @@ use XML::LibXML::Enums;
         is($attr.name,"foo", ' TODO : Add test name' );
         is($attr.content, "bar", ' TODO : Add test name' );
 
-        #~ $attr->setValue( q(bar&amp;) );
-        #~ # TEST
-        #~ is($attr->getValue, q(bar&amp;), ' TODO : Add test name' );
+        $attr.content = 'bar&amp;';
+        is($attr.content, 'bar&amp;', ' TODO : Add test name' );
     }
     #~ {
         #~ # bad attribute creation
