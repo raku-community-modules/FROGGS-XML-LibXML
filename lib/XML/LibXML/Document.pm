@@ -6,10 +6,12 @@ class XML::LibXML::Document is xmlDoc is repr('CStruct');
 
 use NativeCall;
 use XML::LibXML::Node;
+use XML::LibXML::Attr;
 
 sub xmlNewDoc(Str)                            returns XML::LibXML::Document  is native('libxml2') { * }
 sub xmlNodeGetBase(xmlDoc, xmlDoc)            returns Str                    is native('libxml2') { * }
 sub xmlDocGetRootElement(xmlDoc)              returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlDocSetRootElement(xmlDoc, xmlNode)     returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlParseCharEncoding(Str)                 returns int8                   is native('libxml2') { * }
 sub xmlGetCharEncodingName(int8)              returns Str                    is native('libxml2') { * }
 sub xmlNewNode(xmlDoc, Str)                   returns XML::LibXML::Node      is native('libxml2') { * }
@@ -18,9 +20,13 @@ sub xmlNewDocComment(xmlDoc, Str)             returns XML::LibXML::Node      is 
 sub xmlNewCDataBlock(xmlDoc, Str, int32)      returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlStrlen(Str)                            returns int32                  is native('libxml2') { * }
 sub xmlDocDumpMemory(xmlDoc, CArray, CArray)                                 is native('libxml2') { * }
+sub xmlReplaceNode(xmlNode, xmlNode)          returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlNewDocFragment(xmlDoc)                 returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlNewDocProp(xmlDoc, Str, Str)           returns xmlAttr                is native('libxml2') { * }
+sub xmlNewDocProp(xmlDoc, Str, Str)           returns XML::LibXML::Attr      is native('libxml2') { * }
 sub xmlEncodeEntitiesReentrant(xmlDoc, Str)   returns Str                    is native('libxml2') { * }
+sub xmlNewNs(xmlNode, Str, Str)               returns xmlNs                  is native('libxml2') { * }
+sub xmlSearchNsByHref(xmlDoc, xmlNode, Str)   returns xmlNs                  is native('libxml2') { * }
+sub xmlSetNs(xmlNode, xmlNs)                                                 is native('libxml2') { * }
 
 method new(:$version = '1.0', :$encoding) {
     my $doc       = xmlNewDoc(~$version);
@@ -38,7 +44,17 @@ method Str() {
 }
 
 method root {
-    xmlDocGetRootElement(self)
+    Proxy.new(
+        FETCH => -> $ {
+            xmlDocGetRootElement(self)
+        },
+        STORE => -> $, $new {
+            my $root = xmlDocGetRootElement(self);
+            $root ?? xmlReplaceNode($root, $new)
+                  !! xmlDocSetRootElement(self, $new);
+            $new
+        }
+    )
 }
 
 method encoding() {
@@ -123,6 +139,30 @@ multi method new-attr(Pair $kv) {
 }
 multi method new-attr(*%kv where *.elems == 1) {
     self.new-attr(%kv.list[0])
+}
+
+multi method new-attr-ns(Pair $kv, $uri) {
+    my $root = self.root;
+    fail "Can't create a new namespace on an attribute!" unless $root;
+
+    my ($prefix, $name) = $kv.key.split(':', 2);
+
+    unless $name {
+        $name   = $prefix;
+        $prefix = Str;
+    }
+
+    my $ns = xmlSearchNsByHref(self, $root, $uri)
+          || xmlNewNs($root, $uri, $prefix); # create a new NS if the NS does not already exists
+
+    my $buffer = xmlEncodeEntitiesReentrant(self, $kv.value);
+    my $attr   = xmlNewDocProp(self, $name, $buffer);
+    xmlSetNs($attr, $ns);
+    nqp::bindattr(nqp::decont($attr), xmlAttr, '$!doc', nqp::decont(self));
+    $attr
+}
+multi method new-attr-ns(%kv where *.elems == 1, $uri) {
+    self.new-attr-ns(%kv.list[0], $uri)
 }
 
 method new-text(Str $text) {

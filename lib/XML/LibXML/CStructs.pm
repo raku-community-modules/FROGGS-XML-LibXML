@@ -14,6 +14,7 @@ my class  xmlError             is repr('CStruct')  { ... }
 my class  xmlHashTablePtr      is repr('CPointer') { }
 my class  xmlNode              is repr('CStruct')  { ... }
 my class  xmlNodePtr           is repr('CPointer') { }
+my class  xmlNs                is repr('CStruct')  { ... }
 my class  xmlNsPtr             is repr('CPointer') { }
 my class  xmlParserCtxt        is repr('CStruct')  { ... }
 my class  xmlParserInputPtr    is repr('CPointer') { }
@@ -28,13 +29,13 @@ my class xmlAttr is repr('CStruct') is export(:types) {
     has OpaquePointer $._private; # application data
     has int8              $.type; # (xmlElementType) XML_ATTRIBUTE_NODE, must be second !
     has Str               $.name; # the name of the property
-    has xmlNodePtr    $.children; # the value of the property
+    has xmlNode       $.children; # the value of the property
     has xmlNodePtr        $.last; # NULL
     has xmlNodePtr      $.parent; # child->parent link
     has xmlAttrPtr        $.next; # next sibling link
     has xmlAttrPtr        $.prev; # previous sibling link
     has xmlDoc             $.doc; # the containing document
-    #~ xmlNs *	ns	: pointer to the associated namespace
+    has xmlNs               $.ns; # pointer to the associated namespace
     #~ xmlAttributeType	atype	: the attribute type if validating
     #~ void *	psvi	: for type/PSVI informations
 }
@@ -107,6 +108,15 @@ my class xmlNode is repr('CStruct') is export(:types) {
     #~ has OpaquePointer $.psvi	: for type/PSVI informations
     #~ unsigned short	line	: line number
     #~ unsigned short	extra	: extra data for XPath/XSLT
+}
+
+my class xmlNs is repr('CStruct') is export(:types) {
+    has xmlNs             $.next; # next Ns link for this node
+    has int8              $.type; # (xmlElementType) global or local
+    has Str               $.href; # URL for the namespace
+    has Str             $.prefix; # prefix for the namespace
+    has OpaquePointer $._private; # application data
+    has xmlDoc         $.context; # normally an xmlDoc
 }
 
 my class xmlParserCtxt is repr('CStruct') is export(:types) {

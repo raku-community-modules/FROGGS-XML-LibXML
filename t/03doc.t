@@ -172,43 +172,30 @@ use XML::LibXML::Enums;
         $elem.push: $attr;
         is($elem.Str, '<foo attr="e &amp; f"/>', ' TODO : Add test name');
         $elem.remove-attr('attr');
+
         is($elem.Str, '<foo/>', ' TODO : Add test name');
         $attr = $doc.new-attr(:attr2('foo bar baz'));
         $elem.push: $attr;
         is($elem.Str, '<foo attr2="foo bar baz"/>', ' TODO : Add test name');
         $elem.remove-attr('attr2');
-        #~ $attr = $doc.new-attr-ns('attr2' => 'a & b');
-        #~ $elem->addChild($attr);
-        #~ # TEST
-        #~ ok ($elem->toString() eq '<foo attr2="a &amp; b"/>', ' TODO : Add test name');
     }
-    #~ {
-        #~ eval {
-            #~ my $attr = $doc->createAttributeNS("http://kungfoo", "kung:foo","bar");
-        #~ };
-        #~ # TEST
-        #~ ok($@, ' TODO : Add test name');
+    {
+        my $attr = $doc.new-attr-ns('attr2' => 'a & b', 'http://foobar.baz');
+        ok $attr ~~ Failure, 'doc.new-attr-ns depends on doc.root';
 
-        #~ my $root = $doc->createElement( "foo" );
-        #~ $doc->setDocumentElement( $root );
+        my $root = $doc.new-elem('foo');
+        $doc.root = $root;
 
-        #~ my $attr;
-        #~ eval {
-           #~ $attr = $doc->createAttributeNS("http://kungfoo", "kung:foo","bar");
-        #~ };
-        #~ # TEST
-        #~ ok($attr, ' TODO : Add test name');
-        #~ # TEST
-        #~ is($attr->nodeName, "kung:foo", ' TODO : Add test name');
-        #~ # TEST
-        #~ is($attr->name,"foo", ' TODO : Add test name' );
-        #~ # TEST
-        #~ is($attr->value, "bar", ' TODO : Add test name' );
+        $attr = $doc.new-attr-ns('kung:foo' => 'bar', 'http://kungfoo');
+        ok($attr, ' TODO : Add test name');
+        is($attr.ns.prefix, "kung", ' TODO : Add test name');
+        is($attr.name,"foo", ' TODO : Add test name' );
+        is($attr.content, "bar", ' TODO : Add test name' );
 
         #~ $attr->setValue( q(bar&amp;) );
         #~ # TEST
         #~ is($attr->getValue, q(bar&amp;), ' TODO : Add test name' );
-    #~ }
+    }
     #~ {
         #~ # bad attribute creation
         #~ # TEST:$badnames_count=5;
