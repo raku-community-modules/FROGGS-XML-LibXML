@@ -27,16 +27,11 @@ method new(:$version = '1.0', :$encoding) {
 
 method Str() {
     my $result = CArray[Str].new();
-    my $len = CArray[int32].new();
+    my $len    = CArray[int32].new();
     $result[0] = "";
-    $result[1] = "";
-    $len[0] = 0;
-    $len[1] = 0;
+    $len[0]    = 0;
     xmlDocDumpMemory(self, $result, $len);
-    say $len[0];
-    say $len[1];
-    $result[0] ~
-    $result[1]
+    $result[0]
 }
 
 method root {
