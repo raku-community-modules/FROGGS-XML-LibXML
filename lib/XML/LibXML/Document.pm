@@ -44,7 +44,7 @@ method encoding() {
 method version() {
     Proxy.new(
         FETCH => -> $ {
-            nqp::getattr(nqp::decont(self), xmlDoc, '$!version')
+            Version.new(nqp::getattr(nqp::decont(self), xmlDoc, '$!version'))
         },
         STORE => -> $, $new {
             nqp::bindattr(nqp::decont(self), xmlDoc, '$!version', ~$new);
