@@ -24,7 +24,9 @@ method type() {
 }
 
 method name() {
-    self.ns.name ?? self.ns.name ~ ':' ~ self.localname !! self.localname
+    self.ns && self.ns.name
+        ?? self.ns.name ~ ':' ~ self.localname
+        !! self.localname
 }
 
 method Str() {
