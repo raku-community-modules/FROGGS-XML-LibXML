@@ -115,8 +115,8 @@ my class xmlNode is repr('CStruct') is export(:types) {
 }
 
 my class xmlNodeSet is repr('CStruct') is export(:types) {
-    has int32    $.nodeNr; # number of nodes in the set
-    has int32   $.nodeMax; # size of the array as allocated
+    has int32            $.nodeNr; # number of nodes in the set
+    has int32           $.nodeMax; # size of the array as allocated
     has CArray[xmlNode] $.nodeTab; # array of nodes in no particular order @
 }
 
