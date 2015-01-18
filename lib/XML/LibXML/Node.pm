@@ -23,6 +23,10 @@ method type() {
     xmlElementType(nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlNode, '$!type')))
 }
 
+method name() {
+    self.ns.name ?? self.ns.name ~ ':' ~ self.localname !! self.localname
+}
+
 method Str() {
     my $buffer = xmlBufferCreate(); # XXX free
     my $size   = xmlNodeDump($buffer, self.doc, self, 0, 1);

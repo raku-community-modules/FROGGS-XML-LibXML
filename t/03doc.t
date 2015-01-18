@@ -84,9 +84,9 @@ use XML::LibXML::Enums;
         my $node = $doc.new-elem-ns("foo:bar", "http://kungfoo");
         ok $node,                             'xmlDoc.new-elem-ns';
         is $node.type,      XML_ELEMENT_NODE, 'xmlDoc.new-elem-ns.type';
-        #~ is $node.fq-name,   "foo:bar",        'xmlDoc.new-elem-ns.fq-name'; # XXX how do we call it? fq-name?
-        is $node.ns.prefix, "foo",            'xmlDoc.new-elem-ns.ns.prefix';
-        is $node.name,      "bar",            'xmlDoc.new-elem-ns.name';
+        is $node.name,      "foo:bar",        'xmlDoc.new-elem-ns.name';
+        is $node.ns.name,   "foo",            'xmlDoc.new-elem-ns.ns.name';
+        is $node.localname, "bar",            'xmlDoc.new-elem-ns.localname';
         is $node.ns.uri,    "http://kungfoo", 'xmlDoc.new-elem-ns.ns.uri';
     }
 
@@ -179,7 +179,7 @@ use XML::LibXML::Enums;
 
         $attr = $doc.new-attr-ns('kung:foo' => 'bar', 'http://kungfoo');
         ok($attr, ' TODO : Add test name');
-        is($attr.ns.prefix, "kung", ' TODO : Add test name');
+        is($attr.ns.name, "kung", ' TODO : Add test name');
         is($attr.name,"foo", ' TODO : Add test name' );
         is($attr.content, "bar", ' TODO : Add test name' );
 

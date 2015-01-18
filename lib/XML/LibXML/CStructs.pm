@@ -51,7 +51,7 @@ my class xmlBuffer is repr('CStruct') is export(:types) {
 my class xmlDoc is repr('CStruct') is export(:types) {
     has OpaquePointer $._private; # application data
     has int8              $.type; # (xmlElementType) XML_DOCUMENT_NODE, must be second !
-    has Str               $.name; # name/filename/URI of the document
+    has Str          $.localname; # name/filename/URI of the document
     has xmlNodePtr    $.children; # the document tree
     has xmlNodePtr        $.last; # last child link
     has xmlNodePtr      $.parent; # child->parent link
@@ -94,7 +94,7 @@ my class xmlError is repr('CStruct') is export(:types) {
 my class xmlNode is repr('CStruct') is export(:types) {
     has OpaquePointer $._private; # application data
     has int8              $.type; # (xmlElementType) type number, must be second !
-    has Str               $.name; # name/filename/URI of the document
+    has Str          $.localname; # name/filename/URI of the document
     has xmlNodePtr    $.children; # the document tree
     has xmlNodePtr        $.last; # last child link
     has xmlNodePtr      $.parent; # child->parent link
@@ -114,7 +114,7 @@ my class xmlNs is repr('CStruct') is export(:types) {
     has xmlNs             $.next; # next Ns link for this node
     has int8              $.type; # (xmlElementType) global or local
     has Str                $.uri; # URL for the namespace
-    has Str             $.prefix; # prefix for the namespace
+    has Str               $.name; # prefix for the namespace
     has OpaquePointer $._private; # application data
     has xmlDoc         $.context; # normally an xmlDoc
 }
