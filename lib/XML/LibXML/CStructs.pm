@@ -101,10 +101,10 @@ my class xmlNode is repr('CStruct') is export(:types) {
     has xmlNodePtr        $.next; # next sibling link
     has xmlNodePtr        $.prev; # previous sibling link
     has xmlDoc             $.doc; # autoreference to itself End of common p
-    has xmlNsPtr            $.ns; # pointer to the associated namespace
+    has xmlNs               $.ns; # pointer to the associated namespace
     has Str            $.content; # the content
-    #~ struct _xmlAttr *	properties	: properties list
-    #~ xmlNs *	nsDef	: namespace definitions on this node
+    has xmlAttr     $.properties; # properties list
+    has xmlNs            $.nsDef; # namespace definitions on this node
     #~ has OpaquePointer $.psvi	: for type/PSVI informations
     #~ unsigned short	line	: line number
     #~ unsigned short	extra	: extra data for XPath/XSLT
@@ -113,7 +113,7 @@ my class xmlNode is repr('CStruct') is export(:types) {
 my class xmlNs is repr('CStruct') is export(:types) {
     has xmlNs             $.next; # next Ns link for this node
     has int8              $.type; # (xmlElementType) global or local
-    has Str               $.href; # URL for the namespace
+    has Str                $.uri; # URL for the namespace
     has Str             $.prefix; # prefix for the namespace
     has OpaquePointer $._private; # application data
     has xmlDoc         $.context; # normally an xmlDoc

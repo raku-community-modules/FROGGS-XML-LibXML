@@ -23,6 +23,7 @@ sub xmlDocDumpMemory(xmlDoc, CArray, CArray)                                 is 
 sub xmlReplaceNode(xmlNode, xmlNode)          returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlNewDocFragment(xmlDoc)                 returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlNewDocProp(xmlDoc, Str, Str)           returns XML::LibXML::Attr      is native('libxml2') { * }
+sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)    returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlEncodeEntitiesReentrant(xmlDoc, Str)   returns Str                    is native('libxml2') { * }
 sub xmlNewNs(xmlNode, Str, Str)               returns xmlNs                  is native('libxml2') { * }
 sub xmlSearchNsByHref(xmlDoc, xmlNode, Str)   returns xmlNs                  is native('libxml2') { * }
@@ -129,6 +130,29 @@ method new-elem(Str $elem) {
     my $node = xmlNewNode( self, $elem );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
     $node
+}
+
+multi method new-elem-ns(Pair $kv, $uri) {
+    my ($prefix, $name) = $kv.key.split(':', 2);
+
+    unless $name {
+        $name   = $prefix;
+        $prefix = Str;
+    }
+
+    my $ns = xmlNewNs(xmlDoc, $uri, $prefix);
+
+    my $buffer = $kv.value && xmlEncodeEntitiesReentrant(self, $kv.value);
+    my $node   = xmlNewDocNode(self, $ns, $name, $buffer);
+    nqp::bindattr(nqp::decont($node), xmlNode, '$!nsDef', nqp::decont($ns));
+    nqp::bindattr(nqp::decont($node), xmlNode, '$!doc',   nqp::decont(self));
+    $node
+}
+multi method new-elem-ns(%kv where *.elems == 1, $uri) {
+    self.new-elem-ns(%kv.list[0], $uri)
+}
+multi method new-elem-ns($name, $uri) {
+    self.new-elem-ns($name => Str, $uri)
 }
 
 multi method new-attr(Pair $kv) {

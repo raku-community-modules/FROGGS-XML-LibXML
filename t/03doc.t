@@ -79,22 +79,16 @@ use XML::LibXML::Enums;
         #~ );
     }
 
-    #~ {
-        #~ # namespaced element test
-        #~ my $node = $doc->createElementNS( "http://kungfoo", "foo:bar" );
-        #~ # TEST
-        #~ ok($node, ' TODO : Add test name');
-        #~ # TEST
-        #~ is($node->nodeType, XML_ELEMENT_NODE, ' TODO : Add test name');
-        #~ # TEST
-        #~ is($node->nodeName, "foo:bar", ' TODO : Add test name');
-        #~ # TEST
-        #~ is($node->prefix, "foo", ' TODO : Add test name');
-        #~ # TEST
-        #~ is($node->localname, "bar", ' TODO : Add test name');
-        #~ # TEST
-        #~ is($node->namespaceURI, "http://kungfoo", ' TODO : Add test name');
-    #~ }
+    {
+        # namespaced element test
+        my $node = $doc.new-elem-ns("foo:bar", "http://kungfoo");
+        ok $node,                             'xmlDoc.new-elem-ns';
+        is $node.type,      XML_ELEMENT_NODE, 'xmlDoc.new-elem-ns.type';
+        #~ is $node.fq-name,   "foo:bar",        'xmlDoc.new-elem-ns.fq-name'; # XXX how do we call it? fq-name?
+        is $node.ns.prefix, "foo",            'xmlDoc.new-elem-ns.ns.prefix';
+        is $node.name,      "bar",            'xmlDoc.new-elem-ns.name';
+        is $node.ns.uri,    "http://kungfoo", 'xmlDoc.new-elem-ns.ns.uri';
+    }
 
     #~ {
         #~ # bad element creation
