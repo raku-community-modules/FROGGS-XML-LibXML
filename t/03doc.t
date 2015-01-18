@@ -172,19 +172,19 @@ use XML::LibXML::Enums;
     }
     {
         my $attr = $doc.new-attr-ns('attr2' => 'a & b', 'http://foobar.baz');
-        ok $attr ~~ Failure, 'doc.new-attr-ns depends on doc.root';
+        ok $attr ~~ Failure,            'xmlDoc.new-attr-ns depends on doc.root';
 
-        my $root = $doc.new-elem('foo');
+        my $root  = $doc.new-elem('foo');
         $doc.root = $root;
-
-        $attr = $doc.new-attr-ns('kung:foo' => 'bar', 'http://kungfoo');
-        ok($attr, ' TODO : Add test name');
-        is($attr.ns.name, "kung", ' TODO : Add test name');
-        is($attr.name,"foo", ' TODO : Add test name' );
-        is($attr.value, "bar", ' TODO : Add test name' );
+        $attr     = $doc.new-attr-ns('kung:foo' => 'bar', 'http://kungfoo');
+        ok $attr,                       'xmlDoc.new-attr-ns';
+        is $attr.ns.name,   "kung",     'xmlDoc.new-attr-ns.ns.name';
+        is $attr.name,      "kung:foo", 'xmlDoc.new-attr-ns.name';
+        is $attr.localname, "foo",      'xmlDoc.new-attr-ns.localname';
+        is $attr.value,     "bar",      'xmlDoc.new-attr-ns.value';
 
         $attr.value = 'bar&amp;';
-        is($attr.value, 'bar&amp;', ' TODO : Add test name' );
+        is $attr.value,     'bar&amp;', 'xmlDoc.new-attr-ns.value changed';
     }
     #~ {
         #~ # bad attribute creation
