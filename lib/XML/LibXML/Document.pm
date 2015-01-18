@@ -32,6 +32,7 @@ sub xmlSetNs(xmlNode, xmlNs)                                                 is 
 sub xmlXPathCompile(Str)                      returns xmlXPathCompExprPtr    is native('libxml2') { * }
 sub xmlXPathNewContext(xmlDoc)                returns xmlXPathContextPtr     is native('libxml2') { * }
 sub xmlXPathCompiledEval(xmlXPathCompExprPtr, xmlXPathContextPtr)  returns xmlXPathObject  is native('libxml2') { * }
+
 method new(:$version = '1.0', :$encoding) {
     my $doc       = xmlNewDoc(~$version);
     $doc.encoding = $encoding if $encoding;
