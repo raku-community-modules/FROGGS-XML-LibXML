@@ -28,7 +28,9 @@ sub xmlEncodeEntitiesReentrant(xmlDoc, Str)   returns Str                    is 
 sub xmlNewNs(xmlNode, Str, Str)               returns xmlNs                  is native('libxml2') { * }
 sub xmlSearchNsByHref(xmlDoc, xmlNode, Str)   returns xmlNs                  is native('libxml2') { * }
 sub xmlSetNs(xmlNode, xmlNs)                                                 is native('libxml2') { * }
-
+sub xmlXPathCompile(Str)                      returns xmlXPathCompExprPtr    is native('libxml2') { * }
+sub xmlXPathNewContext(xmlDoc)                returns xmlXPathContextPtr     is native('libxml2') { * }
+sub xmlXPathCompiledEval(xmlXPathCompExprPtr, xmlXPathContextPtr)  returns xmlXPathObject  is native('libxml2') { * }
 method new(:$version = '1.0', :$encoding) {
     my $doc       = xmlNewDoc(~$version);
     $doc.encoding = $encoding if $encoding;
@@ -205,4 +207,14 @@ method new-cdata-block(Str $cdata) {
     my $node = xmlNewCDataBlock( self, $cdata, xmlStrlen($cdata) );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
     $node
+}
+
+method find($xpath) {
+    my $comp = xmlXPathCompile($xpath);
+    my $ctxt = xmlXPathNewContext(self.doc);
+    my $res  = xmlXPathCompiledEval($comp, $ctxt);
+
+    (^$res.nodesetval.nodeNr).map: {
+        nativecast(XML::LibXML::Node, $res.nodesetval.nodeTab[$_])
+    }
 }

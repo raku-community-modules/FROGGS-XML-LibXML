@@ -14,6 +14,7 @@ my class  xmlError             is repr('CStruct')  { ... }
 my class  xmlHashTablePtr      is repr('CPointer') { }
 my class  xmlNode              is repr('CStruct')  { ... }
 my class  xmlNodePtr           is repr('CPointer') { }
+my class  xmlNodeSet           is repr('CStruct')  { ... }
 my class  xmlNs                is repr('CStruct')  { ... }
 my class  xmlNsPtr             is repr('CPointer') { }
 my class  xmlParserCtxt        is repr('CStruct')  { ... }
@@ -24,6 +25,9 @@ my class  xmlParserNodeInfo    is repr('CStruct')  { ... }
 my class  xmlParserNodeInfoSeq is repr('CStruct')  { ... }
 my class  xmlSAXHandler        is repr('CPointer') { }
 my class  xmlValidCtxt         is repr('CPointer') { }
+my class  xmlXPathCompExprPtr  is repr('CStruct') is export(:types) { }
+my class  xmlXPathContextPtr   is repr('CStruct') is export(:types) { }
+my class  xmlXPathObject       is repr('CStruct')  { ... }
 
 my class xmlAttr is repr('CStruct') is export(:types) {
     has OpaquePointer $._private; # application data
@@ -108,6 +112,12 @@ my class xmlNode is repr('CStruct') is export(:types) {
     #~ has OpaquePointer $.psvi	: for type/PSVI informations
     #~ unsigned short	line	: line number
     #~ unsigned short	extra	: extra data for XPath/XSLT
+}
+
+my class xmlNodeSet is repr('CStruct') is export(:types) {
+    has int32    $.nodeNr; # number of nodes in the set
+    has int32   $.nodeMax; # size of the array as allocated
+    has CArray[xmlNode] $.nodeTab; # array of nodes in no particular order @
 }
 
 my class xmlNs is repr('CStruct') is export(:types) {
@@ -236,4 +246,16 @@ my class xmlParserNodeInfoSeq is repr('CStruct') is export(:types) {
     has int              $.maximum;
     has int               $.length;
     has xmlParserNodeInfo $.buffer;
+}
+
+my class xmlXPathObject is repr('CStruct') is export(:types) {
+    has int8             $.type; # xmlXPathObjectType
+    has xmlNodeSet $.nodesetval;
+    has int32         $.boolval;
+    has num64        $.floatval;
+    has Str         $.stringval;
+    #~ void *	user
+    #~ int	index
+    #~ void *	user2
+    #~ int	index2
 }
