@@ -54,8 +54,8 @@ my $xmlstring = '<foo>
         #~ is( scalar( @nodes ), 6, 'Found child nodes' );
     }
 
-    #~ {
-        #~ my $result = $doc->find( "/foo/bar" );
+    {
+        my $result = $doc.find("/foo/bar");
         #~ # TEST
         #~ ok( $result, ' TODO : Add test name' );
         #~ # TEST
@@ -87,13 +87,10 @@ my $xmlstring = '<foo>
         #~ # TEST
         #~ ok( $result->string_value =~ /test 1/, ' TODO : Add test name' );
 
-        #~ $result = $doc->find( "string(/foo/bar)" );
-        #~ # TEST
-        #~ ok( $result, ' TODO : Add test name' );
-        #~ # TEST
-        #~ ok( $result->isa( "XML::LibXML::Literal" ), ' TODO : Add test name' );
-        #~ # TEST
-        #~ ok( $result->string_value =~ /test 1/, ' TODO : Add test name' );
+        $result = $doc.find("string(/foo/bar)");
+        ok $result,               'xmlDoc.find as string';
+        ok $result.isa(Str),      'xmlDoc.find isa Str';
+        ok $result ~~ /'test 1'/, 'xmlDoc.find matches /"test 1"/';
 
         #~ $result = $doc->find( XML::LibXML::XPathExpression->new("count(/foo/bar)") );
         #~ # TEST
@@ -103,12 +100,9 @@ my $xmlstring = '<foo>
         #~ # TEST
         #~ is( $result->value, 2, ' TODO : Add test name' );
 
-        #~ $result = $doc->find( "contains(/foo/bar[1], 'test 1')" );
-        #~ # TEST
-        #~ ok( $result, ' TODO : Add test name' );
-        #~ # TEST
-        #~ ok( $result->isa( "XML::LibXML::Boolean" ), ' TODO : Add test name' );
-        #~ # TEST
+        $result = $doc.find("contains(/foo/bar[1], 'test 1')");
+        ok $result,           'xmlDoc.find as boolean';
+        ok $result.isa(Bool), 'xmlDoc.find isa Bool';
         #~ is( $result->string_value, "true", ' TODO : Add test name' );
 
         #~ $result = $doc->find( XML::LibXML::XPathExpression->new("contains(/foo/bar[1], 'test 1')") );
@@ -144,7 +138,7 @@ my $xmlstring = '<foo>
         #~ ok( $node, ' TODO : Add test name' );
         #~ # TEST
         #~ ok ($node->exists("following-sibling::bar"), ' TODO : Add test name');
-    #~ }
+    }
 
     #~ {
         #~ # test the strange segfault after xpathing

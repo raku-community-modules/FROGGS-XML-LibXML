@@ -7,6 +7,7 @@ class XML::LibXML::Document is xmlDoc is repr('CStruct');
 use NativeCall;
 use XML::LibXML::Node;
 use XML::LibXML::Attr;
+use XML::LibXML::Enums;
 
 sub xmlNewDoc(Str)                            returns XML::LibXML::Document  is native('libxml2') { * }
 sub xmlNodeGetBase(xmlDoc, xmlDoc)            returns Str                    is native('libxml2') { * }
@@ -213,8 +214,27 @@ method find($xpath) {
     my $comp = xmlXPathCompile($xpath);
     my $ctxt = xmlXPathNewContext(self.doc);
     my $res  = xmlXPathCompiledEval($comp, $ctxt);
-
-    (^$res.nodesetval.nodeNr).map: {
-        nativecast(XML::LibXML::Node, $res.nodesetval.nodeTab[$_])
+    do given xmlXPathObjectType($res.type) {
+        when XPATH_UNDEFINED {
+            Nil
+        }
+        when XPATH_NODESET {
+            my $set = $res.nodesetval;
+            (^$set.nodeNr).map: {
+                nativecast(XML::LibXML::Node, $set.nodeTab[$_])
+            }
+        }
+        when XPATH_BOOLEAN {
+            so $res.boolval
+        }
+        when XPATH_NUMBER {
+            $res.floatval
+        }
+        when XPATH_STRING {
+            $res.stringval
+        }
+        default {
+            fail "NodeSet type $_ NYI"
+        }
     }
 }
