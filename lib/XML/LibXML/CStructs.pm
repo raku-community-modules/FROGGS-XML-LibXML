@@ -28,7 +28,7 @@ my class  xmlValidCtxt         is repr('CPointer') { }
 my class xmlAttr is repr('CStruct') is export(:types) {
     has OpaquePointer $._private; # application data
     has int8              $.type; # (xmlElementType) XML_ATTRIBUTE_NODE, must be second !
-    has Str               $.name; # the name of the property
+    has Str          $.localname; # the name of the property
     has xmlNode       $.children; # the value of the property
     has xmlNodePtr        $.last; # NULL
     has xmlNodePtr      $.parent; # child->parent link
