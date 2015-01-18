@@ -10,13 +10,13 @@ use XML::LibXML::Node;
 use XML::LibXML::Error;
 use XML::LibXML::XPathExpression;
 
-sub xmlInitParser()                                                                        is native('libxml2') { * }
-sub xmlCtxtReadDoc(XML::LibXML::Parser, Str, Str, Str, Int)  returns XML::LibXML::Document is native('libxml2') { * }
-sub xmlNewParserCtxt                                         returns XML::LibXML::Parser   is native('libxml2') { * }
-sub xmlReadDoc(Str, Str, Str, Int)                           returns XML::LibXML::Document is native('libxml2') { * }
-sub xmlReadMemory(Str, Int, Str, Str, Int)                   returns XML::LibXML::Document is native('libxml2') { * }
-sub htmlParseFile(Str, Str)                                  returns XML::LibXML::Document is native('libxml2') { * }
-sub htmlCtxtReadDoc(XML::LibXML::Parser, Str, Str, Str, Int) returns XML::LibXML::Document is native('libxml2') { * }
+sub xmlInitParser()                                                                  is native('libxml2') { * }
+sub xmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, Int)  returns XML::LibXML::Document is native('libxml2') { * }
+sub xmlNewParserCtxt                                   returns XML::LibXML::Parser   is native('libxml2') { * }
+sub xmlReadDoc(Str, Str, Str, Int)                     returns XML::LibXML::Document is native('libxml2') { * }
+sub xmlReadMemory(Str, Int, Str, Str, Int)             returns XML::LibXML::Document is native('libxml2') { * }
+sub htmlParseFile(Str, Str)                            returns XML::LibXML::Document is native('libxml2') { * }
+sub htmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, Int) returns XML::LibXML::Document is native('libxml2') { * }
 
 
 method new {
