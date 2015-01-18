@@ -24,9 +24,28 @@ method type() {
 }
 
 method name() {
-    self.ns && self.ns.name
-        ?? self.ns.name ~ ':' ~ self.localname
-        !! self.localname
+    do given self.type {
+        when XML_COMMENT_NODE {
+            "#comment";
+        }
+        when XML_CDATA_SECTION_NODE {
+            "#cdata-section";
+        }
+        when XML_TEXT_NODE {
+            "#text";
+        }
+        when XML_DOCUMENT_NODE|XML_HTML_DOCUMENT_NODE|XML_DOCB_DOCUMENT_NODE {
+            "#document";
+        }
+        when XML_DOCUMENT_FRAG_NODE {
+            "#document-fragment";
+        }
+        default {
+            self.ns && self.ns.name
+                ?? self.ns.name ~ ':' ~ self.localname
+                !! self.localname
+        }
+    }
 }
 
 method Str() {
