@@ -202,25 +202,24 @@ my $xmlstring = '<foo>
     #~ _utf16_content_test(\@nodes, 'p content is fine.');
 #~ }
 
-#~ {
-    #~ # from #69096
-    #~ my $doc = XML::LibXML::Document->createDocument('1.0', 'utf-8');
-    #~ my $root = $doc->createElement('root');
-    #~ $doc->setDocumentElement($root);
-    #~ my $e = $doc->createElement("child");
-    #~ my $e2 = $doc->createElement("child");
-    #~ my $t1 = $doc->createTextNode( "te" );
-    #~ my $t2 = $doc->createTextNode( "st" );
-    #~ $root->appendChild($e);
-    #~ $root->appendChild($e2);
-    #~ $e2->appendChild($t1);
-    #~ $e2->appendChild($t2);
+{
+    # from #69096
+    my $doc   = XML::LibXML::Document.new(:version<1.0>, :enoding<utf-8>);
+    my $root  = $doc.new-elem('root');
+    $doc.root = $root;
+    my $e     = $doc.new-elem("child");
+    my $e2    = $doc.new-elem("child");
+    my $t1    = $doc.new-text( "te" );
+    my $t2    = $doc.new-text( "st" );
+    $root.push: $e;
+    $root.push: $e2;
+    $e2.push:   $t1;
+    $e2.push:   $t2;
 
-    #~ $doc->normalize();
-    #~ my @cn = $doc->findnodes('//child[text()="test"]');
-    #~ # TEST
+    #~ $doc->normalize(); # XXX that is not exposed by libxml2
+    my @cn = $doc.find('//child[text()="test"]');
     #~ is( scalar( @cn ), 1, 'xpath testing adjacent text nodes' );
-#~ }
+}
 
 #~ sub _utf16_content_test
 #~ {
