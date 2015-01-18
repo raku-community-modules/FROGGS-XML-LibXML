@@ -30,7 +30,7 @@ method name() {
 method Str() {
     my $buffer = xmlBufferCreate(); # XXX free
     my $size   = xmlNodeDump($buffer, self.doc, self, 0, 1);
-    $buffer.content;
+    $buffer.value;
 }
 
 method push($child) {

@@ -6,13 +6,13 @@ class XML::LibXML::Attr is xmlAttr is repr('CStruct');
 
 use NativeCall;
 
-method content() {
+method value() {
     Proxy.new(
         FETCH => -> $ {
-            self.children.content
+            self.children.value
         },
         STORE => -> $, Str $new {
-            nqp::bindattr(nqp::decont(self.children), xmlNode, '$!content', $new);
+            nqp::bindattr(nqp::decont(self.children), xmlNode, '$!value', $new);
             $new
         }
     )

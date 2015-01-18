@@ -41,7 +41,7 @@ my class xmlAttr is repr('CStruct') is export(:types) {
 }
 
 my class xmlBuffer is repr('CStruct') is export(:types) {
-    has Str     $.content; # The buffer content UTF8
+    has Str     $.value; # The buffer content UTF8
     #~ unsigned int	use	: The buffer size used
     #~ unsigned int	size	: The buffer size
     #~ xmlBufferAllocationScheme	alloc	: The realloc method
@@ -102,7 +102,7 @@ my class xmlNode is repr('CStruct') is export(:types) {
     has xmlNodePtr        $.prev; # previous sibling link
     has xmlDoc             $.doc; # autoreference to itself End of common p
     has xmlNs               $.ns; # pointer to the associated namespace
-    has Str            $.content; # the content
+    has Str              $.value; # the content
     has xmlAttr     $.properties; # properties list
     has xmlNs            $.nsDef; # namespace definitions on this node
     #~ has OpaquePointer $.psvi	: for type/PSVI informations

@@ -107,14 +107,14 @@ use XML::LibXML::Enums;
         my $node = $doc.new-text( "foo" );
         ok($node, ' TODO : Add test name');
         is($node.type, XML_TEXT_NODE, ' TODO : Add test name' );
-        is($node.content, "foo", ' TODO : Add test name' );
+        is($node.value, "foo", ' TODO : Add test name' );
     }
 
     {
         my $node = $doc.new-comment( "foo" );
         ok($node, ' TODO : Add test name');
         is($node.type, XML_COMMENT_NODE, ' TODO : Add test name' );
-        is($node.content, "foo", ' TODO : Add test name' );
+        is($node.value, "foo", ' TODO : Add test name' );
         is($node.Str, "<!--foo-->", ' TODO : Add test name');
     }
 
@@ -122,7 +122,7 @@ use XML::LibXML::Enums;
         my $node = $doc.new-cdata-block( "foo" );
         ok($node, ' TODO : Add test name');
         is($node.type, XML_CDATA_SECTION_NODE, ' TODO : Add test name' );
-        is($node.content, "foo", ' TODO : Add test name' );
+        is($node.value, "foo", ' TODO : Add test name' );
         is($node.Str, "<![CDATA[foo]]>", ' TODO : Add test name');
     }
 
@@ -181,10 +181,10 @@ use XML::LibXML::Enums;
         ok($attr, ' TODO : Add test name');
         is($attr.ns.name, "kung", ' TODO : Add test name');
         is($attr.name,"foo", ' TODO : Add test name' );
-        is($attr.content, "bar", ' TODO : Add test name' );
+        is($attr.value, "bar", ' TODO : Add test name' );
 
-        $attr.content = 'bar&amp;';
-        is($attr.content, 'bar&amp;', ' TODO : Add test name' );
+        $attr.value = 'bar&amp;';
+        is($attr.value, 'bar&amp;', ' TODO : Add test name' );
     }
     #~ {
         #~ # bad attribute creation

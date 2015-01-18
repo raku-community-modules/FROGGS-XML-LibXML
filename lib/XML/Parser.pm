@@ -65,8 +65,7 @@ class xmlNode is repr('CStruct') {
     has xmlDoc $.doc;
     #xmlNs * ns  : pointer to the associated namespace
     has OpaquePointer $.ns;
-    #xmlChar *   content : the content
-    has Str $.content;
+    has Str $.value; # the content
     #struct _xmlAttr *   properties  : properties list
     has OpaquePointer $._xmlAttr;
     #xmlNs * nsDef   : namespace definitions on this node
