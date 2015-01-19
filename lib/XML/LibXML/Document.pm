@@ -32,6 +32,7 @@ sub xmlSetNs(xmlNode, xmlNs)                                                 is 
 sub xmlXPathCompile(Str)                      returns xmlXPathCompExprPtr    is native('libxml2') { * }
 sub xmlXPathNewContext(xmlDoc)                returns xmlXPathContextPtr     is native('libxml2') { * }
 sub xmlXPathCompiledEval(xmlXPathCompExprPtr, xmlXPathContextPtr)  returns xmlXPathObject  is native('libxml2') { * }
+sub xmlC14NDocDumpMemory(xmlDoc, xmlNodeSet, int32, CArray[Str], int32, CArray[Str])  returns int32  is native('libxml2') { * }
 
 method new(:$version = '1.0', :$encoding) {
     my $doc       = xmlNewDoc(~$version);
@@ -238,4 +239,33 @@ method find($xpath) {
             fail "NodeSet type $_ NYI"
         }
     }
+}
+
+method c14n(Bool :$comments = False, Str :$xpath, xmlC14NMode :$exclusive = XML_C14N_1_1, :$inc_prefix_list) {
+    fail "Node passed to c14n must be part of a document" unless self.doc;
+
+    if !$xpath && self.type != any XML_DOCUMENT_NODE, XML_HTML_DOCUMENT_NODE, XML_DOCB_DOCUMENT_NODE {
+        $xpath = $comments
+            ?? '(. | .//node() | .//@* | .//namespace::*)'
+            !! '(. | .//node() | .//@* | .//namespace::*)[not(self::comment())]'
+    }
+
+    my $nodelist = xmlNodeSet;
+
+    if $xpath {
+        my $comp      = xmlXPathCompile($xpath);
+        my $ctxt      = xmlXPathNewContext(self.doc);
+        my $xpath_res = xmlXPathCompiledEval($comp, $ctxt);
+        $nodelist     = $xpath_res.nodesetval;
+    }
+
+    my CArray[Str] $result.=new;
+    $result[0] = '';
+    my $bytes  = xmlC14NDocDumpMemory(self.doc,
+                          $nodelist,
+                          +$exclusive,
+                          Str, #(xmlChar **) inc_prefix_list,
+                          +$comments,
+                          $result );
+    $result[0]
 }
