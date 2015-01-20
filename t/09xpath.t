@@ -16,7 +16,7 @@ my $xmlstring = '<foo>
 
 {
     my $parser = XML::LibXML.new();
-    my $doc    = $parser.parse-str($xmlstring);
+    my $doc    = $parser.parse($xmlstring);
 
     ok $doc, 'Parsing successful.';
 

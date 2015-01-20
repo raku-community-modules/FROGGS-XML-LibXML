@@ -125,13 +125,13 @@ my $parser = XML::LibXML.new();
 # 1.1.1 DEFAULT VALUES
 
 for @goodWFStrings, @goodWFNSStrings, @goodWFDTDStrings -> $str {
-    my $doc = $parser.parse-str($str);
+    my $doc = $parser.parse($str);
     isa_ok($doc, XML::LibXML::Document);
 }
 
 my $fail;
 try {
-    $fail = $parser.parse-str(Str);
+    $fail = $parser.parse(Str);
     CATCH {
         default {
             pass 'parses undef string with an error'
@@ -141,7 +141,7 @@ try {
 flunk 'parses undef string with an error' if $fail;
 
 for @badWFStrings -> $str {
-    my $fail = $parser.parse-str($str);
+    my $fail = $parser.parse($str);
     isa_ok($fail, Failure, "Error thrown passing '{shorten_string($str)}'");
 }
 
@@ -151,13 +151,13 @@ for @badWFStrings -> $str {
 $parser.keep-blanks = 0;
 
 for @goodWFStrings, @goodWFNSStrings, @goodWFDTDStrings -> $str {
-    my $doc = $parser.parse-str($str);
+    my $doc = $parser.parse($str);
         isa_ok($doc, XML::LibXML::Document);
 }
 
 my $fail;
 try {
-    $fail = $parser.parse-str(Str);
+    $fail = $parser.parse(Str);
     CATCH {
         default {
             pass 'parses undef string with an error'
@@ -167,7 +167,7 @@ try {
 flunk 'parses undef string with an error' if $fail;
 
 for @badWFStrings -> $str {
-    my $fail = $parser.parse-str($str);
+    my $fail = $parser.parse($str);
     isa_ok($fail, Failure, "Error thrown passing '{shorten_string($str)}'");
 }
 
@@ -908,7 +908,7 @@ $parser.keep-blanks = 1;
 {
 
    my $parser = XML::LibXML.new();
-   my $doc    = $parser.parse-str('<foo xml:base="foo.xml"/>', :uri<bar.xml>);
+   my $doc    = $parser.parse('<foo xml:base="foo.xml"/>', :uri<bar.xml>);
    my $el     = $doc.root;
    is( $doc.uri, "bar.xml" );
    is( $doc.base-uri, "bar.xml" );

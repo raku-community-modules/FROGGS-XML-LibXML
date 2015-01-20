@@ -12,24 +12,24 @@ use XML::LibXML;
 my $parser = XML::LibXML.new();
 
 {
-    my $doc = $parser.parse-str('<a><b/> <c/> <!-- d --> </a>');
+    my $doc = $parser.parse('<a><b/> <c/> <!-- d --> </a>');
     is $doc.c14n,            '<a><b></b> <c></c>  </a>',           'basic test';
     is $doc.c14n(:comments), '<a><b></b> <c></c> <!-- d --> </a>', 'basic test with comments';
 }
 
 {
-    my $doc = $parser.parse-str('<a><b/><![CDATA[ >e&f<]]><!-- d --> </a>');
+    my $doc = $parser.parse('<a><b/><![CDATA[ >e&f<]]><!-- d --> </a>');
     is $doc.c14n,            '<a><b></b> &gt;e&amp;f&lt; </a>',           'cdata';
     is $doc.c14n(:comments), '<a><b></b> &gt;e&amp;f&lt;<!-- d --> </a>', 'cdata with comments';
 }
 
 {
-    my $doc = $parser.parse-str('<a a="foo"/>');
+    my $doc = $parser.parse('<a a="foo"/>');
     is $doc.c14n, '<a a="foo"></a>', 'attribute';
 }
 
 {
-    my $doc = $parser.parse-str('<b:a xmlns:b="http://foo"/>');
+    my $doc = $parser.parse('<b:a xmlns:b="http://foo"/>');
     is $doc.c14n, '<b:a xmlns:b="http://foo"></b:a>', 'attribute with namespace';
 }
 
@@ -37,7 +37,7 @@ my $parser = XML::LibXML.new();
 # The C14N says: remove unused namespaces, libxml2 just orders them
 # ----------------------------------------------------------------- #
 {
-    my $doc = $parser.parse-str('<b:a xmlns:b="http://foo" xmlns:a="xml://bar"/>');
+    my $doc = $parser.parse('<b:a xmlns:b="http://foo" xmlns:a="xml://bar"/>');
     is $doc.c14n, '<b:a xmlns:a="xml://bar" xmlns:b="http://foo"></b:a>', 'ordered attributes';
 
     # would be correct, but will not work.
@@ -48,17 +48,17 @@ my $parser = XML::LibXML.new();
 # The C14N says: remove redundant namespaces
 # ----------------------------------------------------------------- #
 {
-    my $doc = $parser.parse-str('<b:a xmlns:b="http://foo"><b:b xmlns:b="http://foo"/></b:a>');
+    my $doc = $parser.parse('<b:a xmlns:b="http://foo"><b:b xmlns:b="http://foo"/></b:a>');
     is $doc.c14n, '<b:a xmlns:b="http://foo"><b:b></b:b></b:a>', 'redundant attributes';
 }
 
 {
-    my $doc = $parser.parse-str('<a xmlns="xml://foo"/>');
+    my $doc = $parser.parse('<a xmlns="xml://foo"/>');
     is $doc.c14n, '<a xmlns="xml://foo"></a>', 'empty element with attribute';
 }
 
 {
-    my $doc = $parser.parse-str(q:to/EOX/);
+    my $doc = $parser.parse(q:to/EOX/);
 <?xml version="1.0" encoding="iso-8859-1"?>
 <a><b/></a>
 EOX
@@ -67,7 +67,7 @@ EOX
 }
 
 {
-    my $doc = $parser.parse-str(q:to/EOX/);
+    my $doc = $parser.parse(q:to/EOX/);
 <?xml version="1.0" encoding="iso-8859-1"?>
 <a><b><c/><d/></b></a>
 EOX

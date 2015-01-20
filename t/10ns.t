@@ -37,7 +37,7 @@ my $xml3 = q:to'';
 diag "1.  single namespace";
 
 {
-    my $doc1 = $parser.parse-str($xml1);
+    my $doc1 = $parser.parse($xml1);
     my $elem = $doc1.root;
     #~ is($elem->lookupNamespaceURI( "b" ), "http://whatever", ' TODO : Add test name' );
     #~ my @cn = $elem->childNodes;

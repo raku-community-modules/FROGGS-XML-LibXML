@@ -15,7 +15,7 @@ use XML::LibXML::Enums;
 
 my $xmlstring = '<foo>bar<foobar/><bar foo="foobar"/><!--foo--><![CDATA[&foo bar]]></foo>';
 my $parser    = XML::LibXML.new();
-my $doc       = $parser.parse-str( $xmlstring );
+my $doc       = $parser.parse( $xmlstring );
 
 # 1   Standalone Without NameSpaces
 # 1.1 Node Attributes
