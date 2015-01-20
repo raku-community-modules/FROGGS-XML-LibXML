@@ -13,100 +13,67 @@ my $parser = XML::LibXML.new();
 
 {
     my $doc = $parser.parse-str('<a><b/> <c/> <!-- d --> </a>');
-
-    is $doc.c14n,            '<a><b></b> <c></c>  </a>',           'xmlDoc.c14n';
-    is $doc.c14n(:comments), '<a><b></b> <c></c> <!-- d --> </a>', 'xmlDoc.c14n(:comments)';
+    is $doc.c14n,            '<a><b></b> <c></c>  </a>',           'basic test';
+    is $doc.c14n(:comments), '<a><b></b> <c></c> <!-- d --> </a>', 'basic test with comments';
 }
 
-#~ {
-    #~ my $doc = $parser->parse_string( '<a><b/><![CDATA[ >e&f<]]><!-- d --> </a>' );
+{
+    my $doc = $parser.parse-str('<a><b/><![CDATA[ >e&f<]]><!-- d --> </a>');
+    is $doc.c14n,            '<a><b></b> &gt;e&amp;f&lt; </a>',           'cdata';
+    is $doc.c14n(:comments), '<a><b></b> &gt;e&amp;f&lt;<!-- d --> </a>', 'cdata with comments';
+}
 
-    #~ my $c14n_res = $doc->toStringC14N();
-    #~ # TEST
-    #~ is( $c14n_res, '<a><b></b> &gt;e&amp;f&lt; </a>', ' TODO : Add test name' );
-    #~ $c14n_res = $doc->toStringC14N(1);
-    #~ # TEST
-    #~ is( $c14n_res, '<a><b></b> &gt;e&amp;f&lt;<!-- d --> </a>', ' TODO : Add test name' );
-#~ }
+{
+    my $doc = $parser.parse-str('<a a="foo"/>');
+    is $doc.c14n, '<a a="foo"></a>', 'attribute';
+}
 
-#~ {
-    #~ my $doc = $parser->parse_string( '<a a="foo"/>' );
+{
+    my $doc = $parser.parse-str('<b:a xmlns:b="http://foo"/>');
+    is $doc.c14n, '<b:a xmlns:b="http://foo"></b:a>', 'attribute with namespace';
+}
 
-    #~ my $c14n_res;
-    #~ $c14n_res = $doc->toStringC14N(0);
-    #~ # TEST
-    #~ is( $c14n_res, '<a a="foo"></a>', ' TODO : Add test name' );
-#~ }
+# ----------------------------------------------------------------- #
+# The C14N says: remove unused namespaces, libxml2 just orders them
+# ----------------------------------------------------------------- #
+{
+    my $doc = $parser.parse-str('<b:a xmlns:b="http://foo" xmlns:a="xml://bar"/>');
+    is $doc.c14n, '<b:a xmlns:a="xml://bar" xmlns:b="http://foo"></b:a>', 'ordered attributes';
 
-#~ {
-    #~ my $doc = $parser->parse_string( '<b:a xmlns:b="http://foo"/>' );
+    # would be correct, but will not work.
+    # ok $doc.c14n, '<b:a xmlns:b="http://foo"></b:a>';
+}
 
-    #~ my $c14n_res;
-    #~ $c14n_res = $doc->toStringC14N(0);
-    #~ # TEST
-    #~ is( $c14n_res, '<b:a xmlns:b="http://foo"></b:a>', ' TODO : Add test name' );
-#~ }
+# ----------------------------------------------------------------- #
+# The C14N says: remove redundant namespaces
+# ----------------------------------------------------------------- #
+{
+    my $doc = $parser.parse-str('<b:a xmlns:b="http://foo"><b:b xmlns:b="http://foo"/></b:a>');
+    is $doc.c14n, '<b:a xmlns:b="http://foo"><b:b></b:b></b:a>', 'redundant attributes';
+}
 
+{
+    my $doc = $parser.parse-str('<a xmlns="xml://foo"/>');
+    is $doc.c14n, '<a xmlns="xml://foo"></a>', 'empty element with attribute';
+}
 
-#~ # ----------------------------------------------------------------- #
-#~ # The C14N says: remove unused namespaces, libxml2 just orders them
-#~ # ----------------------------------------------------------------- #
-#~ {
-    #~ my $doc = $parser->parse_string( '<b:a xmlns:b="http://foo" xmlns:a="xml://bar"/>' );
+{
+    my $doc = $parser.parse-str(q:to/EOX/);
+<?xml version="1.0" encoding="iso-8859-1"?>
+<a><b/></a>
+EOX
 
-    #~ my $c14n_res;
-    #~ $c14n_res = $doc->toStringC14N(0);
-    #~ # TEST
-    #~ is( $c14n_res, '<b:a xmlns:a="xml://bar" xmlns:b="http://foo"></b:a>', ' TODO : Add test name' );
+    is $doc.c14n, '<a><b></b></a>', 'xml declaration';
+}
 
-    #~ # would be correct, but will not work.
-    #~ # ok( $c14n_res, '<b:a xmlns:b="http://foo"></b:a>' );
-#~ }
+{
+    my $doc = $parser.parse-str(q:to/EOX/);
+<?xml version="1.0" encoding="iso-8859-1"?>
+<a><b><c/><d/></b></a>
+EOX
 
-#~ # ----------------------------------------------------------------- #
-#~ # The C14N says: remove redundant namespaces
-#~ # ----------------------------------------------------------------- #
-#~ {
-    #~ my $doc = $parser->parse_string( '<b:a xmlns:b="http://foo"><b:b xmlns:b="http://foo"/></b:a>' );
-
-    #~ my $c14n_res;
-    #~ $c14n_res = $doc->toStringC14N(0);
-    #~ # TEST
-    #~ is( $c14n_res, '<b:a xmlns:b="http://foo"><b:b></b:b></b:a>', ' TODO : Add test name' );
-#~ }
-
-#~ {
-    #~ my $doc = $parser->parse_string( '<a xmlns="xml://foo"/>' );
-
-    #~ my $c14n_res;
-    #~ $c14n_res = $doc->toStringC14N(0);
-    #~ # TEST
-    #~ is( $c14n_res, '<a xmlns="xml://foo"></a>', ' TODO : Add test name' );
-#~ }
-
-#~ {
-    #~ my $doc = $parser->parse_string( <<EOX );
-#~ <?xml version="1.0" encoding="iso-8859-1"?>
-#~ <a><b/></a>
-#~ EOX
-
-    #~ my $c14n_res;
-    #~ $c14n_res = $doc->toStringC14N(0);
-    #~ # TEST
-    #~ is( $c14n_res, '<a><b></b></a>', ' TODO : Add test name' );
-#~ }
-
-#~ # canonize with xpath expressions
-#~ {
-    #~ my $doc = $parser->parse_string( <<EOX );
-#~ <?xml version="1.0" encoding="iso-8859-1"?>
-#~ <a><b><c/><d/></b></a>
-#~ EOX
-    #~ my $c14n_res;
-    #~ $c14n_res = $doc->toStringC14N(0, "//d" );
-    #~ # TEST
-    #~ is( $c14n_res, '<d></d>', ' TODO : Add test name' );
-#~ }
+    is( $doc.c14n(:xpath<//d>), '<d></d>', 'canonize with xpath expressions' );
+}
 
 #~ {
     #~ my $doc = $parser->parse_string( <<EOX );
