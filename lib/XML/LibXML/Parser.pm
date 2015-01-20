@@ -27,7 +27,7 @@ method new {
     $self
 }
 
-method parse-str(Str:D $str, Str :$uri) {
+method parse(Str:D $str, Str :$uri) {
     my $doc = xmlCtxtReadDoc(self, $str, $uri, Str, 0);
     fail XML::LibXML::Error.get-last(self, :orig($str)) unless $doc;
     $doc

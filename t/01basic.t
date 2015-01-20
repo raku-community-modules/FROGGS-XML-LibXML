@@ -12,7 +12,7 @@ my $p = XML::LibXML.new();
 # TEST
 ok $p, 'Can initialize a new XML::LibXML instance';
 
-my ($version) = XML::LibXML.parser-version ~~ /(\d+)/;
+my $version = XML::LibXML.parser-version;
 
 # TEST
 ok $version, 'XML::LibXML.parser-version is trueish';
