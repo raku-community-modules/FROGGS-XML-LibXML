@@ -269,3 +269,7 @@ method c14n(Bool :$comments = False, Str :$xpath, xmlC14NMode :$exclusive = XML_
                           $result );
     $result[0]
 }
+
+method ec14n(Bool :$comments = False, Str :$xpath, :$inc_prefix_list) {
+    self.c14n(:$comments, :$xpath, :exclusive(XML_C14N_EXCLUSIVE_1_0), :$inc_prefix_list)
+}
