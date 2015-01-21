@@ -24,10 +24,16 @@ my class  xmlParserMode        is repr('CPointer') { }
 my class  xmlParserNodeInfo    is repr('CStruct')  { ... }
 my class  xmlParserNodeInfoSeq is repr('CStruct')  { ... }
 my class  xmlSAXHandler        is repr('CPointer') { }
+my class  xmlStructuredErrorFunc is repr('CPointer') { }
 my class  xmlValidCtxt         is repr('CPointer') { }
+my class  xmlXPathAxisPtr      is repr('CPointer') { }
 my class  xmlXPathCompExprPtr  is repr('CStruct') is export(:types) { }
 my class  xmlXPathContextPtr   is repr('CStruct') is export(:types) { }
+my class  xmlXPathContext      is repr('CStruct')  { ... }
+my class  xmlXPathFuncLookupFunc is repr('CPointer') { }
 my class  xmlXPathObject       is repr('CStruct')  { ... }
+my class  xmlXPathTypePtr      is repr('CPointer') { }
+my class  xmlXPathVariableLookupFunc is repr('CPointer') { }
 
 my class xmlAttr is repr('CStruct') is export(:types) {
     has OpaquePointer $._private; # application data
@@ -99,7 +105,7 @@ my class xmlNode is repr('CStruct') is export(:types) {
     has OpaquePointer $._private; # application data
     has int8              $.type; # (xmlElementType) type number, must be second !
     has Str          $.localname; # name/filename/URI of the document
-    has xmlNodePtr    $.children; # the document tree
+    has xmlNodePtr    $.children; # parent->childs link
     has xmlNodePtr        $.last; # last child link
     has xmlNodePtr      $.parent; # child->parent link
     has xmlNodePtr        $.next; # next sibling link
@@ -246,6 +252,48 @@ my class xmlParserNodeInfoSeq is repr('CStruct') is export(:types) {
     has int              $.maximum;
     has int               $.length;
     has xmlParserNodeInfo $.buffer;
+}
+
+my class xmlXPathContext is repr('CStruct') is export(:types) {
+    has xmlDoc                               $.doc; # The current document
+    has xmlNode                             $.node; # The current node
+    has int32                $.nb_variables_unused; # unused (hash table)
+    has int32               $.max_variables_unused; # unused (hash table)
+    has xmlHashTablePtr                  $.varHash; # Hash table of defined variables
+    has int32                           $.nb_types; # number of defined types
+    has int32                          $.max_types; # max number of types
+    has xmlXPathTypePtr                    $.types; # Array of defined types
+    has int32                    $.nb_funcs_unused; # unused (hash table)
+    has int32                   $.max_funcs_unused; # unused (hash table)
+    has xmlHashTablePtr                 $.funcHash; # Hash table of defined funcs
+    has int32                            $.nb_axis; # number of defined axis
+    has int32                           $.max_axis; # max number of axis
+    has xmlXPathAxisPtr                     $.axis; # Array of defined axis the namespace nod
+    has xmlNs                         $.namespaces; # Array of namespaces
+    has int32                               $.nsNr; # number of namespace in scope
+    has OpaquePointer                       $.user; # function to free extra variables
+    has int32                        $.contextSize; # the context size
+    has int32                  $.proximityPosition; # the proximity position extra stuff for
+    has int32                               $.xptr; # is this an XPointer context?
+    has xmlNode                             $.here; # for here()
+    has xmlNode                           $.origin; # for origin() the set of namespace decla
+    has xmlHashTablePtr                   $.nsHash; # The namespaces hash table
+    has xmlXPathVariableLookupFunc $.varLookupFunc; # variable lookup func
+    has OpaquePointer              $.varLookupData; # variable lookup data Possibility to lin
+    has OpaquePointer                      $.extra; # needed for XSLT The function name and U
+    has Str                             $.function;
+    has Str                          $.functionURI; # function lookup function and data
+    has xmlXPathFuncLookupFunc    $.funcLookupFunc; # function lookup func
+    has OpaquePointer             $.funcLookupData; # function lookup data temporary namespac
+    has xmlNsPtr                       $.tmpNsList; # Array of namespaces
+    has int32                            $.tmpNsNr; # number of namespaces in scope error rep
+    has OpaquePointer                   $.userData; # user specific data block
+    has xmlStructuredErrorFunc             $.error; # the callback in case of errors
+    has xmlError                       $.lastError; # the last error
+    has xmlNodePtr                     $.debugNode; # the source node XSLT dictionary
+    has xmlDictPtr                          $.dict; # dictionary if any
+    has int32                              $.flags; # flags to control compilation Cache for
+    has OpaquePointer                      $.cache;
 }
 
 my class xmlXPathObject is repr('CStruct') is export(:types) {

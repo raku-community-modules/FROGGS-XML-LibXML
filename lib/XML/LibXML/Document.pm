@@ -30,7 +30,7 @@ sub xmlNewNs(xmlNode, Str, Str)               returns xmlNs                  is 
 sub xmlSearchNsByHref(xmlDoc, xmlNode, Str)   returns xmlNs                  is native('libxml2') { * }
 sub xmlSetNs(xmlNode, xmlNs)                                                 is native('libxml2') { * }
 sub xmlXPathCompile(Str)                      returns xmlXPathCompExprPtr    is native('libxml2') { * }
-sub xmlXPathNewContext(xmlDoc)                returns xmlXPathContextPtr     is native('libxml2') { * }
+sub xmlXPathNewContext(xmlDoc)                returns xmlXPathContext        is native('libxml2') { * }
 sub xmlXPathCompiledEval(xmlXPathCompExprPtr, xmlXPathContextPtr)  returns xmlXPathObject  is native('libxml2') { * }
 sub xmlC14NDocDumpMemory(xmlDoc, xmlNodeSet, int32, CArray[Str], int32, CArray[Str])  returns int32  is native('libxml2') { * }
 
@@ -241,7 +241,7 @@ method find($xpath) {
     }
 }
 
-method c14n(Bool :$comments = False, Str :$xpath, xmlC14NMode :$exclusive = XML_C14N_1_1, :$inc_prefix_list) {
+method c14n(Bool :$comments = False, Str :$xpath is copy, xmlC14NMode :$exclusive = XML_C14N_1_1, :@inc-prefixes) {
     fail "Node passed to c14n must be part of a document" unless self.doc;
 
     if !$xpath && self.type != any XML_DOCUMENT_NODE, XML_HTML_DOCUMENT_NODE, XML_DOCB_DOCUMENT_NODE {
@@ -250,26 +250,28 @@ method c14n(Bool :$comments = False, Str :$xpath, xmlC14NMode :$exclusive = XML_
             !! '(. | .//node() | .//@* | .//namespace::*)[not(self::comment())]'
     }
 
-    my $nodelist = xmlNodeSet;
+    my $nodes = xmlNodeSet;
 
     if $xpath {
         my $comp      = xmlXPathCompile($xpath);
         my $ctxt      = xmlXPathNewContext(self.doc);
         my $xpath_res = xmlXPathCompiledEval($comp, $ctxt);
-        $nodelist     = $xpath_res.nodesetval;
+        $nodes        = $xpath_res.nodesetval;
     }
+
+    my CArray[Str] $prefixes.=new;
+    my $i = 0;
+    $prefixes[$i++] = $_ for @inc-prefixes;
+    $prefixes[$i]   = Str;
 
     my CArray[Str] $result.=new;
     $result[0] = '';
-    my $bytes  = xmlC14NDocDumpMemory(self.doc,
-                          $nodelist,
-                          +$exclusive,
-                          Str, #(xmlChar **) inc_prefix_list,
-                          +$comments,
-                          $result );
+
+    my $bytes = xmlC14NDocDumpMemory(self.doc, $nodes, +$exclusive, $prefixes, +$comments, $result);
+    # XXX fail with a nice message if $bytes < 0
     $result[0]
 }
 
-method ec14n(Bool :$comments = False, Str :$xpath, :$inc_prefix_list) {
-    self.c14n(:$comments, :$xpath, :exclusive(XML_C14N_EXCLUSIVE_1_0), :$inc_prefix_list)
+method ec14n(Bool :$comments = False, Str :$xpath, :@inc-prefixes) {
+    self.c14n(:$comments, :$xpath, :exclusive(XML_C14N_EXCLUSIVE_1_0), :@inc-prefixes)
 }
