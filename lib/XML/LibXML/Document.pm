@@ -8,6 +8,7 @@ use NativeCall;
 use XML::LibXML::Node;
 use XML::LibXML::Attr;
 use XML::LibXML::Enums;
+use XML::LibXML::Error;
 
 sub xmlNewDoc(Str)                            returns XML::LibXML::Document  is native('libxml2') { * }
 sub xmlNodeGetBase(xmlDoc, xmlDoc)            returns Str                    is native('libxml2') { * }
@@ -132,6 +133,10 @@ method new-doc-fragment() {
 }
 
 method new-elem(Str $elem) {
+    if $elem.match(/[ ^<[\W\d]> | <-[\w_.-]> ]/) -> $bad {
+        fail X::XML::InvalidName.new( :name($elem), :pos($bad.from), :routine(&?ROUTINE) )
+    }
+
     my $node = xmlNewNode( self, $elem );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
     $node

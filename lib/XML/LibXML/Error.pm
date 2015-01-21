@@ -6,6 +6,24 @@ use NativeCall;
 sub xmlSetGenericErrorFunc(CStruct, &cb (OpaquePointer, OpaquePointer, CArray[OpaquePointer])) is native('libxml2') is export { * }
 sub xmlSetStructuredErrorFunc(CStruct, &cb (OpaquePointer, OpaquePointer))                     is native('libxml2') is export { * }
 
+class X::XML::InvalidName is Exception {
+    has $.name is rw;
+    has $.pos;
+    has &.routine;
+    method message {
+        my $name  = $!name;
+        my $color = %*ENV<RAKUDO_ERROR_COLOR> // $*DISTRO.name ne 'MSWin32';
+        my ($red, $green, $yellow, $clear) = $color
+            ?? ("\e[31m", "\e[32m", "\e[33m", "\e[0m")
+            !! ("", "", "", "");
+        if $color {
+            my $eject = $*DISTRO.name eq 'MSWin32' ?? "<HERE>" !! "\x[23CF]";
+            $name     = $green ~ substr($!name, 0, $!pos) ~ "$yellow$eject$red" ~ substr($!name, $!pos) ~ $clear
+        }
+        "$red==={$clear}SORRY!$red===$clear Invalid charater in string '$name' for use as an identifier, passed to &!routine.^name.lc() &!routine.name()"
+    }
+}
+
 class X::XML::LibXML::Parser is Exception {
     has $.file;
     has $.orig;

@@ -90,18 +90,12 @@ use XML::LibXML::Enums;
         is $node.ns.uri,    "http://kungfoo", 'xmlDoc.new-elem-ns.ns.uri';
     }
 
-    #~ {
-        #~ # bad element creation
-        #~ # TEST:$badnames_count=5;
-        #~ my @badnames = ( ";", "&", "<><", "/", "1A");
-
-        #~ foreach my $name ( @badnames ) {
-            #~ my $node = eval {$doc->createElement( $name );};
-            #~ # TEST*$badnames_count
-            #~ ok( !(defined $node), ' TODO : Add test name' );
-        #~ }
-
-    #~ }
+    {
+        # bad element creation
+        for ";", "&", "<><", "/", "1A" -> $name {
+            ok $doc.new-elem($name) ~~ Failure, "bad element creation '$name'";
+        }
+    }
 
     {
         my $node = $doc.new-text( "foo" );
