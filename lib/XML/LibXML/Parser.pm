@@ -1,16 +1,14 @@
 use v6;
 
+use NativeCall;
 use XML::LibXML::CStructs :types;
 
 class XML::LibXML::Parser is xmlParserCtxt is repr('CStruct');
 
-use NativeCall;
 use XML::LibXML::Document;
-use XML::LibXML::Node;
+use XML::LibXML::Subs;
 use XML::LibXML::Error;
-use XML::LibXML::XPathExpression;
 
-sub xmlInitParser()                                                                  is native('libxml2') { * }
 sub xmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, Int)  returns XML::LibXML::Document is native('libxml2') { * }
 sub xmlNewParserCtxt                                   returns XML::LibXML::Parser   is native('libxml2') { * }
 sub xmlReadDoc(Str, Str, Str, Int)                     returns XML::LibXML::Document is native('libxml2') { * }

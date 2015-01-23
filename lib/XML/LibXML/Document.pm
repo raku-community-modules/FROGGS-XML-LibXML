@@ -1,39 +1,27 @@
 use v6;
 
-use XML::LibXML::CStructs :types;
-
-class XML::LibXML::Document is xmlDoc is repr('CStruct');
-
 use NativeCall;
+use XML::LibXML::CStructs :types;
+use XML::LibXML::C14N;
+use XML::LibXML::Subs;
 use XML::LibXML::Node;
 use XML::LibXML::Attr;
 use XML::LibXML::Enums;
 use XML::LibXML::Error;
 
-sub xmlNewDoc(Str)                            returns XML::LibXML::Document  is native('libxml2') { * }
-sub xmlNodeGetBase(xmlDoc, xmlDoc)            returns Str                    is native('libxml2') { * }
-sub xmlDocGetRootElement(xmlDoc)              returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlDocSetRootElement(xmlDoc, xmlNode)     returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlParseCharEncoding(Str)                 returns int8                   is native('libxml2') { * }
-sub xmlGetCharEncodingName(int8)              returns Str                    is native('libxml2') { * }
-sub xmlNewNode(xmlDoc, Str)                   returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlNewText(Str)                           returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlNewDocComment(xmlDoc, Str)             returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlNewCDataBlock(xmlDoc, Str, int32)      returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlStrlen(Str)                            returns int32                  is native('libxml2') { * }
-sub xmlDocDumpMemory(xmlDoc, CArray, CArray)                                 is native('libxml2') { * }
-sub xmlReplaceNode(xmlNode, xmlNode)          returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlNewDocFragment(xmlDoc)                 returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlNewDocProp(xmlDoc, Str, Str)           returns XML::LibXML::Attr      is native('libxml2') { * }
-sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)    returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlEncodeEntitiesReentrant(xmlDoc, Str)   returns Str                    is native('libxml2') { * }
-sub xmlNewNs(xmlNode, Str, Str)               returns xmlNs                  is native('libxml2') { * }
-sub xmlSearchNsByHref(xmlDoc, xmlNode, Str)   returns xmlNs                  is native('libxml2') { * }
-sub xmlSetNs(xmlNode, xmlNs)                                                 is native('libxml2') { * }
-sub xmlXPathCompile(Str)                      returns xmlXPathCompExprPtr    is native('libxml2') { * }
-sub xmlXPathNewContext(xmlDoc)                returns xmlXPathContext        is native('libxml2') { * }
-sub xmlXPathCompiledEval(xmlXPathCompExprPtr, xmlXPathContextPtr)  returns xmlXPathObject  is native('libxml2') { * }
-sub xmlC14NDocDumpMemory(xmlDoc, xmlNodeSet, int32, CArray[Str], int32, CArray[Str])  returns int32  is native('libxml2') { * }
+class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::C14N;
+
+sub xmlNewDoc(Str)                          returns XML::LibXML::Document  is native('libxml2') { * }
+sub xmlDocGetRootElement(xmlDoc)            returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlDocSetRootElement(xmlDoc, xmlNode)   returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlNewNode(xmlDoc, Str)                 returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlNewText(Str)                         returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlNewDocComment(xmlDoc, Str)           returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlNewCDataBlock(xmlDoc, Str, int32)    returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlReplaceNode(xmlNode, xmlNode)        returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlNewDocFragment(xmlDoc)               returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlNewDocProp(xmlDoc, Str, Str)         returns XML::LibXML::Attr      is native('libxml2') { * }
+sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)  returns XML::LibXML::Node      is native('libxml2') { * }
 
 method new(:$version = '1.0', :$encoding) {
     my $doc       = xmlNewDoc(~$version);
@@ -124,6 +112,14 @@ method base-uri() {
             $new
         }
     )
+}
+
+method type() {
+    xmlElementType(nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlDoc, '$!type')))
+}
+
+method name() {
+    "#document"
 }
 
 method new-doc-fragment() {
@@ -244,39 +240,4 @@ method find($xpath) {
             fail "NodeSet type $_ NYI"
         }
     }
-}
-
-method c14n(Bool :$comments = False, Str :$xpath is copy, xmlC14NMode :$exclusive = XML_C14N_1_1, :@inc-prefixes) {
-    fail "Node passed to c14n must be part of a document" unless self.doc;
-
-    if !$xpath && self.type != any XML_DOCUMENT_NODE, XML_HTML_DOCUMENT_NODE, XML_DOCB_DOCUMENT_NODE {
-        $xpath = $comments
-            ?? '(. | .//node() | .//@* | .//namespace::*)'
-            !! '(. | .//node() | .//@* | .//namespace::*)[not(self::comment())]'
-    }
-
-    my $nodes = xmlNodeSet;
-
-    if $xpath {
-        my $comp      = xmlXPathCompile($xpath);
-        my $ctxt      = xmlXPathNewContext(self.doc);
-        my $xpath_res = xmlXPathCompiledEval($comp, $ctxt);
-        $nodes        = $xpath_res.nodesetval;
-    }
-
-    my CArray[Str] $prefixes.=new;
-    my $i = 0;
-    $prefixes[$i++] = $_ for @inc-prefixes;
-    $prefixes[$i]   = Str;
-
-    my CArray[Str] $result.=new;
-    $result[0] = '';
-
-    my $bytes = xmlC14NDocDumpMemory(self.doc, $nodes, +$exclusive, $prefixes, +$comments, $result);
-    # XXX fail with a nice message if $bytes < 0
-    $result[0]
-}
-
-method ec14n(Bool :$comments = False, Str :$xpath, :@inc-prefixes) {
-    self.c14n(:$comments, :$xpath, :exclusive(XML_C14N_EXCLUSIVE_1_0), :@inc-prefixes)
 }
