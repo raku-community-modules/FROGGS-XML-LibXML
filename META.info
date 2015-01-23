@@ -1,0 +1,22 @@
+{
+    "name"        : "XML::LibXML",
+    "version"     : "0.1.0",
+    "author"      : "github:FROGGS",
+    "description" : "libxml2 wrapper to parse xml/html files with xpath support",
+    "depends"     : [ "NativeCall" ],
+    "provides"    : {
+        "XML::LibXML"           : "lib/XML/LibXML.pm",
+        "XML::LibXML::Attr"     : "lib/XML/LibXML/Attr.pm",
+        "XML::LibXML::C14N"     : "lib/XML/LibXML/C14N.pm",
+        "XML::LibXML::Common"   : "lib/XML/LibXML/Common.pm",
+        "XML::LibXML::CStructs" : "lib/XML/LibXML/CStructs.pm",
+        "XML::LibXML::Document" : "lib/XML/LibXML/Document.pm",
+        "XML::LibXML::Enums"    : "lib/XML/LibXML/Enums.pm",
+        "XML::LibXML::Error"    : "lib/XML/LibXML/Error.pm",
+        "XML::LibXML::Node"     : "lib/XML/LibXML/Node.pm",
+        "XML::LibXML::Parser"   : "lib/XML/LibXML/Parser.pm",
+        "XML::LibXML::Subs"     : "lib/XML/LibXML/Subs.pm"
+    },
+    "source-url"  : "git://github.com/FROGGS/p6-XML-LibXML.git"
+}
+
