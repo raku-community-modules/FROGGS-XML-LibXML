@@ -8,7 +8,7 @@ use Test;
 
 # since all tests are run on a preparsed
 
-plan *;
+plan 48;
 
 use XML::LibXML;
 use XML::LibXML::Enums;

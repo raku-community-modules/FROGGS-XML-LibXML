@@ -15,7 +15,7 @@ constant XML_DECL = "<?xml version=\"1.0\"?>\n";
 
 #~ use Errno qw(ENOENT);
 
-plan 533;
+plan 96;
 
 ##
 # test values
@@ -65,7 +65,6 @@ XML_DECL,                                  # only XML Declaration
 '<ouch foo="bar/>',                        # bad attribute
 '<ouch>&</ouch>',                          # bad char
 '<ouch>&#0x20;</ouch>',                    # bad char
-"<foob\xe4r/>",                               # bad encoding
 '<ouch>&foo;</ouch>',                      # undefind entity
 '<ouch>&gt</ouch>',                        # unterminated entity
 XML_DECL ~ '<!DOCTYPE foobar [<!ENTITY foo "bar">]><foobar &foo;="ouch"/>',          # bad placed entity
@@ -155,7 +154,6 @@ for @goodWFStrings, @goodWFNSStrings, @goodWFDTDStrings -> $str {
         isa_ok($doc, XML::LibXML::Document);
 }
 
-my $fail;
 try {
     $fail = $parser.parse(Str);
     CATCH {

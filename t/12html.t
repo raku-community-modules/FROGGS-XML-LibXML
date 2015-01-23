@@ -2,16 +2,16 @@ use v6;
 use Test;
 use XML::LibXML;
 
-plan 43;
+plan 2;
 
-ok(1, ' TODO : Add test name');
+ok(1, 'alive');
 
 my $html = "example/test.html";
 
 my $parser = XML::LibXML.new();
 {
     my $doc = $parser.parse-html($html);
-    ok($doc, ' TODO : Add test name');
+    ok($doc, 'parse-html');
 }
 
 =finish

@@ -4,7 +4,7 @@ use Test;
 ##
 # this test checks the DOM Characterdata interface of XML::LibXML
 
-plan *;
+plan 3;
 
 use XML::LibXML;
 

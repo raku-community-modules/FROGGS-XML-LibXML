@@ -8,7 +8,7 @@ use Test;
 # it will ONLY test the DOM capabilities as specified in DOM Level3
 # XPath tests should be done in another test file
 
-plan *;
+plan 4;
 
 use XML::LibXML;
 use XML::LibXML::Enums;

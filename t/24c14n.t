@@ -5,7 +5,7 @@ use Test;
 # these testcases are for xml canonization interfaces.
 #
 
-plan *;
+plan 18;
 
 use XML::LibXML;
 
