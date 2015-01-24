@@ -9,3 +9,7 @@ method parser-version() {
     my $ver = cglobal('libxml2', 'xmlParserVersion', Str);
     Version.new($ver.match(/ (.)? (..)+ $/).list.join: '.')
 }
+
+sub parse-xml(Str $xml) is export {
+    XML::LibXML::Parser.new.parse($xml)
+}
