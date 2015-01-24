@@ -3,6 +3,8 @@ use v6;
 use NativeCall;
 use XML::LibXML::CStructs :types;
 
+multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
+
 # String and encoding functions
 sub xmlParseCharEncoding(Str)                 returns int8                   is native('libxml2') is export { * }
 sub xmlGetCharEncodingName(int8)              returns Str                    is native('libxml2') is export { * }
