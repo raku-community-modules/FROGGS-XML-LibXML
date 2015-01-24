@@ -6,9 +6,9 @@ use XML::LibXML::CStructs :types;
 multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
 
 # String and encoding functions
-sub xmlParseCharEncoding(Str)                 returns int8                   is native('libxml2') is export { * }
-sub xmlGetCharEncodingName(int8)              returns Str                    is native('libxml2') is export { * }
-sub xmlStrlen(Str)                            returns int32                  is native('libxml2') is export { * }
+sub xmlParseCharEncoding(Str)     returns int8   is native('libxml2') is export { * }
+sub xmlGetCharEncodingName(int8)  returns Str    is native('libxml2') is export { * }
+sub xmlStrlen(Str)                returns int32  is native('libxml2') is export { * }
 
 sub xmlNodeGetBase(xmlDoc, xmlDoc)            returns Str                    is native('libxml2') is export { * }
 
@@ -17,15 +17,15 @@ sub xmlSetGenericErrorFunc(CStruct, &cb (OpaquePointer, OpaquePointer, CArray[Op
 sub xmlSetStructuredErrorFunc(CStruct, &cb (OpaquePointer, OpaquePointer))                      is native('libxml2')  is export { * }
 
 # Namespaces
-sub xmlNewNs(xmlNode, Str, Str)               returns xmlNs                  is native('libxml2') is export { * }
-sub xmlSearchNsByHref(xmlDoc, xmlNode, Str)   returns xmlNs                  is native('libxml2') is export { * }
-sub xmlSetNs(xmlNode, xmlNs)                                                 is native('libxml2') is export { * }
-sub xmlGetNsList(xmlDoc, xmlNode)                                                     returns xmlNs                is native('libxml2') is export { * }
+sub xmlNewNs(xmlNode, Str, Str)              returns xmlNs  is native('libxml2') is export { * }
+sub xmlSearchNsByHref(xmlDoc, xmlNode, Str)  returns xmlNs  is native('libxml2') is export { * }
+sub xmlSetNs(xmlNode, xmlNs)                                is native('libxml2') is export { * }
+sub xmlGetNsList(xmlDoc, xmlNode)            returns xmlNs  is native('libxml2') is export { * }
 
 # XPath
-sub xmlXPathCompile(Str)                                                              returns xmlXPathCompExprPtr  is native('libxml2') is export { * }
-sub xmlXPathNewContext(xmlDoc)                                                        returns xmlXPathContext      is native('libxml2') is export { * }
-sub xmlXPathCompiledEval(xmlXPathCompExprPtr, xmlXPathContextPtr)                     returns xmlXPathObject       is native('libxml2') is export { * }
+sub xmlXPathCompile(Str)                                           returns xmlXPathCompExprPtr  is native('libxml2') is export { * }
+sub xmlXPathNewContext(xmlDoc)                                     returns xmlXPathContext      is native('libxml2') is export { * }
+sub xmlXPathCompiledEval(xmlXPathCompExprPtr, xmlXPathContextPtr)  returns xmlXPathObject       is native('libxml2') is export { * }
 
 # Serialization
 sub xmlDocDumpMemory(xmlDoc, CArray, CArray)                                                         is native('libxml2') is export { * }
