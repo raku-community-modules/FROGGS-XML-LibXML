@@ -38,6 +38,15 @@ method Str() {
     $result[0]
 }
 
+method gist() {
+    my $result = CArray[Str].new();
+    my $len    = CArray[int32].new();
+    $result[0] = "";
+    $len[0]    = 0;
+    xmlDocDumpFormatMemory(self, $result, $len, 1);
+    $result[0]
+}
+
 method root {
     Proxy.new(
         FETCH => -> $ {

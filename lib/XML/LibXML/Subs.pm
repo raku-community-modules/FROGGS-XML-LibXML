@@ -29,6 +29,7 @@ sub xmlXPathCompiledEval(xmlXPathCompExprPtr, xmlXPathContextPtr)  returns xmlXP
 
 # Serialization
 sub xmlDocDumpMemory(xmlDoc, CArray, CArray)                                                         is native('libxml2') is export { * }
+sub xmlDocDumpFormatMemory(xmlDoc, CArray, CArray, int32)                                            is native('libxml2') is export { * }
 sub xmlNodeDump(xmlBuffer, xmlDoc, xmlNode, int32, int32)                             returns int32  is native('libxml2') is export { * }
 sub xmlC14NDocDumpMemory(xmlDoc, xmlNodeSet, int32, CArray[Str], int32, CArray[Str])  returns int32  is native('libxml2') is export { * }
 
