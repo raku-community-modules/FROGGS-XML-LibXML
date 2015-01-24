@@ -3,36 +3,36 @@ use NativeCall;
 
 my class CStruct is repr('CStruct') is export(:types) { }
 
-my class  xmlAttr              is repr('CStruct')  { ... }
-my class  xmlAttrPtr           is repr('CPointer') { }
-my class  xmlBuffer            is repr('CStruct')  { ... }
-my native xmlChar              is repr('P6int') is Int is nativesize(8) is unsigned { }
-my class  xmlDictPtr           is repr('CPointer') { }
-my class  xmlDtdPtr            is repr('CPointer') { }
-my class  xmlDoc               is repr('CStruct')  { ... }
-my class  xmlError             is repr('CStruct')  { ... }
-my class  xmlHashTablePtr      is repr('CPointer') { }
-my class  xmlNode              is repr('CStruct')  { ... }
-my class  xmlNodePtr           is repr('CPointer') { }
-my class  xmlNodeSet           is repr('CStruct')  { ... }
-my class  xmlNs                is repr('CStruct')  { ... }
-my class  xmlNsPtr             is repr('CPointer') { }
-my class  xmlParserCtxt        is repr('CStruct')  { ... }
-my class  xmlParserInputPtr    is repr('CPointer') { }
-my native xmlParserInputState  is repr('P6int') is Int is nativesize(64) { }
-my class  xmlParserMode        is repr('CPointer') { }
-my class  xmlParserNodeInfo    is repr('CStruct')  { ... }
-my class  xmlParserNodeInfoSeq is repr('CStruct')  { ... }
-my class  xmlSAXHandler        is repr('CPointer') { }
-my class  xmlStructuredErrorFunc is repr('CPointer') { }
-my class  xmlValidCtxt         is repr('CPointer') { }
-my class  xmlXPathAxisPtr      is repr('CPointer') { }
-my class  xmlXPathCompExprPtr  is repr('CStruct') is export(:types) { }
-my class  xmlXPathContextPtr   is repr('CStruct') is export(:types) { }
-my class  xmlXPathContext      is repr('CStruct')  { ... }
-my class  xmlXPathFuncLookupFunc is repr('CPointer') { }
-my class  xmlXPathObject       is repr('CStruct')  { ... }
-my class  xmlXPathTypePtr      is repr('CPointer') { }
+my class  xmlAttr                    is repr('CStruct')  { ... }
+my class  xmlAttrPtr                 is repr('CPointer') { }
+my class  xmlBuffer                  is repr('CStruct')  { ... }
+my native xmlChar                    is repr('P6int') is Int is nativesize(8) is unsigned { }
+my class  xmlDictPtr                 is repr('CPointer') { }
+my class  xmlDtdPtr                  is repr('CPointer') { }
+my class  xmlDoc                     is repr('CStruct')  { ... }
+my class  xmlError                   is repr('CStruct')  { ... }
+my class  xmlHashTablePtr            is repr('CPointer') { }
+my class  xmlNode                    is repr('CStruct')  { ... }
+my class  xmlNodePtr                 is repr('CPointer') { }
+my class  xmlNodeSet                 is repr('CStruct')  { ... }
+my class  xmlNs                      is repr('CStruct')  { ... }
+my class  xmlNsPtr                   is repr('CPointer') { }
+my class  xmlParserCtxt              is repr('CStruct')  { ... }
+my class  xmlParserInputPtr          is repr('CPointer') { }
+my native xmlParserInputState        is repr('P6int') is Int is nativesize(64) { }
+my class  xmlParserMode              is repr('CPointer') { }
+my class  xmlParserNodeInfo          is repr('CStruct')  { ... }
+my class  xmlParserNodeInfoSeq       is repr('CStruct')  { ... }
+my class  xmlSAXHandler              is repr('CPointer') { }
+my class  xmlStructuredErrorFunc     is repr('CPointer') { }
+my class  xmlValidCtxt               is repr('CPointer') { }
+my class  xmlXPathAxisPtr            is repr('CPointer') { }
+my class  xmlXPathCompExprPtr        is repr('CStruct') is export(:types) { }
+my class  xmlXPathContextPtr         is repr('CStruct') is export(:types) { }
+my class  xmlXPathContext            is repr('CStruct')  { ... }
+my class  xmlXPathFuncLookupFunc     is repr('CPointer') { }
+my class  xmlXPathObject             is repr('CStruct')  { ... }
+my class  xmlXPathTypePtr            is repr('CPointer') { }
 my class  xmlXPathVariableLookupFunc is repr('CPointer') { }
 
 my class xmlAttr is repr('CStruct') is export(:types) {
