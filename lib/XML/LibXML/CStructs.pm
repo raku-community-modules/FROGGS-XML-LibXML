@@ -1,18 +1,12 @@
-
-use NativeCall;
-
-my class CStruct is repr('CStruct') is export(:types) { }
-
+my class  CStruct                    is repr('CStruct')  { }
 my class  xmlAttr                    is repr('CStruct')  { ... }
 my class  xmlAttrPtr                 is repr('CPointer') { }
 my class  xmlBuffer                  is repr('CStruct')  { ... }
 my native xmlChar                    is repr('P6int') is Int is nativesize(8) is unsigned { }
 my class  xmlDictPtr                 is repr('CPointer') { }
 my class  xmlDtdPtr                  is repr('CPointer') { }
-my class  xmlDoc                     is repr('CStruct')  { ... }
 my class  xmlError                   is repr('CStruct')  { ... }
 my class  xmlHashTablePtr            is repr('CPointer') { }
-my class  xmlNode                    is repr('CStruct')  { ... }
 my class  xmlNodePtr                 is repr('CPointer') { }
 my class  xmlNodeSet                 is repr('CStruct')  { ... }
 my class  xmlNs                      is repr('CStruct')  { ... }
@@ -39,12 +33,12 @@ my class xmlAttr is repr('CStruct') is export(:types) {
     has OpaquePointer $._private; # application data
     has int8              $.type; # (xmlElementType) XML_ATTRIBUTE_NODE, must be second !
     has Str          $.localname; # the name of the property
-    has xmlNode       $.children; # the value of the property
+    has XML::LibXML::Node       $.children; # the value of the property
     has xmlNodePtr        $.last; # NULL
     has xmlNodePtr      $.parent; # child->parent link
     has xmlAttrPtr        $.next; # next sibling link
     has xmlAttrPtr        $.prev; # previous sibling link
-    has xmlDoc             $.doc; # the containing document
+    has XML::LibXML::Document             $.doc; # the containing document
     has xmlNs               $.ns; # pointer to the associated namespace
     #~ xmlAttributeType	atype	: the attribute type if validating
     #~ void *	psvi	: for type/PSVI informations
@@ -56,33 +50,6 @@ my class xmlBuffer is repr('CStruct') is export(:types) {
     #~ unsigned int	size	: The buffer size
     #~ xmlBufferAllocationScheme	alloc	: The realloc method
     #~ xmlChar *	contentIO	: in IO mode we may have a different base
-}
-
-my class xmlDoc is repr('CStruct') is export(:types) {
-    has OpaquePointer $._private; # application data
-    has int8              $.type; # (xmlElementType) XML_DOCUMENT_NODE, must be second !
-    has Str          $.localname; # name/filename/URI of the document
-    has xmlNodePtr    $.children; # the document tree
-    has xmlNodePtr        $.last; # last child link
-    has xmlNodePtr      $.parent; # child->parent link
-    has xmlNodePtr        $.next; # next sibling link
-    has xmlNodePtr        $.prev; # previous sibling link
-    has xmlDoc             $.doc; # autoreference to itself End of common p
-    has int32      $.compression; # level of zlib compression
-    has int32       $.standalone; # standalone document (no external refs)
-    has xmlDtdPtr    $.intSubset; # the document internal subset
-    has xmlDtdPtr    $.extSubset; # the document external subset
-    has xmlNsPtr         $.oldNs; # Global namespace, the old way
-    has Str            $.version; # the XML version string
-    has Str           $.encoding; # external initial encoding, if any
-    has OpaquePointer      $.ids; # Hash table for ID attributes if any
-    has OpaquePointer     $.refs; # Hash table for IDREFs attributes if any
-    has Str                $.uri; # The URI for that document
-    has int32          $.charset; # encoding of the in-memory content actua
-    #~ struct _xmlDict *	dict	: dict used to allocate names or NULL
-    #~ void *	psvi	: for type/PSVI informations
-    #~ int	parseFlags	: set of xmlParserOption used to parse th
-    #~ int	properties	: set of xmlDocProperties for this docume
 }
 
 my class xmlError is repr('CStruct') is export(:types) {
@@ -101,29 +68,10 @@ my class xmlError is repr('CStruct') is export(:types) {
     has OpaquePointer $.node; # the node in the tree
 }
 
-my class xmlNode is repr('CStruct') is export(:types) {
-    has OpaquePointer $._private; # application data
-    has int8              $.type; # (xmlElementType) type number, must be second !
-    has Str          $.localname; # name/filename/URI of the document
-    has xmlNodePtr    $.children; # parent->childs link
-    has xmlNodePtr        $.last; # last child link
-    has xmlNodePtr      $.parent; # child->parent link
-    has xmlNodePtr        $.next; # next sibling link
-    has xmlNodePtr        $.prev; # previous sibling link
-    has xmlDoc             $.doc; # autoreference to itself End of common p
-    has xmlNs               $.ns; # pointer to the associated namespace
-    has Str              $.value; # the content
-    has xmlAttr     $.properties; # properties list
-    has xmlNs            $.nsDef; # namespace definitions on this node
-    #~ has OpaquePointer $.psvi	: for type/PSVI informations
-    #~ unsigned short	line	: line number
-    #~ unsigned short	extra	: extra data for XPath/XSLT
-}
-
 my class xmlNodeSet is repr('CStruct') is export(:types) {
     has int32            $.nodeNr; # number of nodes in the set
     has int32           $.nodeMax; # size of the array as allocated
-    has CArray[xmlNode] $.nodeTab; # array of nodes in no particular order @
+    has CArray[xmlNodePtr] $.nodeTab; # array of nodes in no particular order @
 }
 
 my class xmlNs is repr('CStruct') is export(:types) {
@@ -132,13 +80,13 @@ my class xmlNs is repr('CStruct') is export(:types) {
     has Str                $.uri; # URL for the namespace
     has Str               $.name; # prefix for the namespace
     has OpaquePointer $._private; # application data
-    has xmlDoc         $.context; # normally an xmlDoc
+    has XML::LibXML::Document         $.context; # normally an xmlDoc
 }
 
 my class xmlParserCtxt is repr('CStruct') is export(:types) {
     has xmlSAXHandler                  $.sax; # The SAX handler
     has OpaquePointer             $.userData; # For SAX interface only, used by DOM build
-    has xmlDoc                       $.myDoc; # the document being built
+    has XML::LibXML::Document                       $.myDoc; # the document being built
     has int32                   $.wellFormed; # is the document well formed
     has int32              $.replaceEntities; # shall we replace entities ?
     has Str                        $.version; # the XML version string
@@ -255,8 +203,8 @@ my class xmlParserNodeInfoSeq is repr('CStruct') is export(:types) {
 }
 
 my class xmlXPathContext is repr('CStruct') is export(:types) {
-    has xmlDoc                               $.doc; # The current document
-    has xmlNode                             $.node; # The current node
+    has XML::LibXML::Document                               $.doc; # The current document
+    has XML::LibXML::Node                             $.node; # The current node
     has int32                $.nb_variables_unused; # unused (hash table)
     has int32               $.max_variables_unused; # unused (hash table)
     has xmlHashTablePtr                  $.varHash; # Hash table of defined variables
@@ -275,8 +223,8 @@ my class xmlXPathContext is repr('CStruct') is export(:types) {
     has int32                        $.contextSize; # the context size
     has int32                  $.proximityPosition; # the proximity position extra stuff for
     has int32                               $.xptr; # is this an XPointer context?
-    has xmlNode                             $.here; # for here()
-    has xmlNode                           $.origin; # for origin() the set of namespace decla
+    has XML::LibXML::Node                             $.here; # for here()
+    has XML::LibXML::Node                           $.origin; # for origin() the set of namespace decla
     has xmlHashTablePtr                   $.nsHash; # The namespaces hash table
     has xmlXPathVariableLookupFunc $.varLookupFunc; # variable lookup func
     has OpaquePointer              $.varLookupData; # variable lookup data Possibility to lin

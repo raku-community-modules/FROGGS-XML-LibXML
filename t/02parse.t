@@ -7,7 +7,7 @@ use Test;
 
 #~ use IO::File;
 
-use XML::LibXML::Common; #~ qw(:libxml);
+use XML::LibXML;
 #~ use XML::LibXML::SAX;
 #~ use XML::LibXML::SAX::Builder;
 

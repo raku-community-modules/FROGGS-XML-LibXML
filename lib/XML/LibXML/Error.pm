@@ -1,8 +1,3 @@
-use v6;
-
-use NativeCall;
-use XML::LibXML::CStructs :types;
-
 class X::XML::InvalidName is Exception {
     has $.name is rw;
     has $.pos;
@@ -54,9 +49,6 @@ enum XML::LibXML::ErrorLevels   <XML_ERR_NONE XML_ERR_WARNING XML_ERR_ERROR XML_
 my  @XML::LibXML::ErrorLevels = (XML_ERR_NONE,XML_ERR_WARNING,XML_ERR_ERROR,XML_ERR_FATAL);
 
 class XML::LibXML::Error is xmlError is repr('CStruct') {
-    sub xmlCtxtGetLastError(CStruct) returns XML::LibXML::Error is native('libxml2') { * }
-    sub xmlGetLastError()            returns XML::LibXML::Error is native('libxml2') { * }
-
     method get-last($ctx, :$orig) {
         my $err = xmlCtxtGetLastError($ctx);
         $err    = xmlGetLastError() unless $err;

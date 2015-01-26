@@ -11,7 +11,7 @@ use Test;
 plan 48;
 
 use XML::LibXML;
-use XML::LibXML::Enums;
+#~ use XML::LibXML::Enums;
 
 {
     # Document Attributes

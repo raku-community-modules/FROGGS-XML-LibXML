@@ -11,7 +11,7 @@ use Test;
 plan 4;
 
 use XML::LibXML;
-use XML::LibXML::Enums;
+#~ use XML::LibXML::Enums;
 
 my $xmlstring = '<foo>bar<foobar/><bar foo="foobar"/><!--foo--><![CDATA[&foo bar]]></foo>';
 my $parser    = XML::LibXML.new();
