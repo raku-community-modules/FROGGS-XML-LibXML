@@ -23,31 +23,20 @@ sub xmlNewDocFragment(xmlDoc)               returns XML::LibXML::Node      is na
 sub xmlNewDocProp(xmlDoc, Str, Str)         returns XML::LibXML::Attr      is native('libxml2') { * }
 sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)  returns XML::LibXML::Node      is native('libxml2') { * }
 
-method new(:$version = '1.0', :$encoding) {
-    my $doc       = xmlNewDoc(~$version);
-    $doc.encoding = $encoding if $encoding;
-    $doc
+# Objects that implement the Document interface have all properties and functions of the Node interface as well as the properties and functions defined below.
+
+## Properties of objects that implement the Document interface:
+
+#| This read-only property is an object that implements the DocumentType interface.
+method doctype is aka<type> {
+    xmlElementType(nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlDoc, '$!type')))
 }
 
-method Str() {
-    my $result = CArray[Str].new();
-    my $len    = CArray[int32].new();
-    $result[0] = "";
-    $len[0]    = 0;
-    xmlDocDumpMemory(self, $result, $len);
-    $result[0]
-}
+#~ implementation
+    #~ This read-only property is an object that implements the DOMImplementation interface.
 
-method gist() {
-    my $result = CArray[Str].new();
-    my $len    = CArray[int32].new();
-    $result[0] = "";
-    $len[0]    = 0;
-    xmlDocDumpFormatMemory(self, $result, $len, 1);
-    $result[0]
-}
-
-method root {
+#| This read-only property is an object that implements the Element interface.
+method documentElement is aka<root> {
     Proxy.new(
         FETCH => -> $ {
             xmlDocGetRootElement(self)
@@ -61,7 +50,11 @@ method root {
     )
 }
 
-method encoding() {
+#~ inputEncoding
+    #~ This read-only property is a String.
+
+#| This read-only property is a String.
+method xmlEncoding is aka<encoding> {
     Proxy.new(
         FETCH => -> $ {
             xmlGetCharEncodingName(self.charset).lc
@@ -75,7 +68,8 @@ method encoding() {
     )
 }
 
-method version() {
+#| This property is a String and can raise an object that implements the DOMException interface on setting.
+method xmlVersion is aka<version> {
     Proxy.new(
         FETCH => -> $ {
             Version.new(nqp::getattr(nqp::decont(self), xmlDoc, '$!version'))
@@ -87,7 +81,8 @@ method version() {
     )
 }
 
-method standalone() {
+#| This property is a Boolean and can raise an object that implements the DOMException interface on setting.
+method xmlStandalone is aka<standalone> {
     Proxy.new(
         FETCH => -> $ {
             nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlDoc, '$!standalone'))
@@ -99,7 +94,11 @@ method standalone() {
     )
 }
 
-method uri() {
+#~ strictErrorChecking
+    #~ This property is a Boolean.
+
+#| This property is a String.
+method documentURI is aka<uri> {
     Proxy.new(
         FETCH => -> $ {
             nqp::getattr(nqp::decont(self), xmlDoc, '$!uri')
@@ -123,8 +122,100 @@ method base-uri() {
     )
 }
 
-method type() {
-    xmlElementType(nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlDoc, '$!type')))
+#~ domConfig
+    #~ This read-only property is an object that implements the DOMConfiguration interface.
+
+## Functions of objects that implement the Document interface:
+
+#~ createElement(tagName)
+    #~ This function returns an object that implements the Element interface.
+    #~ The tagName parameter is a String.
+    #~ This function can raise an object that implements the DOMException interface.
+#~ createDocumentFragment()
+    #~ This function returns an object that implements the DocumentFragment interface.
+#~ createTextNode(data)
+    #~ This function returns an object that implements the Text interface.
+    #~ The data parameter is a String.
+#~ createComment(data)
+    #~ This function returns an object that implements the Comment interface.
+    #~ The data parameter is a String.
+#~ createCDATASection(data)
+    #~ This function returns an object that implements the CDATASection interface.
+    #~ The data parameter is a String.
+    #~ This function can raise an object that implements the DOMException interface.
+#~ createProcessingInstruction(target, data)
+    #~ This function returns an object that implements the ProcessingInstruction interface.
+    #~ The target parameter is a String.
+    #~ The data parameter is a String.
+    #~ This function can raise an object that implements the DOMException interface.
+#~ createAttribute(name)
+    #~ This function returns an object that implements the Attr interface.
+    #~ The name parameter is a String.
+    #~ This function can raise an object that implements the DOMException interface.
+#~ createEntityReference(name)
+    #~ This function returns an object that implements the EntityReference interface.
+    #~ The name parameter is a String.
+    #~ This function can raise an object that implements the DOMException interface.
+#~ getElementsByTagName(tagname)
+    #~ This function returns an object that implements the NodeList interface.
+    #~ The tagname parameter is a String.
+#~ importNode(importedNode, deep)
+    #~ This function returns an object that implements the Node interface.
+    #~ The importedNode parameter is an object that implements the Node interface.
+    #~ The deep parameter is a Boolean.
+    #~ This function can raise an object that implements the DOMException interface.
+#~ createElementNS(namespaceURI, qualifiedName)
+    #~ This function returns an object that implements the Element interface.
+    #~ The namespaceURI parameter is a String.
+    #~ The qualifiedName parameter is a String.
+    #~ This function can raise an object that implements the DOMException interface.
+#~ createAttributeNS(namespaceURI, qualifiedName)
+    #~ This function returns an object that implements the Attr interface.
+    #~ The namespaceURI parameter is a String.
+    #~ The qualifiedName parameter is a String.
+    #~ This function can raise an object that implements the DOMException interface.
+#~ getElementsByTagNameNS(namespaceURI, localName)
+    #~ This function returns an object that implements the NodeList interface.
+    #~ The namespaceURI parameter is a String.
+    #~ The localName parameter is a String.
+#~ getElementById(elementId)
+    #~ This function returns an object that implements the Element interface.
+    #~ The elementId parameter is a String.
+#~ adoptNode(source)
+    #~ This function returns an object that implements the Node interface.
+    #~ The source parameter is an object that implements the Node interface.
+    #~ This function can raise an object that implements the DOMException interface.
+#~ normalizeDocument()
+    #~ This function has no return value.
+#~ renameNode(n, namespaceURI, qualifiedName)
+    #~ This function returns an object that implements the Node interface.
+    #~ The n parameter is an object that implements the Node interface.
+    #~ The namespaceURI parameter is a String.
+    #~ The qualifiedName parameter is a String.
+    #~ This function can raise an object that implements the DOMException interface.
+
+method new(:$version = '1.0', :$encoding) {
+    my $doc       = xmlNewDoc(~$version);
+    $doc.encoding = $encoding if $encoding;
+    $doc
+}
+
+method Str() {
+    my $result = CArray[Str].new();
+    my $len    = CArray[int32].new();
+    $result[0] = "";
+    $len[0]    = 0;
+    xmlDocDumpMemory(self, $result, $len);
+    $result[0]
+}
+
+method gist() {
+    my $result = CArray[Str].new();
+    my $len    = CArray[int32].new();
+    $result[0] = "";
+    $len[0]    = 0;
+    xmlDocDumpFormatMemory(self, $result, $len, 1);
+    $result[0]
 }
 
 method name() {
