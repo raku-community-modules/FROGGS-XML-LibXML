@@ -1,6 +1,7 @@
 use v6;
+use nqp;
 
-role XML::LibXML::C14N;
+unit role XML::LibXML::C14N;
 
 use NativeCall;
 use XML::LibXML::CStructs :types;

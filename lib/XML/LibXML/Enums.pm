@@ -1,6 +1,6 @@
 use v6;
 
-module XML::LibXML::Enums;
+unit module XML::LibXML::Enums;
 
 enum xmlC14NMode is export (
     XML_C14N_1_0           => 0, # Origianal C14N 1.0 spec

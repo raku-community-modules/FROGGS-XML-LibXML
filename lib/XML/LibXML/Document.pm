@@ -1,5 +1,5 @@
 use v6;
-
+use nqp;
 use NativeCall;
 use XML::LibXML::CStructs :types;
 use XML::LibXML::C14N;
@@ -9,7 +9,7 @@ use XML::LibXML::Attr;
 use XML::LibXML::Enums;
 use XML::LibXML::Error;
 
-class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::C14N;
+unit class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::C14N;
 
 sub xmlNewDoc(Str)                          returns XML::LibXML::Document  is native('libxml2') { * }
 sub xmlDocGetRootElement(xmlDoc)            returns XML::LibXML::Node      is native('libxml2') { * }

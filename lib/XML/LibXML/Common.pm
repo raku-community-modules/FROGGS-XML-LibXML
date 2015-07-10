@@ -1,5 +1,5 @@
 use v6;
 
-module XML::LibXML::Common;
+unit module XML::LibXML::Common;
 
 use XML::LibXML;

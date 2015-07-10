@@ -1,8 +1,9 @@
 use v6;
+use nqp;
 
 use XML::LibXML::CStructs :types;
 
-class XML::LibXML::Attr is xmlAttr is repr('CStruct');
+unit class XML::LibXML::Attr is xmlAttr is repr('CStruct');
 
 use NativeCall;
 

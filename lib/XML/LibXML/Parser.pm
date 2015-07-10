@@ -3,7 +3,7 @@ use v6;
 use NativeCall;
 use XML::LibXML::CStructs :types;
 
-class XML::LibXML::Parser is xmlParserCtxt is repr('CStruct');
+unit class XML::LibXML::Parser is xmlParserCtxt is repr('CStruct');
 
 use XML::LibXML::Document;
 use XML::LibXML::Subs;

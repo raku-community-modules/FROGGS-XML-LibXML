@@ -125,7 +125,7 @@ my $parser = XML::LibXML.new();
 
 for @goodWFStrings, @goodWFNSStrings, @goodWFDTDStrings -> $str {
     my $doc = $parser.parse($str);
-    isa_ok($doc, XML::LibXML::Document);
+    isa-ok($doc, XML::LibXML::Document);
 }
 
 my $fail;
@@ -141,7 +141,7 @@ flunk 'parses undef string with an error' if $fail;
 
 for @badWFStrings -> $str {
     my $fail = $parser.parse($str);
-    isa_ok($fail, Failure, "Error thrown passing '{shorten_string($str)}'");
+    isa-ok($fail, Failure, "Error thrown passing '{shorten_string($str)}'");
 }
 
 
@@ -151,7 +151,7 @@ $parser.keep-blanks = 0;
 
 for @goodWFStrings, @goodWFNSStrings, @goodWFDTDStrings -> $str {
     my $doc = $parser.parse($str);
-        isa_ok($doc, XML::LibXML::Document);
+        isa-ok($doc, XML::LibXML::Document);
 }
 
 try {
@@ -166,7 +166,7 @@ flunk 'parses undef string with an error' if $fail;
 
 for @badWFStrings -> $str {
     my $fail = $parser.parse($str);
-    isa_ok($fail, Failure, "Error thrown passing '{shorten_string($str)}'");
+    isa-ok($fail, Failure, "Error thrown passing '{shorten_string($str)}'");
 }
 
 $parser.keep-blanks = 1;
@@ -186,7 +186,7 @@ $parser.keep-blanks = 1;
 #~ {
     #~ foreach my $str ( @goodWFStrings,@goodWFNSStrings,@goodWFDTDStrings ) {
         #~ my $doc = $parser->parse_string($str);
-        #~ isa_ok($doc, 'XML::LibXML::Document');
+        #~ isa-ok($doc, 'XML::LibXML::Document');
     #~ }
 #~ }
 
@@ -208,7 +208,7 @@ $parser.keep-blanks = 1;
 #~ {
     #~ foreach my $str ( @goodWFStrings,@goodWFNSStrings,@goodWFDTDStrings ) {
         #~ my $doc = $parser->parse_string($str);
-	#~ isa_ok($doc, 'XML::LibXML::Document');
+	#~ isa-ok($doc, 'XML::LibXML::Document');
     #~ }
 #~ }
 
@@ -227,7 +227,7 @@ $parser.keep-blanks = 1;
 
 #~ {
     #~ my $doc = $parser->parse_file($goodfile);
-    #~ isa_ok($doc, 'XML::LibXML::Document');
+    #~ isa-ok($doc, 'XML::LibXML::Document');
 #~ }
 
 #~ eval {my $fail = $parser->parse_file($badfile1);};
@@ -261,13 +261,13 @@ $parser.keep-blanks = 1;
 #~ # 1.3 PARSE A HANDLE
 
 #~ my $fh = IO::File->new($goodfile);
-#~ isa_ok($fh, 'IO::File');
+#~ isa-ok($fh, 'IO::File');
 
 #~ my $doc = $parser->parse_fh($fh);
-#~ isa_ok($doc, 'XML::LibXML::Document');
+#~ isa-ok($doc, 'XML::LibXML::Document');
 
 #~ $fh = IO::File->new($badfile1);
-#~ isa_ok($fh, 'IO::File');
+#~ isa-ok($fh, 'IO::File');
 
 #~ eval { my $doc = $parser->parse_fh($fh); };
 #~ like($@, qr/^Entity: line 3: parser error : Extra content at the end of the document/, "error parsing bad file from file handle of $badfile1");
@@ -314,7 +314,7 @@ $parser.keep-blanks = 1;
     #~ $parser->base_uri( "example/" );
     #~ $parser->keep_blanks(0);
     #~ my $doc = $parser->parse_string( $goodXInclude );
-    #~ isa_ok($doc, 'XML::LibXML::Document');
+    #~ isa-ok($doc, 'XML::LibXML::Document');
 
     #~ my $i;
     #~ eval { $i = $parser->processXIncludes($doc); };
@@ -328,7 +328,7 @@ $parser.keep-blanks = 1;
     #~ # auto expand
     #~ $parser->expand_xinclude(1);
     #~ $doc = $parser->parse_string( $goodXInclude );
-    #~ isa_ok($doc, 'XML::LibXML::Document');
+    #~ isa-ok($doc, 'XML::LibXML::Document');
 
     #~ $doc = undef;
     #~ eval { $doc = $parser->parse_string( $badXInclude ); };
@@ -361,7 +361,7 @@ $parser.keep-blanks = 1;
         #~ my $doc;
         #~ eval {$doc = $pparser->parse_chunk("",1); };
 	#~ is($@, '', "No error parsing $key");
-	#~ isa_ok($doc, 'XML::LibXML::Document', "Document came back parsing chunk: ");
+	#~ isa-ok($doc, 'XML::LibXML::Document', "Document came back parsing chunk: ");
     #~ }
 
     #~ my @good_strings = ("<foo>", "bar", "</foo>" );
@@ -384,7 +384,7 @@ $parser.keep-blanks = 1;
             #~ $parser->parse_chunk( $_ );
         #~ }
         #~ my $doc = $parser->parse_chunk("",1);
-        #~ isa_ok($doc, 'XML::LibXML::Document');
+        #~ isa-ok($doc, 'XML::LibXML::Document');
     #~ }
 
     #~ {
@@ -428,7 +428,7 @@ $parser.keep-blanks = 1;
 	       #~ local $SIG{'__WARN__'} = sub { };
 	       #~ $doc = $parser->finish_push(1);
 	     #~ };
-        #~ isa_ok( $doc, 'XML::LibXML::Document' );
+        #~ isa-ok( $doc, 'XML::LibXML::Document' );
     #~ }
 #~ }
 
@@ -441,12 +441,12 @@ $parser.keep-blanks = 1;
     #~ my $string  = q{<bar foo="bar">foo</bar>};
 
     #~ $doc = $generator->parse_string( $string );
-    #~ isa_ok( $doc , 'XML::LibXML::Document');
+    #~ isa-ok( $doc , 'XML::LibXML::Document');
 
     #~ # 3.1 GENERAL TESTS
     #~ foreach my $str ( @goodWFStrings ) {
         #~ my $doc = $generator->parse_string( $str );
-        #~ isa_ok( $doc , 'XML::LibXML::Document');
+        #~ isa-ok( $doc , 'XML::LibXML::Document');
     #~ }
 
     #~ # CDATA Sections
@@ -464,7 +464,7 @@ $parser.keep-blanks = 1;
     #~ my $i = 0;
     #~ foreach my $str ( @goodWFNSStrings ) {
         #~ my $doc = $generator->parse_string( $str );
-        #~ isa_ok( $doc , 'XML::LibXML::Document');
+        #~ isa-ok( $doc , 'XML::LibXML::Document');
 
         #~ # skip the nested node tests until there is a xmlNormalizeNs().
         #~ #ok(1),next if $i > 2;
@@ -498,12 +498,12 @@ $parser.keep-blanks = 1;
 
     #~ foreach my $str ( @goodWFDTDStrings ) {
         #~ my $doc = $generator->parse_string( $str );
-        #~ isa_ok( $doc , 'XML::LibXML::Document');
+        #~ isa-ok( $doc , 'XML::LibXML::Document');
     #~ }
 
     #~ # 3.5 PARSE URI
     #~ $doc = $generator->parse_uri( "example/test.xml" );
-    #~ isa_ok($doc, 'XML::LibXML::Document');
+    #~ isa-ok($doc, 'XML::LibXML::Document');
 
     #~ # 3.6 PARSE CHUNK
 
@@ -519,7 +519,7 @@ $parser.keep-blanks = 1;
     #~ $parser->set_handler( $handler );
     #~ $parser->push( '<foo/>' );
     #~ my $doc = $parser->finish_push;
-    #~ isa_ok($doc , 'XML::LibXML::Document');
+    #~ isa-ok($doc , 'XML::LibXML::Document');
 
     #~ foreach my $key ( keys %goodPushWF ) {
         #~ foreach ( @{$goodPushWF{$key}} ) {
@@ -528,7 +528,7 @@ $parser.keep-blanks = 1;
 
         #~ my $doc;
         #~ eval {$doc = $parser->finish_push; };
-        #~ isa_ok( $doc , 'XML::LibXML::Document');
+        #~ isa-ok( $doc , 'XML::LibXML::Document');
     #~ }
 #~ }
 
@@ -586,7 +586,7 @@ $parser.keep-blanks = 1;
 
     #~ for ( 1..$MAX_WF_C ) {
         #~ my $frag = $pparser->parse_xml_chunk($chunks{'wellformed'.$_});
-        #~ isa_ok($frag, 'XML::LibXML::DocumentFragment');
+        #~ isa-ok($frag, 'XML::LibXML::DocumentFragment');
         #~ if ( $frag->nodeType == XML_DOCUMENT_FRAG_NODE
              #~ && $frag->hasChildNodes ) {
             #~ if ( $frag->firstChild->isSameNode( $frag->lastChild ) ) {
@@ -603,7 +603,7 @@ $parser.keep-blanks = 1;
 
     #~ for ( 1..$MAX_WB_C ) {
         #~ my $frag = $pparser->parse_xml_chunk($chunks{'wellbalance'.$_});
-        #~ isa_ok($frag, 'XML::LibXML::DocumentFragment');
+        #~ isa-ok($frag, 'XML::LibXML::DocumentFragment');
         #~ if ( $frag->nodeType == XML_DOCUMENT_FRAG_NODE
              #~ && $frag->hasChildNodes ) {
             #~ if ( $chunks{'wellbalance'.$_} =~ /<A><\/A>/ ) {
@@ -686,7 +686,7 @@ $parser.keep-blanks = 1;
     #~ $parser->set_handler( $handler );
     #~ for ( 1..$MAX_WF_C ) {
         #~ my $frag = $parser->parse_xml_chunk($chunks{'wellformed'.$_});
-        #~ isa_ok($frag, 'XML::LibXML::DocumentFragment');
+        #~ isa-ok($frag, 'XML::LibXML::DocumentFragment');
         #~ if ( $frag->nodeType == XML_DOCUMENT_FRAG_NODE
              #~ && $frag->hasChildNodes ) {
             #~ if ( $frag->firstChild->isSameNode( $frag->lastChild ) ) {
@@ -702,7 +702,7 @@ $parser.keep-blanks = 1;
 
     #~ for ( 1..$MAX_WB_C ) {
         #~ my $frag = $parser->parse_xml_chunk($chunks{'wellbalance'.$_});
-        #~ isa_ok($frag, 'XML::LibXML::DocumentFragment');
+        #~ isa-ok($frag, 'XML::LibXML::DocumentFragment');
         #~ if ( $frag->nodeType == XML_DOCUMENT_FRAG_NODE
              #~ && $frag->hasChildNodes ) {
             #~ if ( $chunks{'wellbalance'.$_} =~ /<A><\/A>/ ) {
@@ -893,7 +893,7 @@ $parser.keep-blanks = 1;
            #~ $doc3 = $parser->parse_file( "example/article_external_bad.xml" );
         #~ };
 
-        #~ isa_ok( $doc3, 'XML::LibXML::Document');
+        #~ isa-ok( $doc3, 'XML::LibXML::Document');
 
         #~ $parser->load_ext_dtd(1);
         #~ eval {

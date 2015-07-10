@@ -1,12 +1,12 @@
 use v6;
-
+use nqp;
 use NativeCall;
 use XML::LibXML::CStructs :types;
 use XML::LibXML::Enums;
 use XML::LibXML::Subs;
 use XML::LibXML::C14N;
 
-class XML::LibXML::Node is xmlNode is repr('CStruct') does XML::LibXML::C14N;
+unit class XML::LibXML::Node is xmlNode is repr('CStruct') does XML::LibXML::C14N;
 
 sub xmlAddChild(xmlNode, xmlNode)  returns XML::LibXML::Node  is native('libxml2') { * }
 

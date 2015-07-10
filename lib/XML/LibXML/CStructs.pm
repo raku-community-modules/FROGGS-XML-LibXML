@@ -1,4 +1,5 @@
-
+use v6;
+use nqp;
 use NativeCall;
 
 my class CStruct is repr('CStruct') is export(:types) { }
@@ -35,7 +36,7 @@ my class  xmlXPathObject             is repr('CStruct')  { ... }
 my class  xmlXPathTypePtr            is repr('CPointer') { }
 my class  xmlXPathVariableLookupFunc is repr('CPointer') { }
 
-my class xmlAttr is repr('CStruct') is export(:types) {
+my class xmlAttr is export(:types) {
     has OpaquePointer $._private; # application data
     has int8              $.type; # (xmlElementType) XML_ATTRIBUTE_NODE, must be second !
     has Str          $.localname; # the name of the property
@@ -50,7 +51,7 @@ my class xmlAttr is repr('CStruct') is export(:types) {
     #~ void *	psvi	: for type/PSVI informations
 }
 
-my class xmlBuffer is repr('CStruct') is export(:types) {
+my class xmlBuffer is export(:types) {
     has Str     $.value; # The buffer content UTF8
     #~ unsigned int	use	: The buffer size used
     #~ unsigned int	size	: The buffer size
@@ -58,7 +59,7 @@ my class xmlBuffer is repr('CStruct') is export(:types) {
     #~ xmlChar *	contentIO	: in IO mode we may have a different base
 }
 
-my class xmlDoc is repr('CStruct') is export(:types) {
+my class xmlDoc is export(:types) {
     has OpaquePointer $._private; # application data
     has int8              $.type; # (xmlElementType) XML_DOCUMENT_NODE, must be second !
     has Str          $.localname; # name/filename/URI of the document
@@ -85,7 +86,7 @@ my class xmlDoc is repr('CStruct') is export(:types) {
     #~ int	properties	: set of xmlDocProperties for this docume
 }
 
-my class xmlError is repr('CStruct') is export(:types) {
+my class xmlError is export(:types) {
     has int32       $.domain; # What part of the library raised this error
     has int32         $.code; # The error code, e.g. an xmlParserError
     has Str        $.message; # human-readable informative error message
@@ -101,7 +102,7 @@ my class xmlError is repr('CStruct') is export(:types) {
     has OpaquePointer $.node; # the node in the tree
 }
 
-my class xmlNode is repr('CStruct') is export(:types) {
+my class xmlNode is export(:types) {
     has OpaquePointer $._private; # application data
     has int8              $.type; # (xmlElementType) type number, must be second !
     has Str          $.localname; # name/filename/URI of the document
@@ -120,13 +121,13 @@ my class xmlNode is repr('CStruct') is export(:types) {
     #~ unsigned short	extra	: extra data for XPath/XSLT
 }
 
-my class xmlNodeSet is repr('CStruct') is export(:types) {
+my class xmlNodeSet is export(:types) {
     has int32            $.nodeNr; # number of nodes in the set
     has int32           $.nodeMax; # size of the array as allocated
     has CArray[xmlNode] $.nodeTab; # array of nodes in no particular order @
 }
 
-my class xmlNs is repr('CStruct') is export(:types) {
+my class xmlNs is export(:types) {
     has xmlNs             $.next; # next Ns link for this node
     has int8              $.type; # (xmlElementType) global or local
     has Str                $.uri; # URL for the namespace
@@ -135,7 +136,7 @@ my class xmlNs is repr('CStruct') is export(:types) {
     has xmlDoc         $.context; # normally an xmlDoc
 }
 
-my class xmlParserCtxt is repr('CStruct') is export(:types) {
+my class xmlParserCtxt is export(:types) {
     has xmlSAXHandler                  $.sax; # The SAX handler
     has OpaquePointer             $.userData; # For SAX interface only, used by DOM build
     has xmlDoc                       $.myDoc; # the document being built
@@ -240,7 +241,7 @@ my class xmlParserCtxt is repr('CStruct') is export(:types) {
     }
 }
 
-my class xmlParserNodeInfo is repr('CStruct') is export(:types) {
+my class xmlParserNodeInfo is export(:types) {
     has xmlNodePtr $.node; # Position & line # that text that create
     has int   $.begin_pos;
     has int  $.begin_line;
@@ -248,13 +249,13 @@ my class xmlParserNodeInfo is repr('CStruct') is export(:types) {
     has int    $.end_line;
 }
 
-my class xmlParserNodeInfoSeq is repr('CStruct') is export(:types) {
+my class xmlParserNodeInfoSeq is export(:types) {
     has int              $.maximum;
     has int               $.length;
     has xmlParserNodeInfo $.buffer;
 }
 
-my class xmlXPathContext is repr('CStruct') is export(:types) {
+my class xmlXPathContext is export(:types) {
     has xmlDoc                               $.doc; # The current document
     has xmlNode                             $.node; # The current node
     has int32                $.nb_variables_unused; # unused (hash table)
@@ -296,7 +297,7 @@ my class xmlXPathContext is repr('CStruct') is export(:types) {
     has OpaquePointer                      $.cache;
 }
 
-my class xmlXPathObject is repr('CStruct') is export(:types) {
+my class xmlXPathObject is export(:types) {
     has int8             $.type; # xmlXPathObjectType
     has xmlNodeSet $.nodesetval;
     has int32         $.boolval;
