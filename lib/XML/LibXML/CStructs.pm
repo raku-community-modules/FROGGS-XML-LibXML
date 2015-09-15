@@ -5,9 +5,13 @@ use NativeCall;
 my class CStruct is repr('CStruct') is export(:types) { }
 
 my class  xmlAttr                    is repr('CStruct')  { ... }
+my native xmlAttributeType           is repr('P6int') is Int is nativesize(32) is export(:types) { }
 my class  xmlAttrPtr                 is repr('CPointer') { }
+my class  xmlAutomataPtr             is repr('CPointer') { }
+my class  xmlAutomataStatePtr        is repr('CPointer') { }
 my class  xmlBuffer                  is repr('CStruct')  { ... }
-my native xmlChar                    is repr('P6int') is Int is nativesize(8) is unsigned { }
+my native xmlBufferAllocationScheme  is repr('P6int') is Int is nativesize(32) is export(:types) { }
+my native xmlChar                    is repr('P6int') is Int is nativesize(8) is unsigned is export(:types) { }
 my class  xmlDictPtr                 is repr('CPointer') { }
 my class  xmlDtdPtr                  is repr('CPointer') { }
 my class  xmlDoc                     is repr('CStruct')  { ... }
@@ -19,17 +23,19 @@ my class  xmlNodeSet                 is repr('CStruct')  { ... }
 my class  xmlNs                      is repr('CStruct')  { ... }
 my class  xmlNsPtr                   is repr('CPointer') { }
 my class  xmlParserCtxt              is repr('CStruct')  { ... }
-my class  xmlParserInputPtr          is repr('CPointer') { }
-my native xmlParserInputState        is repr('P6int') is Int is nativesize(64) { }
-my class  xmlParserMode              is repr('CPointer') { }
+my class  xmlParserInputPtr          is repr('CPointer') is Pointer { }
+my native xmlParserInputState        is repr('P6int') is Int is nativesize(32) is export(:types) { }
+my native xmlParserMode              is repr('P6int') is Int is nativesize(32) is export(:types) { }
 my class  xmlParserNodeInfo          is repr('CStruct')  { ... }
 my class  xmlParserNodeInfoSeq       is repr('CStruct')  { ... }
-my class  xmlSAXHandler              is repr('CPointer') { }
+my class  xmlSAXHandler              is repr('CStruct')  { ... }
 my class  xmlStructuredErrorFunc     is repr('CPointer') { }
-my class  xmlValidCtxt               is repr('CPointer') { }
+my class  xmlValidityErrorFunc       is repr('CPointer') { }
+my class  xmlValidityWarningFunc     is repr('CPointer') { }
+my class  xmlValidCtxt               is repr('CStruct')  { ... }
 my class  xmlXPathAxisPtr            is repr('CPointer') { }
-my class  xmlXPathCompExprPtr        is repr('CStruct') is export(:types) { }
-my class  xmlXPathContextPtr         is repr('CStruct') is export(:types) { }
+my class  xmlXPathCompExprPtr        is repr('CPointer') is export(:types) { }
+my class  xmlXPathContextPtr         is repr('CPointer') is export(:types) { }
 my class  xmlXPathContext            is repr('CStruct')  { ... }
 my class  xmlXPathFuncLookupFunc     is repr('CPointer') { }
 my class  xmlXPathObject             is repr('CStruct')  { ... }
@@ -37,7 +43,7 @@ my class  xmlXPathTypePtr            is repr('CPointer') { }
 my class  xmlXPathVariableLookupFunc is repr('CPointer') { }
 
 my class xmlAttr is export(:types) {
-    has OpaquePointer $._private; # application data
+    has Pointer       $._private; # application data
     has int8              $.type; # (xmlElementType) XML_ATTRIBUTE_NODE, must be second !
     has Str          $.localname; # the name of the property
     has xmlNode       $.children; # the value of the property
@@ -47,16 +53,16 @@ my class xmlAttr is export(:types) {
     has xmlAttrPtr        $.prev; # previous sibling link
     has xmlDoc             $.doc; # the containing document
     has xmlNs               $.ns; # pointer to the associated namespace
-    #~ xmlAttributeType	atype	: the attribute type if validating
-    #~ void *	psvi	: for type/PSVI informations
+    has xmlAttributeType $.atype; # the attribute type if validating
+    has Pointer           $.psvi; # for type/PSVI informations
 }
 
 my class xmlBuffer is export(:types) {
-    has Str     $.value; # The buffer content UTF8
-    #~ unsigned int	use	: The buffer size used
-    #~ unsigned int	size	: The buffer size
-    #~ xmlBufferAllocationScheme	alloc	: The realloc method
-    #~ xmlChar *	contentIO	: in IO mode we may have a different base
+    has Str                       $.value; # The buffer content UTF8
+    has uint32                      $.use; # The buffer size used
+    has uint32                     $.size; # The buffer size
+    has xmlBufferAllocationScheme $.alloc; # The realloc method
+    has Pointer[xmlChar]      $.contentIO; # in IO mode we may have a different base
 }
 
 my class xmlDoc is export(:types) {
@@ -79,11 +85,15 @@ my class xmlDoc is export(:types) {
     has OpaquePointer      $.ids; # Hash table for ID attributes if any
     has OpaquePointer     $.refs; # Hash table for IDREFs attributes if any
     has Str                $.uri; # The URI for that document
-    has int32          $.charset; # encoding of the in-memory content actua
+    has int32          $.charset is rw; # encoding of the in-memory content actua
     #~ struct _xmlDict *	dict	: dict used to allocate names or NULL
+    has Pointer $.dict;
     #~ void *	psvi	: for type/PSVI informations
+    has Pointer $.psvi;
     #~ int	parseFlags	: set of xmlParserOption used to parse th
+    has int32 $.parseFlags;
     #~ int	properties	: set of xmlDocProperties for this docume
+    has int32 $.properties;
 }
 
 my class xmlError is export(:types) {
@@ -116,9 +126,11 @@ my class xmlNode is export(:types) {
     has Str              $.value; # the content
     has xmlAttr     $.properties; # properties list
     has xmlNs            $.nsDef; # namespace definitions on this node
-    #~ has OpaquePointer $.psvi	: for type/PSVI informations
+    has OpaquePointer $.psvi; # for type/PSVI informations
     #~ unsigned short	line	: line number
+    has uint16 $.line;
     #~ unsigned short	extra	: extra data for XPath/XSLT
+    has uint16 $.extra;
 }
 
 my class xmlNodeSet is export(:types) {
@@ -136,12 +148,82 @@ my class xmlNs is export(:types) {
     has xmlDoc         $.context; # normally an xmlDoc
 }
 
+my class xmlParserNodeInfo is export(:types) {
+    has xmlNodePtr   $.node; # Position & line # that text that create
+    has ulong   $.begin_pos;
+    has ulong  $.begin_line;
+    has ulong     $.end_pos;
+    has ulong    $.end_line;
+}
+
+my class xmlParserNodeInfoSeq is export(:types) {
+    has ulong            $.maximum;
+    has ulong             $.length;
+    has xmlParserNodeInfo $.buffer;
+}
+
+my class xmlValidCtxt is export(:types) {
+    has Pointer                $.userData; # user specific data block
+    has xmlValidityErrorFunc      $.error; # the callback in case of errors
+    has xmlValidityWarningFunc  $.warning; # the callback in case of warning
+    # Node analysis stack used when validating within entities
+    has xmlNodePtr                 $.node; # Current parsed Node
+    has int32                    $.nodeNr; # Depth of the parsing stack
+    has int32                   $.nodeMax; # Max depth of the parsing stack
+    has Pointer[xmlNodePtr]     $.nodeTab; # array of nodes
+    has uint32                $.finishDtd; # finished validating the Dtd ?
+    has Pointer[xmlDoc]             $.doc; # the document
+    has int32                     $.valid; # temporary validity check result
+    # state state used for non-determinist content validation
+    has Pointer                  $.vstate; # current state
+    has int32                  $.vstateNr; # Depth of the validation stack
+    has int32                 $.vstateMax; # Max depth of the validation stack
+    has Pointer               $.vstateTab; # array of validation states
+    has xmlAutomataPtr               $.am; # the automata
+    has xmlAutomataStatePtr       $.state; # used to build the automata
+}
+
+my class xmlSAXHandler is export(:types) {
+    #~ internalSubsetSAXFunc internalSubset;
+    #~ isStandaloneSAXFunc isStandalone;
+    #~ hasInternalSubsetSAXFunc hasInternalSubset;
+    #~ hasExternalSubsetSAXFunc hasExternalSubset;
+    #~ resolveEntitySAXFunc resolveEntity;
+    #~ getEntitySAXFunc getEntity;
+    #~ entityDeclSAXFunc entityDecl;
+    #~ notationDeclSAXFunc notationDecl;
+    #~ attributeDeclSAXFunc attributeDecl;
+    #~ elementDeclSAXFunc elementDecl;
+    #~ unparsedEntityDeclSAXFunc unparsedEntityDecl;
+    #~ setDocumentLocatorSAXFunc setDocumentLocator;
+    #~ startDocumentSAXFunc startDocument;
+    #~ endDocumentSAXFunc endDocument;
+    #~ startElementSAXFunc startElement;
+    #~ endElementSAXFunc endElement;
+    #~ referenceSAXFunc reference;
+    #~ charactersSAXFunc characters;
+    #~ ignorableWhitespaceSAXFunc ignorableWhitespace;
+    #~ processingInstructionSAXFunc processingInstruction;
+    #~ commentSAXFunc comment;
+    #~ warningSAXFunc warning;
+    #~ errorSAXFunc error;
+    #~ fatalErrorSAXFunc fatalError; /* unused error() get all the errors */
+    #~ getParameterEntitySAXFunc getParameterEntity;
+    #~ cdataBlockSAXFunc cdataBlock;
+    #~ externalSubsetSAXFunc externalSubset;
+    has uint32 $.initialized;
+    # The following fields are extensions available only on version 2
+    has Pointer $._private;
+    #~ startElementNsSAX2Func startElementNs;
+    #~ endElementNsSAX2Func endElementNs;
+    #~ xmlStructuredErrorFunc serror;
+}
 my class xmlParserCtxt is export(:types) {
     has xmlSAXHandler                  $.sax; # The SAX handler
     has OpaquePointer             $.userData; # For SAX interface only, used by DOM build
     has xmlDoc                       $.myDoc; # the document being built
     has int32                   $.wellFormed; # is the document well formed
-    has int32              $.replaceEntities; # shall we replace entities ?
+    has int32       $.replace-entities is rw; # shall we replace entities ?
     has Str                        $.version; # the XML version string
     has Str                       $.encoding; # the declared encoding, if any
     has int32                   $.standalone; # standalone document
@@ -155,43 +237,43 @@ my class xmlParserCtxt is export(:types) {
     has int32                      $.nodeMax; # Max depth of the parsing stack
     has CArray[xmlNodePtr]         $.nodeTab; # array of nodes
     has int32                  $.record_info; # Whether node info should be kept
-    has xmlParserNodeInfoSeq      $.node_seq; # info about each node parsed
+    HAS xmlParserNodeInfoSeq      $.node_seq; # info about each node parsed
     has int32                        $.errNo; # error code
     has int32            $.hasExternalSubset; # reference and external subset
     has int32                    $.hasPErefs; # the internal subset has PE refs
     has int32                     $.external; # are we parsing an external entity
     has int32                        $.valid; # is the document valid
     has int32                     $.validate; # shall we try to validate ?
-    has xmlValidCtxt                 $.vctxt; # The validity context
+    HAS xmlValidCtxt                 $.vctxt; # The validity context
     has xmlParserInputState        $.instate; # current type of input
     has int32                        $.token; # next char look-ahead
-    has CArray[int8]             $.directory; # the data directory Node name stack
-    has CArray[int8]                  $.name; # Current parsed Node
+    has Str                      $.directory; # the data directory Node name stack
+    has Str                           $.name; # Current parsed Node
     has int32                       $.nameNr; # Depth of the parsing stack
     has int32                      $.nameMax; # Max depth of the parsing stack
     has CArray[Str]                $.nameTab; # array of nodes
-    has int                        $.nbChars; # number of xmlChar processed
-    has int                     $.checkIndex; # used by progressive parsing lookup
-    has int32                   $.keepBlanks; # ugly but ...
+    has long                       $.nbChars; # number of xmlChar processed
+    has long                    $.checkIndex; # used by progressive parsing lookup
+    has int32            $.keep-blanks is rw; # ugly but ...
     has int32                   $.disableSAX; # SAX callbacks are disabled
     has int32                     $.inSubset; # Parsing is in int 1/ext 2 subset
     has Str                     $.intSubName; # name of subset
     has Str                      $.extSubURI; # URI of external subset
     has Str                   $.extSubSystem; # SYSTEM ID of external subset xml:space
-    has CArray[int]                  $.space; # Should the parser preserve spaces
+    has CArray[int32]                $.space; # Should the parser preserve spaces
     has int32                      $.spaceNr; # Depth of the parsing stack
     has int32                     $.spaceMax; # Max depth of the parsing stack
-    has CArray[int]               $.spaceTab; # array of space infos
+    has CArray[int32]             $.spaceTab; # array of space infos
     has int32                        $.depth; # to prevent entity substitution loops
     has xmlParserInputPtr           $.entity; # used to check entities boundaries
     has int32                      $.charset; # encoding of the in-memory content actua
     has int32                      $.nodelen; # Those two fields are there to
     has int32                      $.nodemem; # Speed up large node parsing
-    has int32                     $.pedantic; # signal pedantic warnings
-    has OpaquePointer             $._private; # For user data, libxml won't touch it
+    has int32               $.pedantic is rw; # signal pedantic warnings
+    has Pointer                   $._private; # For user data, libxml won't touch it
     has int32                   $.loadsubset; # should the external subset be loaded
     has int32                  $.linenumbers; # set line number in element content
-    has OpaquePointer             $.catalogs; # document's own catalog
+    has Pointer                   $.catalogs; # document's own catalog
     has int32                     $.recovery; # run in recovery mode
     has int32                  $.progressive; # is this a progressive parsing
     has xmlDictPtr                    $.dict; # dictionnary for the parser
@@ -205,7 +287,7 @@ my class xmlParserCtxt is export(:types) {
     has int32                         $.nsNr; # the number of inherited namespaces
     has int32                        $.nsMax; # the size of the arrays
     has CArray[Str]                  $.nsTab; # the array of prefix/namespace name
-    has CArray[int]              $.attallocs; # which attribute were allocated
+    has CArray[int32]            $.attallocs; # which attribute were allocated
     has CArray[OpaquePointer]      $.pushTab; # array of data for push
     has xmlHashTablePtr        $.attsDefault; # defaulted attributes if any
     has xmlHashTablePtr        $.attsSpecial; # non-CDATA attributes if any
@@ -216,43 +298,16 @@ my class xmlParserCtxt is export(:types) {
     has xmlNodePtr               $.freeElems; # List of freed element nodes
     has int32                  $.freeAttrsNr; # number of freed attributes nodes
     has xmlAttrPtr               $.freeAttrs; # * the complete error informations for th
-    has xmlError                 $.lastError;
+    HAS xmlError                 $.lastError;
     has xmlParserMode            $.parseMode; # the parser mode
-    has int                     $.nbentities; # number of entities references
-    has int                   $.sizeentities; # size of parsed entities for use by HTML
+    has ulong                   $.nbentities; # number of entities references
+    has ulong                 $.sizeentities; # size of parsed entities for use by HTML
     has xmlParserNodeInfo         $.nodeInfo; # Current NodeInfo
     has int32                   $.nodeInfoNr; # Depth of the parsing stack
     has int32                  $.nodeInfoMax; # Max depth of the parsing stack
     has xmlParserNodeInfo      $.nodeInfoTab; # array of nodeInfos
     has int32                     $.input_id; # we need to label inputs
-    has int                    $.sizeentcopy; # volume of entity copy
-
-    # XXX This can go away when rakudo supports 'is rw' on natively typed attributes
-    method keep-blanks(*@a) is rw {
-        Proxy.new(
-            FETCH => -> $ {
-                nqp::p6bool(nqp::getattr_i(nqp::decont(self), xmlParserCtxt, '$!keepBlanks'))
-            },
-            STORE => -> $, int32 $new {
-                nqp::bindattr_i(nqp::decont(self), xmlParserCtxt, '$!keepBlanks', $new);
-                $new
-            }
-        )
-    }
-}
-
-my class xmlParserNodeInfo is export(:types) {
-    has xmlNodePtr $.node; # Position & line # that text that create
-    has int   $.begin_pos;
-    has int  $.begin_line;
-    has int     $.end_pos;
-    has int    $.end_line;
-}
-
-my class xmlParserNodeInfoSeq is export(:types) {
-    has int              $.maximum;
-    has int               $.length;
-    has xmlParserNodeInfo $.buffer;
+    has ulong                  $.sizeentcopy; # volume of entity copy
 }
 
 my class xmlXPathContext is export(:types) {
@@ -303,8 +358,8 @@ my class xmlXPathObject is export(:types) {
     has int32         $.boolval;
     has num64        $.floatval;
     has Str         $.stringval;
-    #~ void *	user
-    #~ int	index
-    #~ void *	user2
-    #~ int	index2
+    has Pointer          $.user;
+    has int32           $.index;
+    has Pointer         $.user2;
+    has int32          $.index2;
 }
