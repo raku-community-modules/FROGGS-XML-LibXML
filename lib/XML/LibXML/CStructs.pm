@@ -15,10 +15,11 @@ my native xmlChar                    is repr('P6int') is Int is nativesize(8) is
 my class  xmlDictPtr                 is repr('CPointer') { }
 my class  xmlDtdPtr                  is repr('CPointer') { }
 my class  xmlDoc                     is repr('CStruct')  { ... }
+my class  xmlDocPtr                  is repr('CPointer') is Pointer is export(:types) { }
 my class  xmlError                   is repr('CStruct')  { ... }
 my class  xmlHashTablePtr            is repr('CPointer') { }
 my class  xmlNode                    is repr('CStruct')  { ... }
-my class  xmlNodePtr                 is repr('CPointer') { }
+my class  xmlNodePtr                 is repr('CPointer') is Pointer { }
 my class  xmlNodeSet                 is repr('CStruct')  { ... }
 my class  xmlNs                      is repr('CStruct')  { ... }
 my class  xmlNsPtr                   is repr('CPointer') { }
@@ -74,7 +75,7 @@ my class xmlDoc is export(:types) {
     has xmlNodePtr      $.parent; # child->parent link
     has xmlNodePtr        $.next; # next sibling link
     has xmlNodePtr        $.prev; # previous sibling link
-    has xmlDoc             $.doc; # autoreference to itself End of common p
+    has xmlDocPtr          $.doc; # autoreference to itself End of common p
     has int32      $.compression; # level of zlib compression
     has int32       $.standalone; # standalone document (no external refs)
     has xmlDtdPtr    $.intSubset; # the document internal subset
@@ -84,7 +85,7 @@ my class xmlDoc is export(:types) {
     has Str           $.encoding; # external initial encoding, if any
     has OpaquePointer      $.ids; # Hash table for ID attributes if any
     has OpaquePointer     $.refs; # Hash table for IDREFs attributes if any
-    has Str                $.uri; # The URI for that document
+    has Str           $.uri is rw; # The URI for that document
     has int32          $.charset is rw; # encoding of the in-memory content actua
     #~ struct _xmlDict *	dict	: dict used to allocate names or NULL
     has Pointer $.dict;
@@ -121,7 +122,7 @@ my class xmlNode is export(:types) {
     has xmlNodePtr      $.parent; # child->parent link
     has xmlNodePtr        $.next; # next sibling link
     has xmlNodePtr        $.prev; # previous sibling link
-    has xmlDoc             $.doc; # autoreference to itself End of common p
+    has xmlDocPtr          $.doc; # autoreference to itself End of common p
     has xmlNs               $.ns; # pointer to the associated namespace
     has Str              $.value; # the content
     has xmlAttr     $.properties; # properties list
@@ -243,7 +244,7 @@ my class xmlParserCtxt is export(:types) {
     has int32                    $.hasPErefs; # the internal subset has PE refs
     has int32                     $.external; # are we parsing an external entity
     has int32                        $.valid; # is the document valid
-    has int32                     $.validate; # shall we try to validate ?
+    has int32               $.validate is rw; # shall we try to validate ?
     HAS xmlValidCtxt                 $.vctxt; # The validity context
     has xmlParserInputState        $.instate; # current type of input
     has int32                        $.token; # next char look-ahead
@@ -272,7 +273,7 @@ my class xmlParserCtxt is export(:types) {
     has int32               $.pedantic is rw; # signal pedantic warnings
     has Pointer                   $._private; # For user data, libxml won't touch it
     has int32                   $.loadsubset; # should the external subset be loaded
-    has int32                  $.linenumbers; # set line number in element content
+    has int32            $.linenumbers is rw; # set line number in element content
     has Pointer                   $.catalogs; # document's own catalog
     has int32                     $.recovery; # run in recovery mode
     has int32                  $.progressive; # is this a progressive parsing

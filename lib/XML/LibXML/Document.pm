@@ -9,7 +9,7 @@ use XML::LibXML::Attr;
 use XML::LibXML::Enums;
 use XML::LibXML::Error;
 
-unit class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::C14N;
+unit class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::Nodish;
 
 sub xmlNewDoc(Str)                          returns XML::LibXML::Document  is native('libxml2') { * }
 sub xmlDocGetRootElement(xmlDoc)            returns XML::LibXML::Node      is native('libxml2') { * }
@@ -22,6 +22,13 @@ sub xmlReplaceNode(xmlNode, xmlNode)        returns XML::LibXML::Node      is na
 sub xmlNewDocFragment(xmlDoc)               returns XML::LibXML::Node      is native('libxml2') { * }
 sub xmlNewDocProp(xmlDoc, Str, Str)         returns XML::LibXML::Attr      is native('libxml2') { * }
 sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)  returns XML::LibXML::Node      is native('libxml2') { * }
+
+
+method process-xincludes {
+    sub xmlXIncludeProcessFlags(xmlDoc, int32) returns int32 is native('libxml2') { * }
+    xmlXIncludeProcessFlags(self, 0)
+}
+
 
 # Objects that implement the Document interface have all properties and functions of the Node interface as well as the properties and functions defined below.
 
@@ -62,7 +69,7 @@ method xmlEncoding is aka<encoding> {
         STORE => -> $, Str $new {
             my $enc = xmlParseCharEncoding($new);
             die if $enc < 0;
-            nqp::bindattr_i(nqp::decont(self), xmlDoc, '$!charset', $enc);
+            self.charset = $enc;
             $new
         }
     )
@@ -88,6 +95,7 @@ method xmlStandalone is aka<standalone> {
             nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlDoc, '$!standalone'))
         },
         STORE => -> $, int32 $new {
+            #~ self.standalone = 
             nqp::bindattr_i(nqp::decont(self), xmlDoc, '$!standalone', $new);
             $new
         }
@@ -113,10 +121,11 @@ method documentURI is aka<uri> {
 method base-uri() {
     Proxy.new(
         FETCH => -> $ {
-            xmlNodeGetBase(self.doc, self)
+            xmlNodeGetBase(self, self)
         },
         STORE => -> $, $new {
-            nqp::bindattr(nqp::decont(self), xmlDoc, '$!uri', nqp::unbox_s(~$new));
+            #~ nqp::bindattr(nqp::decont(self), xmlDoc, '$!uri', nqp::unbox_s(~$new));
+            xmlNodeSetBase(self, ~$new);
             $new
         }
     )
@@ -194,32 +203,50 @@ method base-uri() {
     #~ The qualifiedName parameter is a String.
     #~ This function can raise an object that implements the DOMException interface.
 
+
+
+    multi method elems() {
+        sub xmlChildElementCount(xmlDoc)           returns ulong      is native('libxml2') { * }
+        xmlChildElementCount(self)
+    }
+
+    method push($child) is aka<appendChild> {
+        sub xmlAddChild(xmlDoc,  xmlNode)  returns XML::LibXML::Node  is native('libxml2') { * }
+        xmlAddChild(self, $child)
+    }
+
+    method Str(:$format = 0) {
+        my $result = CArray[Str].new();
+        my $len    = CArray[int32].new();
+        $result[0] = "";
+        $len[0]    = 0;
+        #~ xmlDocDumpMemory(self, $result, $len);
+        xmlDocDumpFormatMemory(self, $result, $len, $format);
+        $result[0]
+    }
+
+    #~ multi method Str(:$skip-xml-declaration) {
+        #~ self.list.grep({ !xmlIsBlankNode($_) })».Str.join
+        #~ self.list.grep({ $_.type != XML_DTD_NODE && !xmlIsBlankNode($_) })».Str(:!format).join: ''
+        #~ self.list».Str(:!format).join: ''
+            
+    #~ }
+
+    method gist() {
+        my $result = CArray[Str].new();
+        my $len    = CArray[int32].new();
+        $result[0] = "";
+        $len[0]    = 0;
+        xmlDocDumpFormatMemory(self, $result, $len, 1);
+        $result[0]
+    }
+
+
+
 method new(:$version = '1.0', :$encoding) {
     my $doc       = xmlNewDoc(~$version);
     $doc.encoding = $encoding if $encoding;
     $doc
-}
-
-method Str() {
-    my $result = CArray[Str].new();
-    my $len    = CArray[int32].new();
-    $result[0] = "";
-    $len[0]    = 0;
-    xmlDocDumpMemory(self, $result, $len);
-    $result[0]
-}
-
-method gist() {
-    my $result = CArray[Str].new();
-    my $len    = CArray[int32].new();
-    $result[0] = "";
-    $len[0]    = 0;
-    xmlDocDumpFormatMemory(self, $result, $len, 1);
-    $result[0]
-}
-
-method name() {
-    "#document"
 }
 
 method new-doc-fragment() {
@@ -228,13 +255,13 @@ method new-doc-fragment() {
     $node
 }
 
-method new-elem(Str $elem) {
+method new-elem(Str $elem) is aka<createElement> {
     if $elem.match(/[ ^<[\W\d]> | <-[\w_.-]> ]/) -> $bad {
         fail X::XML::InvalidName.new( :name($elem), :pos($bad.from), :routine(&?ROUTINE) )
     }
 
     my $node = xmlNewNode( self, $elem );
-    nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
+    nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self.doc));
     $node
 }
 
@@ -311,33 +338,4 @@ method new-cdata-block(Str $cdata) {
     my $node = xmlNewCDataBlock( self, $cdata, xmlStrlen($cdata) );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
     $node
-}
-
-method find($xpath) {
-    my $comp = xmlXPathCompile($xpath);
-    my $ctxt = xmlXPathNewContext(self.doc);
-    my $res  = xmlXPathCompiledEval($comp, $ctxt);
-    do given xmlXPathObjectType($res.type) {
-        when XPATH_UNDEFINED {
-            Nil
-        }
-        when XPATH_NODESET {
-            my $set = $res.nodesetval;
-            (^$set.nodeNr).map: {
-                nativecast(XML::LibXML::Node, $set.nodeTab[$_])
-            }
-        }
-        when XPATH_BOOLEAN {
-            so $res.boolval
-        }
-        when XPATH_NUMBER {
-            $res.floatval
-        }
-        when XPATH_STRING {
-            $res.stringval
-        }
-        default {
-            fail "NodeSet type $_ NYI"
-        }
-    }
 }

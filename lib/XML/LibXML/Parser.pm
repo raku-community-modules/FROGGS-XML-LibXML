@@ -8,6 +8,7 @@ unit class XML::LibXML::Parser is xmlParserCtxt is repr('CStruct');
 use XML::LibXML::Document;
 use XML::LibXML::Subs;
 use XML::LibXML::Error;
+use XML::LibXML::Enums;
 
 sub xmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, Int)  returns XML::LibXML::Document is native('libxml2') { * }
 sub xmlNewParserCtxt                                   returns XML::LibXML::Parser   is native('libxml2') { * }
@@ -18,6 +19,7 @@ sub htmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, Int) returns XML::LibXML::Docu
 
 
 method new {
+    xmlKeepBlanksDefault(1);
     my $self = xmlNewParserCtxt();
 
     # This stops libxml2 printing errors to stderr
@@ -36,3 +38,22 @@ method parse-html(Str:D $str, Str :$uri) {
     fail XML::LibXML::Error.get-last(self, :orig($str)) unless $doc;
     $doc
 }
+
+#~ multi method expand-entities() {
+    #~ sub xmlCtxtUseOptions(xmlParserCtxt, int32)                     returns int32 is native('libxml2') { * }
+    #~ say self.replaceEntities;
+    #~ say xmlCtxtUseOptions(self, XML_PARSE_NOENT);
+    #~ say self.replaceEntities;
+    
+    #~ if (scalar(@_) and $_[0]) {
+      #~ return $self->__parser_option(XML_PARSE_NOENT | XML_PARSE_DTDLOAD,1);
+    #~ }
+    #~ return $self->__parser_option(XML_PARSE_NOENT,@_);
+#~ }
+#~ multi method expand-entities() {
+    #~ my $self = shift;
+    #~ if (scalar(@_) and $_[0]) {
+      #~ return $self->__parser_option(XML_PARSE_NOENT | XML_PARSE_DTDLOAD,1);
+    #~ }
+    #~ return $self->__parser_option(XML_PARSE_NOENT,@_);
+#~ }

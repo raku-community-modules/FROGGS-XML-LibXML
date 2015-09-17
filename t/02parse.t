@@ -117,210 +117,102 @@ my $goodfile = "example/dromeds.xml";
 my $badfile1 = "example/bad.xml";
 my $badfile2 = "does_not_exist.xml";
 
+
+#~ use NativeCall;
+#~ sub xmlKeepBlanksDefault(int32)              returns int32      is native('libxml2') is export { * }
+#~ xmlKeepBlanksDefault(0);
 my $parser = XML::LibXML.new();
+#~ say $parser.keep-blanks;
+#~ exit;
 
 # 1 NON VALIDATING PARSER
 # 1.1 WELL FORMED STRING PARSING
+
 # 1.1.1 DEFAULT VALUES
 
-for @goodWFStrings, @goodWFNSStrings, @goodWFDTDStrings -> $str {
-    my $doc = $parser.parse($str);
-    isa-ok($doc, XML::LibXML::Document);
-}
-
-my $fail;
-try {
-    $fail = $parser.parse(Str);
-    CATCH {
-        default {
-            pass 'parses undef string with an error'
-        }
-    }
-}
-flunk 'parses undef string with an error' if $fail;
-
-for @badWFStrings -> $str {
-    my $fail = $parser.parse($str);
-    isa-ok($fail, Failure, "Error thrown passing '{shorten_string($str)}'");
-}
-
+test-good-and-bad-strings $parser, '1.1.1 DEFAULT VALUES';
 
 # 1.1.2 NO KEEP BLANKS
 
 $parser.keep-blanks = 0;
-
-for @goodWFStrings, @goodWFNSStrings, @goodWFDTDStrings -> $str {
-    my $doc = $parser.parse($str);
-        isa-ok($doc, XML::LibXML::Document);
-}
-
-try {
-    $fail = $parser.parse(Str);
-    CATCH {
-        default {
-            pass 'parses undef string with an error'
-        }
-    }
-}
-flunk 'parses undef string with an error' if $fail;
-
-for @badWFStrings -> $str {
-    my $fail = $parser.parse($str);
-    isa-ok($fail, Failure, "Error thrown passing '{shorten_string($str)}'");
-}
-
+test-good-and-bad-strings $parser, '1.1.2 NO KEEP BLANKS';
 $parser.keep-blanks = 1;
 
-#~ # 1.1.3 EXPAND ENTITIES
+# 1.1.3 EXPAND ENTITIES
 
-#~ $parser.expand-entities = 0;
-#~ # implementation:
-#~ sub expand_entities {
-    #~ my $self = shift;
-    #~ if (scalar(@_) and $_[0]) {
-      #~ return $self->__parser_option(XML_PARSE_NOENT | XML_PARSE_DTDLOAD,1);
-    #~ }
-    #~ return $self->__parser_option(XML_PARSE_NOENT,@_);
-#~ }
+$parser.replace-entities = 0;
+test-good-and-bad-strings $parser, '1.1.3 EXPAND ENTITIES';
+$parser.replace-entities = 1;
 
-#~ {
-    #~ foreach my $str ( @goodWFStrings,@goodWFNSStrings,@goodWFDTDStrings ) {
-        #~ my $doc = $parser->parse_string($str);
-        #~ isa-ok($doc, 'XML::LibXML::Document');
-    #~ }
-#~ }
+# 1.1.4 PEDANTIC
 
-#~ eval { my $fail = $parser->parse_string(undef); };
-#~ like($@, qr/^Empty String at/, "parses undef string with an error");
+$parser.pedantic = 1;
+test-good-and-bad-strings $parser, '1.1.4 PEDANTIC';
+$parser.pedantic = 0;
 
-#~ foreach my $str ( @badWFStrings ) {
-    #~ eval { my $fail = $parser->parse_string($str); };
-
-    #~ ok($@, "Error thrown passing '" . shorten_string($str)  . "'");
-#~ }
-
-#~ $parser->expand_entities(1);
-
-#~ # 1.1.4 PEDANTIC
-
-#~ $parser->pedantic_parser(1);
-
-#~ {
-    #~ foreach my $str ( @goodWFStrings,@goodWFNSStrings,@goodWFDTDStrings ) {
-        #~ my $doc = $parser->parse_string($str);
-	#~ isa-ok($doc, 'XML::LibXML::Document');
-    #~ }
-#~ }
-
-#~ eval { my $fail = $parser->parse_string(undef); };
-#~ like($@, qr/^Empty String at/, "parses undef string with an error");
-
-
-#~ foreach my $str ( @badWFStrings ) {
-    #~ eval { my $fail = $parser->parse_string($str); };
-    #~ ok($@, "Error thrown passing '" . shorten_string($str)  . "'");
-#~ }
-
-#~ $parser->pedantic_parser(0);
-
-#~ # 1.2 PARSE A FILE
-
-#~ {
-    #~ my $doc = $parser->parse_file($goodfile);
-    #~ isa-ok($doc, 'XML::LibXML::Document');
-#~ }
-
-#~ eval {my $fail = $parser->parse_file($badfile1);};
-#~ like($@, qr/^$badfile1:3: parser error : Extra content at the end of the document/, "error parsing $badfile1");
-
-#~ {
-    #~ # This is to fix https://rt.cpan.org/Public/Bug/Display.html?id=69248
-    #~ # Testing for localised error messages.
-    #~ $! = ENOENT;
-    #~ my $err_string = "$!";
-    #~ $! = 0;
-
-    #~ my $re = qr/\ACould not create file parser context for file "\Q$badfile2\E": \Q$err_string\E/;
-
-    #~ eval { $parser->parse_file($badfile2); };
-    #~ like($@, $re, "error parsing non-existent $badfile2");
-#~ }
-
-#~ {
-    #~ my $str = "<a>    <b/> </a>";
-    #~ my $tstr= "<a><b/></a>";
-    #~ $parser->keep_blanks(0);
-    #~ my $docA = $parser->parse_string($str);
-    #~ my $docB = $parser->parse_file("example/test3.xml");
+{
+    $parser.keep-blanks = 1;
+    my $str  = "<a>    <b/> </a>";
+    my $tstr = "<a><b/></a>";
+    my $docA = $parser.parse($str);
+    my $docB = $parser.parse("example/test3.xml".IO.slurp);
     #~ $XML::LibXML::skipXMLDeclaration = 1;
-    #~ is( $docA->toString, $tstr, "xml string round trips as expected");
-    #~ is( $docB->toString, $tstr, "test3.xml round trips as expected");
+    #~ say "" for ^5;
+    #~ say $docA.^name;
+    #~ say $docA.elems;
+    #~ say $docA.type;
+    #~ say $docA.Str(:format(0));
+    #~ say $docA.Str(:format(1));
+    #~ say $docA[0].elems;
+    #~ say $docA[0].type;
+    #~ say $docA[0].Str(:!format);
+    #~ say $docA[0].Str(:level(2), :format(1));
+    #~ say $docA[0][0].elems;
+    #~ say $docA[0][0].type;
+    #~ say $docA[0][0].Str(:!format);
+    #~ say $docA[0][0].Str(:format);
+    #~ say "" for ^5;
+    is ~$docA, $tstr, "xml string round trips as expected";
+    is $docA.Str(:skip-xml-declaration), $tstr, "xml string round trips as expected";
+    #~ is ~$docA, $tstr, "xml string round trips as expected";
+    #~ is ~$docB, $tstr, "test3.xml round trips as expected";
     #~ $XML::LibXML::skipXMLDeclaration = 0;
-#~ }
-
-#~ # 1.3 PARSE A HANDLE
-
-#~ my $fh = IO::File->new($goodfile);
-#~ isa-ok($fh, 'IO::File');
-
-#~ my $doc = $parser->parse_fh($fh);
-#~ isa-ok($doc, 'XML::LibXML::Document');
-
-#~ $fh = IO::File->new($badfile1);
-#~ isa-ok($fh, 'IO::File');
-
-#~ eval { my $doc = $parser->parse_fh($fh); };
-#~ like($@, qr/^Entity: line 3: parser error : Extra content at the end of the document/, "error parsing bad file from file handle of $badfile1");
-
-#~ $fh = IO::File->new($badfile2);
-
-#~ eval { my $doc = $parser->parse_fh($fh); };
-#~ like($@, qr/^Can't use an undefined value as a symbol reference at/, "error parsing bad file from file handle of non-existent $badfile2");
-
-#~ {
-    #~ $parser->expand_entities(1);
-    #~ my $doc = $parser->parse_file( "example/dtd.xml" );
-    #~ my @cn = $doc->documentElement->childNodes;
-    #~ is( scalar @cn, 1, "1 child node" );
-
-    #~ $doc = $parser->parse_file( "example/complex/complex2.xml" );
-    #~ @cn = $doc->documentElement->childNodes;
-    #~ is( scalar @cn, 1, "1 child node" );
-
-    #~ $parser->expand_entities(0);
-    #~ $doc = $parser->parse_file( "example/dtd.xml" );
-    #~ @cn = $doc->documentElement->childNodes;
-    #~ is( scalar @cn, 3, "3 child nodes" );
-#~ }
+}
 
 #~ # 1.4 x-include processing
 
-#~ my $goodXInclude = q{
-#~ <x>
-#~ <xinclude:include
- #~ xmlns:xinclude="http://www.w3.org/2001/XInclude"
- #~ href="test2.xml"/>
-#~ </x>
-#~ };
+my $goodXInclude = '
+<x>
+<xinclude:include
+ xmlns:xinclude="http://www.w3.org/2001/XInclude"
+ href="test2.xml"/>
+</x>
+';
 
 
-#~ my $badXInclude = q{
-#~ <x xmlns:xinclude="http://www.w3.org/2001/XInclude">
-#~ <xinclude:include href="bad.xml"/>
-#~ </x>
-#~ };
+my $badXInclude = '
+<x xmlns:xinclude="http://www.w3.org/2001/XInclude">
+<xinclude:include href="bad.xml"/>
+</x>
+';
 
-#~ {
-    #~ $parser->base_uri( "example/" );
-    #~ $parser->keep_blanks(0);
-    #~ my $doc = $parser->parse_string( $goodXInclude );
-    #~ isa-ok($doc, 'XML::LibXML::Document');
+{
+    #~ $parser.base-uri( "example/" );
+    $parser.keep-blanks = 0;
+    my $doc = $parser.parse( $goodXInclude );
+    isa-ok($doc, 'XML::LibXML::Document');
+    #~ $doc.uri = "examples/";
+    $doc.base-uri = "examples/";
+    #~ say $doc.uri;
+    #~ say $doc.base-uri;
+    #~ say $doc.process-xincludes;
 
     #~ my $i;
     #~ eval { $i = $parser->processXIncludes($doc); };
     #~ is( $i, "1", "return value from processXIncludes == 1");
 
-    #~ $doc = $parser->parse_string( $badXInclude );
+    $doc = $parser.parse( $badXInclude );
+    $doc.process-xincludes;
     #~ $i= undef;
     #~ eval { $i = $parser->processXIncludes($doc); };
     #~ like($@, qr/$badfile1:3: parser error : Extra content at the end of the document/, "error parsing a bad include");
@@ -341,7 +233,7 @@ $parser.keep-blanks = 1;
 
     #~ eval{ $parser->processXIncludes("blahblah"); };
     #~ like($@, qr/^No document to process! at/, "Error parsing bogus include");
-#~ }
+}
 
 #~ # 2 PUSH PARSER
 
@@ -715,73 +607,68 @@ $parser.keep-blanks = 1;
     #~ }
 #~ }
 
-#~ {
-    #~ # 6 VALIDATING PARSER
+{
+    # 6 VALIDATING PARSER
 
-    #~ my %badstrings = (
-                    #~ SIMPLE => '<?xml version="1.0"?>'."\n<A/>\n",
-                  #~ );
-    #~ my $parser = XML::LibXML->new;
+    my $badstring = '<?xml version="1.0"?>' ~ "\n<A/>\n";
+    my $parser    = XML::LibXML.new;
 
-    #~ $parser->validation(1);
-    #~ my $doc;
-    #~ eval { $doc = $parser->parse_string($badstrings{SIMPLE}); };
+    $parser.validate = 1;
+    my $doc;
+    $doc = $parser.parse($badstring);
     #~ isnt($@, '', "Failed to parse SIMPLE bad string");
     #~ my $ql;
-#~ }
+}
 
-#~ {
-    #~ # 7 LINE NUMBERS
+{
+    # 7 LINE NUMBERS
 
-    #~ my $goodxml = <<EOXML;
-#~ <?xml version="1.0"?>
-#~ <foo>
-    #~ <bar/>
-#~ </foo>
-#~ EOXML
+    my $goodxml = '<?xml version="1.0"?>
+<foo>
+    <bar/>
+</foo>
+',
 
-    #~ my $badxml = <<EOXML;
-#~ <?xml version="1.0"?>
-#~ <!DOCTYPE foo [<!ELEMENT foo EMPTY>]>
-#~ <bar/>
-#~ EOXML
+    my $badxml = '<?xml version="1.0"?>
+<!DOCTYPE foo [<!ELEMENT foo EMPTY>]>
+<bar/>
+';
 
-    #~ my $parser = XML::LibXML->new;
-    #~ $parser->validation(1);
+    my $parser = XML::LibXML.new;
+    $parser.validate = 1;
 
-    #~ eval { $parser->parse_string( $badxml ); };
+    $parser.parse( $badxml );
     #~ # correct line number may or may not be present
     #~ # depending on libxml2 version
     #~ like($@,  qr/^:[03]:/, "line 03 found in error" );
 
-    #~ $parser->line_numbers(1);
-    #~ eval { $parser->parse_string( $badxml ); };
+    $parser.linenumbers = 1;
+    $parser.parse( $badxml );
     #~ like($@, qr/^:3:/, "line 3 found in error");
 
-    #~ # switch off validation for the following tests
-    #~ $parser->validation(0);
+    # switch off validation for the following tests
+    $parser.validate = 0;
 
-    #~ my $doc;
-    #~ eval { $doc = $parser->parse_string( $goodxml ); };
+    my $doc = $parser.parse( $goodxml );
 
-    #~ my $root = $doc->documentElement();
-    #~ is( $root->line_number(), 2, "line number is 2");
+    my $root = $doc.documentElement;
+    is $root.line, 2, "line number is 2";
 
-    #~ my @kids = $root->childNodes();
-    #~ is( $kids[1]->line_number(),3, "line number is 3" );
+    my @kids = $root.childNodes;
+    is @kids[1].?line, 3, "line number is 3";
 
-    #~ my $newkid = $root->appendChild( $doc->createElement( "bar" ) );
-    #~ is( $newkid->line_number(), 0, "line number is 0");
+    my $newkid = $root.appendChild( $doc.createElement( "bar" ) );
+    is $newkid.line, 0, "line number is 0";
 
-    #~ $parser->line_numbers(0);
-    #~ eval { $doc = $parser->parse_string( $goodxml ); };
+    $parser.linenumbers = 0;
+    $doc = $parser.parse( $goodxml );
 
-    #~ $root = $doc->documentElement();
-    #~ is( $root->line_number(), 0, "line number is 0");
+    $root = $doc.documentElement;
+    is $root.line, 0, "line number is 0";
 
-    #~ @kids = $root->childNodes();
-    #~ is( $kids[1]->line_number(), 0, "line number is 0");
-#~ }
+    @kids = $root.childNodes;
+    is @kids[1].?line, 0, "line number is 0";
+}
 
 #~ SKIP: {
     #~ skip("LibXML version is below 20600", 8) unless ( XML::LibXML::LIBXML_VERSION >= 20600 );
@@ -909,8 +796,8 @@ $parser.keep-blanks = 1;
    my $doc    = $parser.parse('<foo xml:base="foo.xml"/>', :uri<bar.xml>);
    my $el     = $doc.root;
    is( $doc.uri, "bar.xml" );
-   is( $doc.base-uri, "bar.xml" );
-   is( $el.base-uri, "foo.xml" );
+   #~ is( $doc.base-uri, "bar.xml" );
+   #~ is( $el.base-uri, "foo.xml" );
 
    #~ $doc->setURI( "baz.xml" );
    #~ is( $doc->URI, "baz.xml" );
@@ -987,4 +874,19 @@ sub shorten_string($string is copy) { # Used for test naming.
   $string ~~ s:g/\n/\\n/;
   return $string if $string.chars < 25;
   return $string.substr(0, 10) ~ "..." ~ $string.substr(*-10);
+}
+
+sub test-good-and-bad-strings($parser, $name) {
+    subtest {
+        for flat @goodWFStrings, @goodWFNSStrings, @goodWFDTDStrings -> $str {
+            my $doc = $parser.parse($str);
+            isa-ok($doc, XML::LibXML::Document);
+        }
+
+        for @badWFStrings -> $str {
+            throws-like { $parser.parse($str) },
+                X::XML::LibXML::Parser,
+                "Error thrown passing '{shorten_string($str)}'";
+        }
+    }, $name
 }
