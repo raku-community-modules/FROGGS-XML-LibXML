@@ -5,6 +5,7 @@ use XML::LibXML::CStructs :types;
 use XML::LibXML::Enums;
 use XML::LibXML::Subs;
 use XML::LibXML::C14N;
+use XML::LibXML::Attr;
 
 class XML::LibXML::Node is xmlNode is repr('CStruct') { ... }
 
@@ -15,7 +16,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         my @ret;
         while $elem {
             push @ret, $elem; # unless $elem.type == XML_ATTRIBUTE_NODE;
-            $elem = nativecast(XML::LibXML::Node, self.next);
+            $elem = nativecast(XML::LibXML::Node, $elem.next);
         }
         @ret
     }
@@ -62,6 +63,16 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         }
     }
 
+    method attrs() {
+        my $elem = nativecast(XML::LibXML::Attr, self.properties);
+        my @ret;
+        while $elem {
+            push @ret, $elem;
+            $elem = nativecast(XML::LibXML::Attr, $elem.next);
+        }
+        @ret
+    }
+
     method remove-attr($name, :$ns) {
         #~ $ns ?? xmlUnsetNsProp(self, $ns, $name) !!
         xmlUnsetProp(self, $name)
@@ -77,9 +88,9 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             }
             when XPATH_NODESET {
                 my $set = $res.nodesetval;
-                (^$set.nodeNr).map: {
+                (^$set.nodeNr).map({
                     nativecast(XML::LibXML::Node, $set.nodeTab[$_])
-                }
+                }).cache
             }
             when XPATH_BOOLEAN {
                 so $res.boolval
