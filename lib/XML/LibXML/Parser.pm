@@ -2,6 +2,7 @@ use v6;
 
 use NativeCall;
 use XML::LibXML::CStructs :types;
+use XML::LibXML::Enums;
 
 unit class XML::LibXML::Parser is xmlParserCtxt is repr('CStruct');
 
@@ -14,13 +15,15 @@ sub xmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, Int)  returns XML::LibXML::Docu
 sub xmlNewParserCtxt                                   returns XML::LibXML::Parser   is native('libxml2') { * }
 sub xmlReadDoc(Str, Str, Str, Int)                     returns XML::LibXML::Document is native('libxml2') { * }
 sub xmlReadMemory(Str, Int, Str, Str, Int)             returns XML::LibXML::Document is native('libxml2') { * }
+sub htmlNewParserCtxt                                  returns XML::LibXML::Parser   is native('libxml2') { * }
 sub htmlParseFile(Str, Str)                            returns XML::LibXML::Document is native('libxml2') { * }
 sub htmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, Int) returns XML::LibXML::Document is native('libxml2') { * }
 
 
 method new {
-    xmlKeepBlanksDefault(1);
-    my $self = xmlNewParserCtxt();
+    xmlKeepBlanksDefault(0); # 1 for XML
+    #~ my $self = xmlNewParserCtxt();
+    my $self = htmlNewParserCtxt();
 
     # This stops libxml2 printing errors to stderr
     xmlSetStructuredErrorFunc($self, -> OpaquePointer, OpaquePointer { });
@@ -33,8 +36,8 @@ method parse(Str:D $str, Str :$uri) {
     $doc
 }
 
-method parse-html(Str:D $str, Str :$uri) {
-    my $doc = htmlCtxtReadDoc(self, $str, $uri, Str, 0);
+method parse-html(Str:D $str, Str :$uri, :$flags = HTML_PARSE_RECOVER + HTML_PARSE_NOBLANKS) {
+    my $doc = htmlCtxtReadDoc(self, $str, $uri, Str, +$flags);
     fail XML::LibXML::Error.get-last(self, :orig($str)) unless $doc;
     $doc
 }
