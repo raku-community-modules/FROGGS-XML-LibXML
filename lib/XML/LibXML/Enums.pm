@@ -58,6 +58,27 @@ enum xmlParserOption is export (
     XML_PARSE_BIG_LINES  => 4194304, # Store big lines numbers in text PSVI field
 );
 
+enum htmlParserOption is export (
+    HTML_PARSE_RECOVER    => 1,       # Relaxed parsing
+    HTML_PARSE_NODEFDTD   => 4,       # do not default a doctype if not found
+    HTML_PARSE_NOERROR    => 32,      # suppress error reports
+    HTML_PARSE_NOWARNING  => 64,      # suppress warning reports
+    HTML_PARSE_PEDANTIC   => 128,     # pedantic error reporting
+    HTML_PARSE_NOBLANKS   => 256,     # remove blank nodes
+    HTML_PARSE_NONET      => 2048,    # Forbid network access
+    HTML_PARSE_NOIMPLIED  => 8192,    # Do not add implied html/body... elements
+    HTML_PARSE_COMPACT    => 65536,   # compact small text nodes
+    HTML_PARSE_IGNORE_ENC => 2097152, # ignore internal document encoding hint
+);
+
+enum htmlStatus is export (
+    HTML_NA         => 0,  # something we don't check at all
+    HTML_INVALID    => 1,
+    HTML_DEPRECATED => 2,
+    HTML_VALID      => 4,
+    HTML_REQUIRED   => 12, # VALID bit set so ( & HTML_VALID ) is TRUE
+);
+
 enum xmlXPathObjectType is export (
     XPATH_UNDEFINED   => 0,
     XPATH_NODESET     => 1,
