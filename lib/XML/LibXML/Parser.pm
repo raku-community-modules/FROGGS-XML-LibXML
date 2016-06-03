@@ -11,13 +11,13 @@ use XML::LibXML::Subs;
 use XML::LibXML::Error;
 use XML::LibXML::Enums;
 
-sub xmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, Int)  returns XML::LibXML::Document is native('xml2') { * }
-sub xmlNewParserCtxt                                   returns XML::LibXML::Parser   is native('xml2') { * }
-sub xmlReadDoc(Str, Str, Str, Int)                     returns XML::LibXML::Document is native('xml2') { * }
-sub xmlReadMemory(Str, Int, Str, Str, Int)             returns XML::LibXML::Document is native('xml2') { * }
-sub htmlNewParserCtxt                                  returns XML::LibXML::Parser   is native('xml2') { * }
-sub htmlParseFile(Str, Str)                            returns XML::LibXML::Document is native('xml2') { * }
-sub htmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, Int) returns XML::LibXML::Document is native('xml2') { * }
+sub xmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, int32)  returns XML::LibXML::Document is native('xml2') { * }
+sub xmlNewParserCtxt                                     returns XML::LibXML::Parser   is native('xml2') { * }
+sub xmlReadDoc(Str, Str, Str, int32)                     returns XML::LibXML::Document is native('xml2') { * }
+sub xmlReadMemory(Str, int32, Str, Str, int32)           returns XML::LibXML::Document is native('xml2') { * }
+sub htmlNewParserCtxt                                    returns XML::LibXML::Parser   is native('xml2') { * }
+sub htmlParseFile(Str, Str)                              returns XML::LibXML::Document is native('xml2') { * }
+sub htmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, int32) returns XML::LibXML::Document is native('xml2') { * }
 
 
 method new {
