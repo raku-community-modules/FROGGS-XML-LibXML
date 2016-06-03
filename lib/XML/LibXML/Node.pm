@@ -7,6 +7,8 @@ use XML::LibXML::Subs;
 use XML::LibXML::C14N;
 use XML::LibXML::Attr;
 
+multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
+
 class XML::LibXML::Node is xmlNode is repr('CStruct') { ... }
 
 role XML::LibXML::Nodish does XML::LibXML::C14N {

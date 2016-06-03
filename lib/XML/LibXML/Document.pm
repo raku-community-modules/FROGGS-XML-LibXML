@@ -11,6 +11,8 @@ use XML::LibXML::Error;
 
 unit class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::Nodish;
 
+multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
+
 sub xmlNewDoc(Str)                          returns XML::LibXML::Document  is native('xml2') { * }
 sub xmlDocGetRootElement(xmlDoc)            returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlDocSetRootElement(xmlDoc, xmlNode)   returns XML::LibXML::Node      is native('xml2') { * }
