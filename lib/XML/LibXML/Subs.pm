@@ -24,9 +24,9 @@ sub xmlSetNs(xmlNode, xmlNs)                                is native('libxml2')
 sub xmlGetNsList(xmlDoc, xmlNode)            returns xmlNs  is native('libxml2') is export { * }
 
 # XPath
-sub xmlXPathCompile(Str)                                           returns xmlXPathCompExprPtr  is native('libxml2') is export { * }
-sub xmlXPathNewContext(xmlDoc)                                     returns xmlXPathContext      is native('libxml2') is export { * }
-sub xmlXPathCompiledEval(xmlXPathCompExprPtr, xmlXPathContextPtr)  returns xmlXPathObject       is native('libxml2') is export { * }
+sub xmlXPathCompile(Str)                                        returns xmlXPathCompExprPtr  is native('libxml2') is export { * }
+sub xmlXPathNewContext(xmlDocPtr)                               returns xmlXPathContext      is native('libxml2') is export { * }
+sub xmlXPathCompiledEval(xmlXPathCompExprPtr, xmlXPathContext)  returns xmlXPathObject       is native('libxml2') is export { * }
 
 # Serialization
 sub xmlDocDumpMemory(xmlDoc, CArray, CArray)                                                         is native('libxml2') is export { * }
