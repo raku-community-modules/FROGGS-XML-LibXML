@@ -6,7 +6,7 @@ use XML::LibXML::Parser;
 unit class XML::LibXML is XML::LibXML::Parser;
 
 method parser-version() {
-    my $ver = cglobal('libxml2', 'xmlParserVersion', Str);
+    my $ver = cglobal('xml2', 'xmlParserVersion', Str);
     Version.new($ver.match(/ (.)? (..)+ $/).list.join: '.')
 }
 
