@@ -50,7 +50,7 @@ my class xmlAttr is export(:types) {
     has xmlNode       $.children; # the value of the property
     has xmlNodePtr        $.last; # NULL
     has xmlNodePtr      $.parent; # child->parent link
-    has xmlAttrPtr        $.next; # next sibling link
+    has xmlAttr           $.next; # next sibling link
     has xmlAttrPtr        $.prev; # previous sibling link
     has xmlDoc             $.doc; # the containing document
     has xmlNs               $.ns; # pointer to the associated namespace
