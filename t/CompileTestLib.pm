@@ -9,10 +9,9 @@ sub compile_test_lib($name) is export {
     if $VM.name eq 'moar' {
         my $o  = $cfg<obj>;
         my $so = $cfg<dll>;
-        $so ~~ s/^.*\%s//;
         $c_line = "$cfg<cc> -I/usr/include/libxml2 -c $cfg<ccshared> $cfg<ccout>$name$o $cfg<cflags> t/$name.c";
         $l_line = "$cfg<ld> $cfg<ldshared> $cfg<ldflags> " ~
-            "$cfg<ldlibs> $cfg<ldout>$name$so $name$o";
+            "$cfg<ldlibs> {$cfg<ldout>}{$name.fmt($cfg<dll>)} $name$o";
         @cleanup = << "$name$so" "$name$o" >>;
     }
     elsif $VM.name eq 'jvm' {
