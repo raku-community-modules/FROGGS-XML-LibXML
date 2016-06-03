@@ -11,13 +11,13 @@ use XML::LibXML::Subs;
 use XML::LibXML::Error;
 use XML::LibXML::Enums;
 
-sub xmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, Int)  returns XML::LibXML::Document is native('libxml2') { * }
-sub xmlNewParserCtxt                                   returns XML::LibXML::Parser   is native('libxml2') { * }
-sub xmlReadDoc(Str, Str, Str, Int)                     returns XML::LibXML::Document is native('libxml2') { * }
-sub xmlReadMemory(Str, Int, Str, Str, Int)             returns XML::LibXML::Document is native('libxml2') { * }
-sub htmlNewParserCtxt                                  returns XML::LibXML::Parser   is native('libxml2') { * }
-sub htmlParseFile(Str, Str)                            returns XML::LibXML::Document is native('libxml2') { * }
-sub htmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, Int) returns XML::LibXML::Document is native('libxml2') { * }
+sub xmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, Int)  returns XML::LibXML::Document is native('xml2') { * }
+sub xmlNewParserCtxt                                   returns XML::LibXML::Parser   is native('xml2') { * }
+sub xmlReadDoc(Str, Str, Str, Int)                     returns XML::LibXML::Document is native('xml2') { * }
+sub xmlReadMemory(Str, Int, Str, Str, Int)             returns XML::LibXML::Document is native('xml2') { * }
+sub htmlNewParserCtxt                                  returns XML::LibXML::Parser   is native('xml2') { * }
+sub htmlParseFile(Str, Str)                            returns XML::LibXML::Document is native('xml2') { * }
+sub htmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, Int) returns XML::LibXML::Document is native('xml2') { * }
 
 
 method new {
@@ -25,7 +25,7 @@ method new {
     #~ my $self = xmlNewParserCtxt();
     my $self = htmlNewParserCtxt();
 
-    # This stops libxml2 printing errors to stderr
+    # This stops xml2 printing errors to stderr
     xmlSetStructuredErrorFunc($self, -> OpaquePointer, OpaquePointer { });
     $self
 }
@@ -43,7 +43,7 @@ method parse-html(Str:D $str, Str :$uri, :$flags = HTML_PARSE_RECOVER + HTML_PAR
 }
 
 #~ multi method expand-entities() {
-    #~ sub xmlCtxtUseOptions(xmlParserCtxt, int32)                     returns int32 is native('libxml2') { * }
+    #~ sub xmlCtxtUseOptions(xmlParserCtxt, int32)                     returns int32 is native('xml2') { * }
     #~ say self.replaceEntities;
     #~ say xmlCtxtUseOptions(self, XML_PARSE_NOENT);
     #~ say self.replaceEntities;

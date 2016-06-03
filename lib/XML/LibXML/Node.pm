@@ -111,12 +111,12 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 class XML::LibXML::Node does XML::LibXML::Nodish {
 
     multi method elems() {
-        sub xmlChildElementCount(xmlNode)          returns ulong      is native('libxml2') { * }
+        sub xmlChildElementCount(xmlNode)          returns ulong      is native('xml2') { * }
         xmlChildElementCount(self)
     }
 
     method push($child) is aka<appendChild> {
-        sub xmlAddChild(xmlNode, xmlNode)  returns XML::LibXML::Node  is native('libxml2') { * }
+        sub xmlAddChild(xmlNode, xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
         xmlAddChild(self, $child)
     }
 

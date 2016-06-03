@@ -11,21 +11,21 @@ use XML::LibXML::Error;
 
 unit class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::Nodish;
 
-sub xmlNewDoc(Str)                          returns XML::LibXML::Document  is native('libxml2') { * }
-sub xmlDocGetRootElement(xmlDoc)            returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlDocSetRootElement(xmlDoc, xmlNode)   returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlNewNode(xmlDoc, Str)                 returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlNewText(Str)                         returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlNewDocComment(xmlDoc, Str)           returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlNewCDataBlock(xmlDoc, Str, int32)    returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlReplaceNode(xmlNode, xmlNode)        returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlNewDocFragment(xmlDoc)               returns XML::LibXML::Node      is native('libxml2') { * }
-sub xmlNewDocProp(xmlDoc, Str, Str)         returns XML::LibXML::Attr      is native('libxml2') { * }
-sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)  returns XML::LibXML::Node      is native('libxml2') { * }
+sub xmlNewDoc(Str)                          returns XML::LibXML::Document  is native('xml2') { * }
+sub xmlDocGetRootElement(xmlDoc)            returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlDocSetRootElement(xmlDoc, xmlNode)   returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewNode(xmlDoc, Str)                 returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewText(Str)                         returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewDocComment(xmlDoc, Str)           returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewCDataBlock(xmlDoc, Str, int32)    returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlReplaceNode(xmlNode, xmlNode)        returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewDocFragment(xmlDoc)               returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewDocProp(xmlDoc, Str, Str)         returns XML::LibXML::Attr      is native('xml2') { * }
+sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)  returns XML::LibXML::Node      is native('xml2') { * }
 
 
 method process-xincludes {
-    sub xmlXIncludeProcessFlags(xmlDoc, int32) returns int32 is native('libxml2') { * }
+    sub xmlXIncludeProcessFlags(xmlDoc, int32) returns int32 is native('xml2') { * }
     xmlXIncludeProcessFlags(self, 0)
 }
 
@@ -206,12 +206,12 @@ method base-uri() {
 
 
     multi method elems() {
-        sub xmlChildElementCount(xmlDoc)           returns ulong      is native('libxml2') { * }
+        sub xmlChildElementCount(xmlDoc)           returns ulong      is native('xml2') { * }
         xmlChildElementCount(self)
     }
 
     method push($child) is aka<appendChild> {
-        sub xmlAddChild(xmlDoc,  xmlNode)  returns XML::LibXML::Node  is native('libxml2') { * }
+        sub xmlAddChild(xmlDoc,  xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
         xmlAddChild(self, $child)
     }
 
