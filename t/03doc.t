@@ -93,7 +93,8 @@ use XML::LibXML::Enums;
     {
         # bad element creation
         for ";", "&", "<><", "/", "1A" -> $name {
-            ok $doc.new-elem($name) ~~ Failure, "bad element creation '$name'";
+            my $f = $doc.new-elem($name);
+            ok $f ~~ Failure, "bad element creation '$name'";
         }
     }
 
