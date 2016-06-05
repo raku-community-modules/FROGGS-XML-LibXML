@@ -8,7 +8,7 @@ use Test;
 
 # since all tests are run on a preparsed
 
-plan 48;
+plan 49;
 
 use XML::LibXML;
 use XML::LibXML::Enums;
@@ -54,8 +54,7 @@ use XML::LibXML::Enums;
         is($node.type, XML_DOCUMENT_FRAG_NODE, ' TODO : Add test name');
     }
 
-    #~ # TEST*$_check_created_element
-    #~ _check_created_element($doc, 'foo', 'foo', 'Simple Element');
+    _check_created_element($doc, 'foo', 'foo', 'Simple Element');
 
     {
         # document with encoding
@@ -63,20 +62,6 @@ use XML::LibXML::Enums;
         $encdoc.encoding = "iso-8859-1";
 
         _check_created_element($encdoc, 'foo', 'foo', 'Encdoc Element creation');
-
-        #~ # SAX style document with encoding
-        #~ my $node_def = {
-            #~ Name => "object",
-            #~ LocalName => "object",
-            #~ Prefix => "",
-            #~ NamespaceURI => "",
-                       #~ };
-
-        #~ # TEST*$_check_created_element
-        #~ _check_created_element(
-            #~ $encdoc, $node_def->{Name}, 'object',
-            #~ 'Encdoc element creation based on node_def->{name}',
-        #~ );
     }
 
     {
