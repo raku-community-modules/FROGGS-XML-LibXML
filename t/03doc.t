@@ -8,7 +8,7 @@ use Test;
 
 # since all tests are run on a preparsed
 
-plan 49;
+plan 55;
 
 use XML::LibXML;
 use XML::LibXML::Enums;
@@ -106,25 +106,17 @@ use XML::LibXML::Enums;
         is($node.Str, "<![CDATA[foo]]>", ' TODO : Add test name');
     }
 
-    #~ # -> Create Attributes
-    #~ {
-        #~ my $attr = $doc->createAttribute("foo", "bar");
-        #~ # TEST
-        #~ ok($attr, ' TODO : Add test name');
-        #~ # TEST
-        #~ is($attr->nodeType, XML_ATTRIBUTE_NODE, ' TODO : Add test name' );
-        #~ # TEST
-        #~ is($attr->name, "foo", ' TODO : Add test name');
-        #~ # TEST
-        #~ is($attr->value, "bar", ' TODO : Add test name' );
-        #~ # TEST
-        #~ is($attr->hasChildNodes, 0, ' TODO : Add test name');
-        #~ my $content = $attr->firstChild;
-        #~ # TEST
-        #~ ok( $content, ' TODO : Add test name' );
-        #~ # TEST
-        #~ is( $content->nodeType, XML_TEXT_NODE, ' TODO : Add test name' );
-    #~ }
+    # -> Create Attributes
+    {
+        my $attr = $doc.createAttribute("foo" => "bar");
+        ok $attr, ' TODO : Add test name';
+        is $attr.type, XML_ATTRIBUTE_NODE, ' TODO : Add test name';
+        is $attr.name, "foo", ' TODO : Add test name';
+        is $attr.value, "bar", ' TODO : Add test name';
+        my $content = $attr.firstChild;
+        ok $content, ' TODO : Add test name';
+        is $content.type, XML_TEXT_NODE, ' TODO : Add test name';
+    }
     #~ {
         #~ # bad attribute creation
         #~ # TEST:$badnames_count=5;

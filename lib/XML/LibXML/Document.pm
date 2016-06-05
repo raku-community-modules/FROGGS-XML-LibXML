@@ -290,7 +290,7 @@ multi method new-elem-ns($name, $uri) {
     self.new-elem-ns($name => Str, $uri)
 }
 
-multi method new-attr(Pair $kv) {
+multi method new-attr(Pair $kv) is aka<createAttribute> {
     my $buffer = xmlEncodeEntitiesReentrant(self, $kv.value);
     my $attr   = xmlNewDocProp(self, $kv.key, $buffer);
     nqp::bindattr(nqp::decont($attr), xmlAttr, '$!doc', nqp::decont(self));
