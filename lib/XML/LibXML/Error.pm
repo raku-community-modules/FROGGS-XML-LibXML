@@ -17,7 +17,7 @@ class X::XML::InvalidName is Exception {
             my $eject = $*DISTRO.name eq 'MSWin32' ?? "<HERE>" !! "\x[23CF]";
             $name     = $green ~ substr($!name, 0, $!pos) ~ "$yellow$eject$red" ~ substr($!name, $!pos) ~ $clear
         }
-        "$red==={$clear}SORRY!$red===$clear Invalid charater in string '$name' for use as an identifier, passed to &!routine.^name.lc() &!routine.name()"
+        "$red==={$clear}SORRY!$red===$clear Invalid character in string '$name' for use as an identifier, passed to &!routine.^name.lc() &!routine.name()"
     }
 }
 
