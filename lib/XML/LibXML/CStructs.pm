@@ -75,7 +75,7 @@ my class xmlDoc is export(:types) {
     has xmlNodePtr      $.parent; # child->parent link
     has xmlNodePtr        $.next; # next sibling link
     has xmlNodePtr        $.prev; # previous sibling link
-    has xmlDocPtr          $.doc; # autoreference to itself End of common p
+    has xmlDoc             $.doc; # autoreference to itself End of common p
     has int32      $.compression; # level of zlib compression
     has int32       $.standalone; # standalone document (no external refs)
     has xmlDtdPtr    $.intSubset; # the document internal subset
@@ -122,7 +122,7 @@ my class xmlNode is export(:types) {
     has xmlNodePtr      $.parent; # child->parent link
     has xmlNodePtr        $.next; # next sibling link
     has xmlNodePtr        $.prev; # previous sibling link
-    has xmlDocPtr          $.doc; # autoreference to itself End of common p
+    has xmlDoc             $.doc; # autoreference to itself End of common p
     has xmlNs               $.ns; # pointer to the associated namespace
     has Str              $.value; # the content
     has xmlAttr     $.properties; # properties list
