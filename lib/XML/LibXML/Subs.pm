@@ -25,7 +25,7 @@ sub xmlGetNsList(xmlDoc, xmlNode)            returns xmlNs  is native('xml2') is
 
 # XPath
 sub xmlXPathCompile(Str)                                        returns xmlXPathCompExprPtr  is native('xml2') is export { * }
-sub xmlXPathNewContext(xmlDocPtr)                               returns xmlXPathContext      is native('xml2') is export { * }
+sub xmlXPathNewContext(xmlDoc)                                  returns xmlXPathContext      is native('xml2') is export { * }
 sub xmlXPathCompiledEval(xmlXPathCompExprPtr, xmlXPathContext)  returns xmlXPathObject       is native('xml2') is export { * }
 
 # Serialization
