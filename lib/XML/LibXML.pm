@@ -13,3 +13,7 @@ method parser-version() {
 sub parse-xml(Str $xml) is export {
     XML::LibXML::Parser.new.parse($xml)
 }
+
+sub parse-html(Str $html) is export {
+    XML::LibXML::Parser.new(:html).parse($html)
+}

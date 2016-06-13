@@ -20,24 +20,21 @@ sub htmlParseFile(Str, Str)                              returns XML::LibXML::Do
 sub htmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, int32) returns XML::LibXML::Document is native('xml2') { * }
 
 
-method new {
-    xmlKeepBlanksDefault(0); # 1 for XML
-    #~ my $self = xmlNewParserCtxt();
-    my $self = htmlNewParserCtxt();
+method new(:$html = False) {
+    xmlKeepBlanksDefault($html ?? 0 !! 1);
+    my $self = $html
+            ?? htmlNewParserCtxt()
+            !! xmlNewParserCtxt();
 
     # This stops xml2 printing errors to stderr
     xmlSetStructuredErrorFunc($self, -> OpaquePointer, OpaquePointer { });
     $self
 }
 
-method parse(Str:D $str, Str :$uri) {
-    my $doc = xmlCtxtReadDoc(self, $str, $uri, Str, 0);
-    fail XML::LibXML::Error.get-last(self, :orig($str)) unless $doc;
-    $doc
-}
-
-method parse-html(Str:D $str, Str :$uri, :$flags = HTML_PARSE_RECOVER + HTML_PARSE_NOBLANKS) {
-    my $doc = htmlCtxtReadDoc(self, $str, $uri, Str, +$flags);
+method parse(Str:D $str, Str :$uri, :$flags = self.html == 1 ?? HTML_PARSE_RECOVER + HTML_PARSE_NOBLANKS !! 0) {
+    my $doc = self.html == 1
+            ?? htmlCtxtReadDoc(self, $str, $uri, Str, +$flags)
+            !! xmlCtxtReadDoc(self, $str, $uri, Str, +$flags);
     fail XML::LibXML::Error.get-last(self, :orig($str)) unless $doc;
     $doc
 }
