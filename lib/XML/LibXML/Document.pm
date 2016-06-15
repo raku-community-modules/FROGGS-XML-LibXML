@@ -6,6 +6,7 @@ use XML::LibXML::C14N;
 use XML::LibXML::Subs;
 use XML::LibXML::Node;
 use XML::LibXML::Attr;
+use XML::LibXML::Dom;
 use XML::LibXML::Enums;
 use XML::LibXML::Error;
 
@@ -45,7 +46,10 @@ method doctype is aka<type> {
     #~ This read-only property is an object that implements the DOMImplementation interface.
 
 #| This read-only property is an object that implements the Element interface.
-method documentElement is aka<root> {
+method documentElement 
+    is aka<root> 
+    is aka<getDocumentElement>
+{
     Proxy.new(
         FETCH => -> $ {
             xmlDocGetRootElement(self)
@@ -234,7 +238,7 @@ method base-uri() {
             
     #~ }
 
-    method gist() {
+    method gist(XML::LibXML::Document:D:) {
         my $result = CArray[Str].new();
         my $len    = CArray[int32].new();
         $result[0] = "";
@@ -264,7 +268,7 @@ method new-elem(Str $elem) is aka<createElement> {
 
     my $node = xmlNewNode( self, $elem );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self.doc));
-    $node
+    nativecast(::('XML::LibXML::Element'), $node);
 }
 
 multi method new-elem-ns(Pair $kv, $uri) {
@@ -281,7 +285,7 @@ multi method new-elem-ns(Pair $kv, $uri) {
     my $node   = xmlNewDocNode(self, $ns, $name, $buffer);
     nqp::bindattr(nqp::decont($node), xmlNode, '$!nsDef', nqp::decont($ns));
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc',   nqp::decont(self));
-    $node
+    nativecast(::('XML::LibXML::Element'), $node);
 }
 multi method new-elem-ns(%kv where *.elems == 1, $uri) {
     self.new-elem-ns(%kv.list[0], $uri)
@@ -290,15 +294,40 @@ multi method new-elem-ns($name, $uri) {
     self.new-elem-ns($name => Str, $uri)
 }
 
-multi method new-attr(Pair $kv) is aka<createAttribute> {
+method createElementNS($_uri, $_name) {
+    unless testNodeName($_name) {
+        die "bad name";
+        # cw: For .resume inside CATCH
+        return;
+    } 
+
+    self.new-elem-ns($_name, $_uri);
+}
+
+
+multi method createAttribute($key, $value) {
+    self.new-attr($key => $value);
+}
+multi method createAttribute(*%kv where *.elems == 1) {
+    self.new-attr(%kv.list[0])
+}
+multi method createAttribute(Pair $kv) {
+    self.new-attr($kv);
+}
+
+multi method new-attr($key, $value) {
+    self.new-attr($key => $value);
+}
+multi method new-attr(Pair $kv) {
     my $buffer = xmlEncodeEntitiesReentrant(self, $kv.value);
     my $attr   = xmlNewDocProp(self, $kv.key, $buffer);
     nqp::bindattr(nqp::decont($attr), xmlAttr, '$!doc', nqp::decont(self));
-    $attr
+    nativecast(::('XML::LibXML::Attr'), $attr);
 }
 multi method new-attr(*%kv where *.elems == 1) {
     self.new-attr(%kv.list[0])
 }
+
 
 multi method new-attr-ns(Pair $kv, $uri) {
     my $root = self.root;
@@ -312,16 +341,20 @@ multi method new-attr-ns(Pair $kv, $uri) {
     }
 
     my $ns = xmlSearchNsByHref(self, $root, $uri)
-          || xmlNewNs($root, $uri, $prefix); # create a new NS if the NS does not already exists
+        || xmlNewNs($root, $uri, $prefix); # create a new NS if the NS does not already exists
 
     my $buffer = xmlEncodeEntitiesReentrant(self, $kv.value);
     my $attr   = xmlNewDocProp(self, $name, $buffer);
     xmlSetNs($attr, $ns);
     nqp::bindattr(nqp::decont($attr), xmlAttr, '$!doc', nqp::decont(self));
-    $attr
+    nativecast(::('XML::LibXML::Attr'), $attr);
 }
 multi method new-attr-ns(%kv where *.elems == 1, $uri) {
     self.new-attr-ns(%kv.list[0], $uri)
+}
+
+method createAttributeNS($nsUri, $name, $val) {
+    self.new-attr-ns($name => $val, $nsUri);
 }
 
 method new-text(Str $text) {
@@ -340,4 +373,39 @@ method new-cdata-block(Str $cdata) {
     my $node = xmlNewCDataBlock( self, $cdata, xmlStrlen($cdata) );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
     $node
+}
+
+method createTextNode(Str $content) {
+    my $newText = self.new-text($content);
+    my $docfrag = self.new-doc-fragment();
+    xmlAddChild(
+        nativecast(xmlNodePtr, $docfrag), 
+        nativecast(xmlNodePtr, $newText)
+    );
+
+    $newText;
+}
+
+method setDocumentElement($e) {
+    my $elem = nativecast(xmlNode, $e);
+
+    if $elem.type != XML_ELEMENT_NODE {
+        die "setDocumentElement: ELEMENT node required";
+        # cw: To properly handle .resume in CATCH {}
+        return;
+    }
+
+    domImportNode(self, $elem, 1, 1);
+    my $oelem = xmlDocGetRootElement(self);
+    if (!$oelem.defined || !$oelem._private.defined) {
+        xmlDocSetRootElement(self, $elem);
+    } 
+    else {
+        my $docfrag = self.new-doc-fragment();
+        xmlReplaceNode($oelem, $elem);
+        xmlAddChild($docfrag, $oelem)
+        # PmmFixOwner( ((ProxyNodePtr)oelem->_private), docfrag);
+        #PmmFixOwner( SvPROXYNODE(proxy), PmmPROXYNODE(self));
+        #    if $elem.private !=:= Pointer;
+    }
 }
