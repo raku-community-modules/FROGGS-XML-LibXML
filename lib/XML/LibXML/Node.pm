@@ -6,6 +6,7 @@ use XML::LibXML::Enums;
 use XML::LibXML::Subs;
 use XML::LibXML::C14N;
 use XML::LibXML::Attr;
+use XML::LibXML::Dom;
 
 multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
 
@@ -116,7 +117,6 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         sub xmlChildElementCount(xmlNode)          returns ulong      is native('xml2') { * }
         xmlChildElementCount(self)
     }
-
     method push($child) is aka<appendChild> {
         sub xmlAddChild(xmlNode, xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
         xmlAddChild(self, $child)
@@ -126,6 +126,211 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         my $buffer = xmlBufferCreate(); # XXX free
         my $size   = xmlNodeDump($buffer, self.doc, self, $level, $format);
         $buffer.value;
+    }
+
+    method !testNodeName(Str $n) {
+        return False if ($n ~~ /^<-[ a..z A..Z \_ : ]>/) !~~ Nil;
+
+        # cw: Missing IS_EXTENDER(c)
+        return ($n ~~ /<-[ \d a..z A..Z : \- \. ]>/) ~~ Nil;
+    }
+
+    method setNodeName(Str $n) {
+        sub xmlNodeSetName(xmlNode, Str)       is native('xml2') { * }
+
+        #die "Bad name" if self!testNodeName($n);
+        #xmlNodeSetName(self, $n);
+
+        if self!testNodeName($n) {
+            xmlNodeSetName(self, $n);        
+        } else {
+            die "Bad name";
+        }
+    }
+
+    method setAttribute(Str $a, Str $v) {
+        sub xmlSetProp(xmlNode, Str, Str)       is native('xml2') { * }
+
+        if self!testNodeName($a) {
+            # cw: Note, this method locks us into libxml2 versions of 2.6.21 and 
+            #     later. libxml2 does -not- provide us a mechanism to test and 
+            #     implement backwards compatibility.
+            xmlSetProp(self, $a, $v);
+        } else {
+            die "Bad name '$a'";
+        }
+    }
+
+    method setAttributeNS(Str $namespace, Str $name, Str  $val) {
+        if ! self!testNodeName($name) {
+            die "Bad name '$name'";
+            # cw: Yes, I know this looks weird, but is done incase we 
+            #     .return from a CATCH{}
+            return;
+        }
+
+        my ($prefix, $localname) = $name.split(':');
+
+        if !$localname {
+            $localname = $prefix;
+            $prefix := Str;
+        }
+
+        # cw: Sublime currently has crappy syntax highlighting so 
+        #     $namespace ~~ s:g/// will break it. 
+        my xmlNs $ns;
+
+        my $attr_ns;
+        if $namespace.defined {
+            $attr_ns = $namespace.subst(/\s/, '');
+            if $attr_ns.chars {
+                $ns = xmlSearchNsByHref(self.doc, self, $attr_ns);
+
+                if $ns.defined && !$ns.prefix {
+                    my @all_ns := nativecast(
+                        CArray[xmlNsPtr],
+                        xmlGetNsList(self.doc, self)
+                    );
+
+                    if (@all_ns.defined) {
+                        my $i = 0;
+                        repeat {
+                            my $nsp := @all_ns[$i++];
+                            $ns = nativecast(xmlNs, $nsp);
+                            last if $ns.prefix && ($ns.uri eq $namespace);
+                        } while ($ns);
+                        #xmlFree($all_ns);
+                    }
+                }
+            }
+
+            if (!$ns.defined) {
+                # create new ns
+                if $prefix.defined {
+                    my $attr_p = $prefix.subst(/s/, '');
+                    if $attr_p.chars {
+                        $ns := xmlNewNs(self, $attr_ns, $attr_p);
+                    } else {
+                        $ns := xmlNs;
+                    }
+                }
+            }
+        }
+
+        if $attr_ns.defined && $attr_ns.chars && ! $ns.defined {
+            die "bad ns attribute!";
+            return            
+        }
+
+        xmlSetNsProp(self, $ns, $localname, $val);
+    }
+
+    method getAttribute(Str $a) {
+        sub xmlGetNoNsProp(xmlNode, Str)  returns Str      is native('xml2') { * }
+
+        my $name = $a.subst(/\s/, '');
+        return unless $name;
+
+        my $ret;
+        unless ($ret = xmlGetNoNsProp(self, $name)) {
+            my ($prefix, $localname) = $a.split(':');
+
+            if !$localname {
+                $localname = $prefix;
+                $prefix := Str;
+            }
+            if $localname {
+                my $ns = xmlSearchNs(self.doc, self, $prefix);
+                if $ns {
+                    $ret = xmlGetNsProp(self, $localname, $ns.href);
+                }
+            }
+        }
+
+        #my $retval = $ret.clone;
+        #xmlFree($ret);
+
+        return $ret;
+    }
+
+    method hasAttribute(Str $a) {
+        my $ret = domGetAttrNode(self, $a);
+
+        my $retVal = $ret ?? True !! False;
+        #xmlFree($ret)
+
+        return $retVal;
+    }
+
+    method hasAttributeNS(Str $ns!, Str $name!) {
+        my $attr_ns = $ns.subst(/\s/, '');
+        $attr_ns := Str if !$attr_ns.chars;
+
+        my xmlAttr $attr = nativecast(
+            xmlAttr,
+            xmlHasNsProp(self, $name, $attr_ns)
+        );
+
+        return ($attr.defined && $attr.type == XML_ATTRIBUTE_NODE) ??
+            1 !! 0;
+    }
+
+    method getAttributeNode($a) {
+        my $ret := domGetAttrNode(self, $a);
+        #my $retVal = $ret.clone;
+        #xmlFree($ret);
+
+        # cw: Returns CStruct allocated from libxml2!
+        return nativecast(XML::LibXML::Attr, $ret);
+    }
+
+    method setAttributeNode(xmlAttr $an) {
+        unless $an {
+            die "Lost attribute";
+            # cw: If caught and .resume'd, execution may return here.
+            return;
+        }
+
+        return unless $an.type == XML_ATTRIBUTE_NODE;
+
+        # cw: -XXX- currently performing an endless loop. Check dom* functions.
+
+        if $an.doc =:= self.doc {
+            domImportNode(self.doc, $an, 1, 1);
+        }
+
+        my $ret;
+        $ret = domGetAttrNode(self, $an.name);
+        if $ret {
+            return unless $ret !=:= $an;
+            
+            xmlReplaceNode(
+                nativecast(xmlNode, $ret), 
+                nativecast(xmlNode, $an)
+            );
+        } else {
+            xmlAddChild(
+                nativecast(xmlNodePtr, self), 
+                nativecast(xmlNodePtr, $an)
+            );
+        }
+
+        # cw: ????
+        #if ( attr->_private != NULL ) {
+        #    PmmFixOwner( SvPROXYNODE(attr_node), PmmPROXYNODE(self) );
+        #}
+
+        return unless $ret;
+        my $retVal = nativecast(XML::LibXML::Node, $ret);
+
+        # cw: ?????
+        #PmmFixOwner( SvPROXYNODE(RETVAL), NULL );
+        return $retVal;
+    }
+
+    method isSameNode($n) {
+        # cw: Maybe.
+        return self =:= $n;
     }
     
     #~ multi method Str() {

@@ -2,11 +2,15 @@ use v6;
 use nqp;
 use NativeCall;
 
+constant XML_XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace";
+
+my $LIBXML_VERSION := cglobal('libc.so.6', 'LIBXML_VERSION', int32);
+
 my class CStruct is repr('CStruct') is export(:types) { }
 
 my class  xmlAttr                    is repr('CStruct')  { ... }
 my native xmlAttributeType           is repr('P6int') is Int is nativesize(32) is export(:types) { }
-my class  xmlAttrPtr                 is repr('CPointer') { }
+my class  xmlAttrPtr                 is repr('CPointer') is export(:types) { }
 my class  xmlAutomataPtr             is repr('CPointer') { }
 my class  xmlAutomataStatePtr        is repr('CPointer') { }
 my class  xmlBuffer                  is repr('CStruct')  { ... }
@@ -17,12 +21,14 @@ my class  xmlDtdPtr                  is repr('CPointer') { }
 my class  xmlDoc                     is repr('CStruct')  { ... }
 my class  xmlDocPtr                  is repr('CPointer') is Pointer is export(:types) { }
 my class  xmlError                   is repr('CStruct')  { ... }
+my class  xmlElement                 is repr('CStruct')  { ... }
+my class  xmlElementPtr              is repr('CPointer') is Pointer { }
 my class  xmlHashTablePtr            is repr('CPointer') { }
 my class  xmlNode                    is repr('CStruct')  { ... }
-my class  xmlNodePtr                 is repr('CPointer') is Pointer { }
+my class  xmlNodePtr                 is repr('CPointer') is Pointer is export(:types) { }
 my class  xmlNodeSet                 is repr('CStruct')  { ... }
-my class  xmlNs                      is repr('CStruct')  { ... }
-my class  xmlNsPtr                   is repr('CPointer') { }
+my class  xmlNs                      is repr('CStruct') is export(:types) { ... } 
+my class  xmlNsPtr                   is repr('CPointer') is Pointer is export(:types) { } 
 my class  xmlParserCtxt              is repr('CStruct')  { ... }
 my class  xmlParserInputPtr          is repr('CPointer') is Pointer { }
 my native xmlParserInputState        is repr('P6int') is Int is nativesize(32) is export(:types) { }
@@ -113,6 +119,23 @@ my class xmlError is export(:types) {
     has OpaquePointer $.node; # the node in the tree
 }
 
+my class xmlElement is export(:types) {
+    has OpaquePointer $.private;  # application data
+    has int8             $.type;  # xmlElementType type number, must be second!
+    has Str              $.name;  # Element name
+    has xmlNodePtr   $.children;  # parent->childs link
+    has xmlNodePtr        $.last; # last child link
+    has xmlNodePtr      $.parent; # child->parent link
+    has xmlNodePtr        $.next; # next sibling link
+    has xmlNodePtr        $.prev; # previous sibling link
+    has xmlDoc             $.doc; # autoreference to itself End of common p
+    has int8             $.etype; # The type
+    has OpaquePointer  $.content; # The allowed element content
+    has xmlAttrPtr  $.attributes; # List of declared attributes
+    has Str             $.prefix;
+    #has xmlRegex    $.contModel; # The validating regexp.
+}
+
 my class xmlNode is export(:types) {
     has OpaquePointer $._private; # application data
     has int8              $.type; # (xmlElementType) type number, must be second !
@@ -132,6 +155,30 @@ my class xmlNode is export(:types) {
     has uint16 $.line;
     #~ unsigned short	extra	: extra data for XPath/XSLT
     has uint16 $.extra;
+
+
+    # cw: Looks like having methods in these classes will be unavoidable unless we 
+    #     decide to make the attributes rw... which might be workable as long as 
+    #     we can protect them in descendent classes
+    method setNext(xmlNodePtr $n) {
+        $!next = $n;
+    }
+
+    method setPrev(xmlNodePtr $p) {
+        $!prev = $p;
+    }
+
+    method setParent(xmlNodePtr $p) {
+        $!parent = $p;
+    }
+
+    method setChildren(xmlNodePtr $c) {
+        $!children = $c;
+    }
+
+    method setLast(xmlNodePtr $l) {
+        $!last = $l;
+    }
 }
 
 my class xmlNodeSet is export(:types) {
