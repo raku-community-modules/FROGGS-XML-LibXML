@@ -160,11 +160,13 @@ my @badnames= ("1A", "<><", "&", "-:");
     # TEST
     ok $tattr, 'can retrieve attribute node via namespace';
     # TEST
-    is $tattr.name, $foo, 'retrieved attribute has proper name';
+    is 
+        $tattr.localname, $foo, 
+        'retrieved attribute has proper name (via localname)';
     # TEST
     is 
-        $tattr.nodeName, "{$prefix}:{$foo}", 
-        'nodeName includes proper namespace';
+        $tattr.name, "{$prefix}:{$foo}", 
+        'name includes proper namespace';
     # TEST
     is $tattr.value, $attvalue2, 'attribute node has proper value';
 

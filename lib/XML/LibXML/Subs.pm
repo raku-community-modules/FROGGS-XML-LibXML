@@ -37,7 +37,7 @@ sub xmlC14NDocDumpMemory(xmlDoc, xmlNodeSet, int32, CArray[Str], int32, CArray[S
 sub xmlBufferCreate()                        returns xmlBuffer  is native('xml2') is export { * }
 sub xmlKeepBlanksDefault(int32)              returns int32      is native('xml2') is export { * }
 sub xmlIsBlankNode(xmlNode)                  returns int32      is native('xml2') is export { * }
-sub xmlUnlinkNode(xmlNode)                                      is native('xml2') is export { * }
+sub xmlUnlinkNode(xmlNodePtr)                                   is native('xml2') is export { * }
 sub xmlUnsetProp(xmlNode, Str)               returns int32      is native('xml2') is export { * }
 #~ multi xmlChildElementCount(xmlNode)          returns ulong      is native('xml2') is export { * }
 #~ multi xmlChildElementCount(xmlDoc)           returns ulong      is native('xml2') is export { * }

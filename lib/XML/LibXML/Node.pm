@@ -284,6 +284,26 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         return nativecast(XML::LibXML::Attr, $ret);
     }
 
+    method getAttributeNodeNS(Str $ns!, Str $name!) {
+        my $attr_ns = $ns.subst(/\s/, '');
+        my $attr_name = $name.subst(/\s/, '');
+
+        return unless $attr_name.chars;
+
+        $attr_ns := Str unless $attr_ns.chars;
+        my $ret_p = xmlHasNsProp(self, $attr_name, $attr_ns);
+        my $ret = nativecast(XML::LibXML::Attr, $ret_p);
+
+        # cw: Deep XS code that has yet to be grokked.
+        #my $retVal = PmmNodeToSv(
+        #    $ret_p,
+        #    PmmOWNERPO(PmmPROXYNODE(self))
+        #);
+
+        return $ret.type == XML_ATTRIBUTE_NODE ??
+            $ret !! Nil;
+    }
+
     method setAttributeNode(xmlAttr $an) {
         unless $an {
             die "Lost attribute";
@@ -326,6 +346,29 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         # cw: ?????
         #PmmFixOwner( SvPROXYNODE(RETVAL), NULL );
         return $retVal;
+    }
+
+    method removeAttributeNode(xmlNode $an!) {
+        if ($an == Nil || $an =:= xmlNode) {
+            die "lost attribute node";
+            # cw: For .resume in CATCH{}
+            return;
+        }
+
+        return unless 
+            $an.type == XML_ATTRIBUTE_NODE
+            &&
+            $an.parent !=:= self;
+
+        my $ret = $an;
+        my $ret_p = nativecast(xmlNodePtr, $ret);
+        xmlUnlinkNode($ret);
+
+        # cw: ????
+        # $ret = PmmNodeToSv($ret_p, NUL)
+        # PmmFixOwner( SvPROXYNODE($ret), NULL)
+
+        return $ret;
     }
 
     method isSameNode($n) {

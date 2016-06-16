@@ -207,7 +207,6 @@ package XML::LibXML::Dom {
 	    }
 
 	    return if $ret && $ret.type != XML_ATTRIBUTE_NODE;
-
 	    return $ret;
 	}
 
