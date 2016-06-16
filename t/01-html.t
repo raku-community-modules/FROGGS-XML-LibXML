@@ -3,7 +3,7 @@ use Test;
 use XML::LibXML;
 use NativeCall;
 
-plan 7;
+plan 1;
 
 #~ my $html-string = 'example/yahoo-finance-html-with-errors.html'.IO.slurp;
 #~ my $html-string = 'example/test.html'.IO.slurp;
