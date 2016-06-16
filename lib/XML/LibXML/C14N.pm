@@ -27,12 +27,12 @@ method c14n(Bool :$comments = False, Str :$xpath is copy, xmlC14NMode :$exclusiv
         $nodes        = $xpath_res.nodesetval;
     }
 
-    my CArray[Str] $prefixes.=new;
+    my $prefixes = CArray[Str].new;
     my $i = 0;
     $prefixes[$i++] = $_ for @inc-prefixes;
     $prefixes[$i]   = Str;
 
-    my CArray[Str] $result.=new;
+    my $result = CArray[Str].new;
     $result[0] = '';
 
     my $bytes = xmlC14NDocDumpMemory(self.doc, $nodes, +$exclusive, $prefixes, +$comments, $result);
