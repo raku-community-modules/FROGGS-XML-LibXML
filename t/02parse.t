@@ -819,8 +819,8 @@ my $badXInclude = '
 
 {
 
-   my $parser = XML::LibXML.new();
-   my $doc    = $parser.parse-html('<html><head><base href="foo.html"></head><body></body></html>', :uri<bar.html>);
+   my $parser = XML::LibXML.new(:html);
+   my $doc    = $parser.parse('<html><head><base href="foo.html"></head><body></body></html>', :uri<bar.html>);
    my $el     = $doc.root;
    is( $doc.uri, "bar.html" );
    #~ is( $doc.base-uri, "foo.html" );
