@@ -7,6 +7,7 @@ use XML::LibXML::Subs;
 use XML::LibXML::C14N;
 use XML::LibXML::Attr;
 use XML::LibXML::Dom;
+#use XML::LibXML::Pmm;
 
 multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
 
@@ -313,8 +314,6 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
 
         return unless $an.type == XML_ATTRIBUTE_NODE;
 
-        # cw: -XXX- currently performing an endless loop. Check dom* functions.
-
         if $an.doc =:= self.doc {
             domImportNode(self.doc, $an, 1, 1);
         }
@@ -348,8 +347,8 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         return $retVal;
     }
 
-    method removeAttributeNode(xmlNode $an!) {
-        if ($an == Nil || $an =:= xmlNode) {
+    method removeAttributeNode($an!) {
+        if $an =:= xmlNode {
             die "lost attribute node";
             # cw: For .resume in CATCH{}
             return;
@@ -362,7 +361,7 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
 
         my $ret = $an;
         my $ret_p = nativecast(xmlNodePtr, $ret);
-        xmlUnlinkNode($ret);
+        xmlUnlinkNode($ret_p);
 
         # cw: ????
         # $ret = PmmNodeToSv($ret_p, NUL)
