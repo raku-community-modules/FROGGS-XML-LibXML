@@ -4,12 +4,8 @@ use XML::LibXML::CStructs :types;
 
 class XML::LibXML::xmlNs is xmlNs {
 
-	method setNext(xmlNsPtr $n) {
+	method setNext(xmlNs $n) {
 		$.next = $n;
-	}
-
-	method setNsDef(xmlNsPtr $ns) {
-		$.nsDef = $ns;
 	}
 
 }
@@ -28,7 +24,7 @@ package XML::LibXML::Dom {
 		while ($i !=:= xmlNsPtr && $i !=:= $ns) {
 			$i = nativecast(xmlNs, $i).next;
 			if ($i =:= xmlNsPtr) {
-				nativecast(XML::LibXML::xmlNs, $ns).setNext($c);
+				nativecast(xmlNs, $ns).setNext($c);
 				return $ns;
 			}
 		}
@@ -37,13 +33,16 @@ package XML::LibXML::Dom {
 	}
 
 	sub _domReconcileNsAttr(xmlAttrPtr $a, xmlNsPtr $unused) {
-		my $attr = nativecast(XML::LibXML::xmlAttr, $a);
+		return unless $a.defined;
+
+		my $attr = nativecast(xmlAttr, $a);
+
 		my xmlNodePtr $tree = $attr.parent;
-		my xmlNode $tree_o = nativecast(XML::LibXML::xmlNode, $tree);
+		my xmlNode $tree_o = nativecast(xmlNode, $tree);
 
-		return if $tree =:= xmlNodePtr;
+		return if ! $tree.defined;
 
-		if ($attr.ns !=:= xmlNsPtr) {
+		if ($attr.ns.defined) {
 			my xmlNsPtr $ns;
 
 			if ($attr.ns.name.defined && $attr.ns.name eq "xml") {
@@ -54,9 +53,9 @@ package XML::LibXML::Dom {
 				$ns = xmlSearchNs($tree_o.doc, $tree_o.parent, $attr.ns.name);
 			}
 
-			my $nso = nativecast(XML::LibXML::xmlNs, $ns);
+			my $nso = nativecast(xmlNs, $ns);
 			if [&&](
-				$ns !=:= xmlNsPtr,
+				$ns.defined,
 				$nso.uri.defined,
 				$attr.ns.uri.defined,
 				$nso.uri eq $attr.ns.uri
@@ -76,70 +75,69 @@ package XML::LibXML::Dom {
 		}
 	}
 
-	sub _domReconcileNs(xmlNode $tree, xmlNs $unused) {
+	#sub _domReconcileNs(xmlNode $tree, xmlNs $unused) {
+	sub _domReconcileNs($tree, $unused) {
 		sub xmlCopyNamespace(xmlNs) returns xmlNs is native('xml2') { * }
 
-	    if  $tree.ns !~~ Nil     &&
-	        ($tree.type == XML_ELEMENT_NODE || $tree.type == XML_ATTRIBUTE_NODE)
-	    {
-	        my $ns = xmlSearchNs($tree.doc, $tree.parent, $tree.ns.prefix);
-	        if  $ns.defined           && 
-	            $ns.href.defined      && 
-	            $tree.ns.href.defined &&
+	     if  $tree.ns !~~ Nil     &&
+	         ($tree.type == XML_ELEMENT_NODE || $tree.type == XML_ATTRIBUTE_NODE)
+	     {
+	         my $ns = xmlSearchNs($tree.doc, $tree.parent, $tree.ns.uri);
+	         if [&&](
+         		$ns.defined,
+	            $ns.href.defined,
+	            $tree.ns.href.defined,
 	            $ns.href eq $tree.ns.href
-	        {
-	            $unused = _domAddNsChain($unused, $tree.ns)
+	         ) {
+				$unused = _domAddNsChain($unused, $tree.ns)
 	                if domRemoveNsDef($tree, $tree.ns);
 	            $tree.ns = $ns;
-	        } else {
-	            if domRemoveNsDef($tree, $tree.ns) {
-	                domAddNsDef($tree, $tree.ns);
-	            } else {
-	                $tree.ns = xmlCopyNamespace($tree.ns);
-	                domAddNsDef($tree, $tree.ns);
-	            }
-	        }
+	         } else {
+		# cw: Endless loop here...	    	
+	             if domRemoveNsDef($tree, $tree.ns) {
+	    #             domAddNsDef($tree, $tree.ns);
+	    #         } else {
+	    #             $tree.ns = xmlCopyNamespace($tree.ns);
+	    #             domAddNsDef($tree, $tree.ns);
+	             }
+	         }
 	    }
 
 	    if ($tree.type == XML_ELEMENT_NODE) {
 	        my xmlElement $ele = nativecast(xmlElement, $tree);
 
-	        my xmlAttr $attr= nativecast(xmlAttr, $ele.attributes);
-	        while ($attr !=:= xmlAttr) {
-	            _domReconcileNsAttr(
-	            	nativecast(xmlAttrPtr, $attr), $unused
-            	);
-	            $attr = $attr.next;
+	        my xmlAttrPtr $a_p = $ele.attributes;
+	        while ($a_p.defined) {
+	            _domReconcileNsAttr($a_p, $unused);
+	            $a_p = nativecast(xmlAttr, $a_p).next;
 	        }
 	    }
 
-	    my xmlNode $child = $tree.children;
-	    while ($child !=:= xmlNode) {
-	        _domReconcileNs($child, $unused);
-	        $child = $child.next;
+	    my xmlNodePtr $c_p = $tree.children;
+	    while ($c_p.defined) {
+	        _domReconcileNs($c_p, $unused);
+	        $c_p = nativecast(xmlNode, $c_p).next;
 	    }
 	}
 
 	sub domReconcileNs(xmlNode $tree) is export {
-		sub xmlFreeNsList(xmlNs) is native('xml2') { * };
+		sub xmlFreeNsList(xmlNsPtr) is native('xml2') { * };
 
-	    my $unused;
+	    my xmlNsPtr $unused;
 	    _domReconcileNs($tree, $unused);
 	    xmlFreeNsList($unused) if $unused.defined;
 	}
 
-	sub domAddNsDef(xmlNodePtr $t, xmlNsPtr $ns) {
-		my $i = nativecast(xmlNode, $t).nsDef;
+	# cw: This implementation is shit. For one thing we really need to move
+	#     away from "pointer-think"
+	sub domAddNsDef(xmlNode $t, xmlNs $ns) {
+		my xmlNs $i = $t.nsDef;
 
-		$i = nativecast(xmlNode, $i).next
-			while $i !=:= xmlNodePtr && $i !=:= $ns;
-		if ($i =:= xmlNodePtr) {
-			nativecast(
-				XML::LibXML::xmlNs, $ns
-			).setNext(
-				nativecast(xmlNode, $t).nsDef
-			);
-			nativecast(xmlNs, $t).setnsDef($ns);
+		$i = $i.next while $i.defined && $i !=:= $ns;
+
+		if (! $i.defined) {
+			$ns.setNext($t.nsDef);
+			$t.setNsDef($ns);
 		}
 	}
 
@@ -172,9 +170,9 @@ package XML::LibXML::Dom {
 	    }
 
 	    if  (
-	    	$reconcileNS.defined    && 
-	        $d.defined              && 
-	        $return_node.defined    &&
+	    	$reconcileNS.defined      && 
+	        $d.defined                && 
+	        $return_node.defined      &&
 	        $return_node.type != XML_ENTITY_REF_NODE
 	    ) {
 	        domReconcileNs($return_node);
@@ -209,35 +207,41 @@ package XML::LibXML::Dom {
 	    return $ret;
 	}
 
-	sub domRemoveNsDef(xmlNodePtr $tree, xmlNsPtr $ns) {
-		my $tree_o = nativecast(XML::LibXML::Node, $tree);
-		my $ns_o = nativecast(XML::LibXML::xmlNs, $ns);
-		my xmlNsPtr $i = $tree_o.nsDef;
+	# cw: Type check sends rakudo into an endless loop!
+	#
+	#sub domRemoveNsDef(xmlNodePtr $tree, xmlNsPtr $ns) {
+	#	
+	sub domRemoveNsDef($_tree, $_ns) {
+		my $tree = $_tree ~~ xmlNodePtr ??
+			nativecast(xmlNode, $_tree) !! $_tree;
+		my $ns = $_ns ~~ xmlNsPtr ??
+			nativecast(xmlNs, $_ns) !! $_ns;
 
-		if ($ns =:= $tree_o.nsDef) {
-			$tree_o.setNsDef($tree_o.nsDef.next);
-			$ns.setNext(xmlNsPtr);
+		my xmlNs $i = $tree.nsDef;
+
+		if ($ns =:= $tree.nsDef) {
+			$tree.setNsDef($tree.nsDef.next);
+			$ns.setNext(xmlNs);
 			return 1;
 		}
 
-		while $i !=:= xmlNsPtr {
-			my $i_o = nativecast(XML::LibXML::xmlNs, $i);
-			if $i_o.next =:= $ns {
-				$i_o.setNext($ns_o.next);
-				$ns_o.setNext(xmlNsPtr);
+		while $i.defined {
+			if $i.next =:= $ns {
+				$i.setNext(nativecast(xmlNodePtr, $ns.next));
+				$ns.setNext(xmlNsPtr);
 				return 1;
 			}
-			$i = $i_o.next;
+			$i = $i.next;
 		}
 
 		return 0;
 	}
 
 	sub domUnlinkNode(xmlNodePtr $n) {
-		my $node = nativecast(XML::LibXML::xmlNode, $n);
+		my $node = nativecast(xmlNode, $n);
 
 		return if 
-			$n =:= xmlNodePtr || [&&](
+			!$n.defined || [&&](
 				$node.prev   =:= xmlNodePtr &&
 				$node.parent =:= xmlNodePtr
 			);
@@ -250,7 +254,7 @@ package XML::LibXML::Dom {
 		$node.prev.setNext($node.next) if $node.prev !=:= xmlNodePtr;
 		$node.next.setPrev($node.prev) if $node.next !=:= xmlNodePtr;
 
-		if ($node.parent !=:= xmlNodePtr) {
+		if ($node.parent.defined) {
 			$node.parent.setLast($node.prev) 
 				if $node.parent.last =:= $node.prev;
 

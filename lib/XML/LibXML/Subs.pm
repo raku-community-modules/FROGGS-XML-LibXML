@@ -44,7 +44,7 @@ sub xmlUnsetProp(xmlNode, Str)               returns int32      is native('xml2'
 sub xmlEncodeEntitiesReentrant(xmlDoc, Str)  returns Str        is native('xml2') is export { * }
 
 sub xmlHasNsProp(xmlNode, Str, Str)          
-	returns Pointer[xmlAttr]
+	returns xmlAttr
     is native('xml2') is export { * }
 
 sub xmlGetNsProp(xmlNode, Str, Str)          returns Str        is native('xml2') is export { * }

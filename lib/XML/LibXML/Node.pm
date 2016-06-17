@@ -254,7 +254,7 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         return $ret;
     }
 
-    method hasAttribute(Str $a) {
+    method hasAttribute($a) {
         my $ret = domGetAttrNode(self, $a);
 
         my $retVal = $ret ?? True !! False;
@@ -263,9 +263,10 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         return $retVal;
     }
 
-    method hasAttributeNS(Str $ns!, Str $name!) {
-        my $attr_ns = $ns.subst(/\s/, '');
-        $attr_ns := Str if !$attr_ns.chars;
+    method hasAttributeNS($ns!, Str $name!) {
+        my $attr_ns;
+        $attr_ns = $ns.subst(/\s/, '') if $ns.defined;
+        $attr_ns := Str if !$ns.defined || !$attr_ns.chars;
 
         my xmlAttr $attr = nativecast(
             xmlAttr,
@@ -347,8 +348,46 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         return $retVal;
     }
 
-    method removeAttributeNode($an!) {
-        if $an =:= xmlNode {
+    method setAttributeNodeNS(xmlAttr $an!) {
+        sub xmlReconciliateNs(xmlDoc, xmlNode) returns int32 is native('xml2') { * }
+
+        if !$an.defined {
+            die "lost attribute node";
+            # cw: For .resume in CATCH{}
+            return;
+        }
+
+        return unless $an.type != XML_ATTRIBUTE_NODE;
+
+        domImportNode(self.doc, $an, 1, 1) if $an.doc !=:= self.doc;
+        my xmlNs $ns = $an.ns;
+        my $ret = xmlHasNsProp(
+            self, 
+            $ns.defined ?? $ns.uri !! Str,
+            $an.localname
+        );
+
+        if $ret.defined && $ret.type == XML_ATTRIBUTE_NODE {
+            return if $ret =:= $an;
+            xmlReplaceNode($ret, $an);
+        } else {
+            xmlAddChild(
+                nativecast(xmlNodePtr, self), 
+                nativecast(xmlNodePtr, $an)
+            );
+            xmlReconciliateNs(self.doc, self);
+        }
+
+        # cw: ??? XS
+        #if ( attr->_private != NULL ) {
+        #    PmmFixOwner( SvPROXYNODE(attr_node), PmmPROXYNODE(self) );
+        #}
+
+        return $ret;
+    }
+
+    method removeAttributeNode(xmlAttr $an!) {
+        if !$an.defined {
             die "lost attribute node";
             # cw: For .resume in CATCH{}
             return;
@@ -359,15 +398,32 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
             &&
             $an.parent !=:= self;
 
-        my $ret = $an;
-        my $ret_p = nativecast(xmlNodePtr, $ret);
-        xmlUnlinkNode($ret_p);
+        my $an_p = nativecast(xmlNodePtr, $an);
+        xmlUnlinkNode($an_p);
 
         # cw: ????
         # $ret = PmmNodeToSv($ret_p, NUL)
         # PmmFixOwner( SvPROXYNODE($ret), NULL)
 
-        return $ret;
+        return $an;
+    }
+
+    method removeAttributeNS($_nsUri, $_name) {
+        sub xmlFreeProp(xmlAttrPtr) is native('xml2') { * }
+
+        my $nsUri = $_nsUri.defined ?? $_nsUri.subst(/\s/, '') !! Str;
+        my $name = $_name.defined ?? $_name.subst(/\s/, '') !! Str;
+
+        my xmlAttr $xattr = xmlHasNsProp(self, $name, $nsUri);
+        xmlUnlinkNode(nativecast(xmlNodePtr, $xattr)) 
+            if $xattr.defined && $xattr.type == XML_ATTRIBUTE_NODE;
+
+        if ($xattr.defined && $xattr._private.defined) {
+            # cw: ???? XS code
+            # PmmFixOwner((ProxyNodePtr)xattr->_private, NULL);
+        } else {
+            xmlFreeProp(nativecast(xmlAttrPtr, $xattr));
+        }
     }
 
     method isSameNode($n) {

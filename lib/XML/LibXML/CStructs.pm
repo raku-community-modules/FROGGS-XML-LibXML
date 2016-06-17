@@ -179,6 +179,10 @@ my class xmlNode is export(:types) {
     method setLast(xmlNodePtr $l) {
         $!last = $l;
     }
+
+    method setNsDef(xmlNs $n) {
+        $!nsDef = $n
+    }
 }
 
 my class xmlNodeSet is export(:types) {

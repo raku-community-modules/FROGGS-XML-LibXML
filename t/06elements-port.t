@@ -176,5 +176,66 @@ my @badnames= ("1A", "<><", "&", "-:");
         !$elem.hasAttributeNS($nsURI, $foo), 
         'namespaced attribute was properly removed';
 
+    # empty NS
+    $elem.setAttributeNS( '', $foo, $attvalue2 );
+    # TEST
+    ok 
+        $elem.hasAttribute( $foo ), 
+        'can blank an attribute with a blank namespace';
+    $tattr = $elem.getAttributeNode( $foo );
+    # TEST
+    ok $tattr, 'can retrieve an attribuet with a blank namespace';
+    # TEST
+    is 
+        $tattr.localname, $foo, 
+        'attribute with blank namespace has proper name';
+    # TEST
+    is $tattr.name, $foo, 'attribute full name is correct';
+    # TEST
+    # cw: I would assume this is the prefix field in struct _xmlAttribute, 
+    #     but that is not defined in CStructs.pm. 
+    #     
+    #     Until that is rectified, we skip this test.
+    #ok $tattr.namespaceURI, ' TODO : Add test name';
+    # TEST
+    is $tattr.value, $attvalue2, 'attribute value is correct';
+
+    ok $elem.hasAttribute($foo), 'attribute can be found by name';
+    # TEST
+    ok 
+        $elem.hasAttributeNS(Nil, $foo), 
+        'attribute can be found by name using an undefined namespace';
+    # TEST
+    ok 
+        $elem.hasAttributeNS('', $foo), 
+        'attribute can be found by name using a blank namespace';
+
+    $elem.removeAttributeNode( $tattr );
+    # TEST
+    ok 
+        !$elem.hasAttributeNS('', $foo), 
+        'attribute shown as removed with blank namespace';
+    # TEST
+    ok  
+        !$elem.hasAttributeNS(Nil, $foo), 
+        'attribute shown as removed with undefined namespace';
+
+    # node based functions
+    my $e2 = $doc.createElement($foo);
+    $doc.setDocumentElement($e2);
+    my $nsAttr = $doc.createAttributeNS( 
+        "{$nsURI}.x", "{$prefix}:{$foo}", $bar
+    );
+    # TEST
+    ok $nsAttr.defined, 'created dotted attribute with namespace';
+    $elem.setAttributeNodeNS($nsAttr);
+    # TEST
+    ok 
+        $elem.hasAttributeNS( "{$nsURI}.x", $foo ), 
+        'found dotted, namespaced attribute in element';
+    $elem.removeAttributeNS( "{$nsURI}.x", $foo );
+    # TEST
+    ok !$elem.hasAttributeNS("{$nsURI}.x", $foo), 
+        'can remove dotted attribute from element';
 
 }

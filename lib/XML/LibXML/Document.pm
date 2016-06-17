@@ -6,6 +6,7 @@ use XML::LibXML::C14N;
 use XML::LibXML::Subs;
 use XML::LibXML::Node;
 use XML::LibXML::Attr;
+use XML::LibXML::Dom;
 use XML::LibXML::Enums;
 use XML::LibXML::Error;
 
@@ -234,7 +235,7 @@ method base-uri() {
             
     #~ }
 
-    method gist() {
+    method gist(XML::LibXML::Document:D:) {
         my $result = CArray[Str].new();
         my $len    = CArray[int32].new();
         $result[0] = "";
@@ -338,6 +339,10 @@ multi method new-attr-ns(%kv where *.elems == 1, $uri) {
     self.new-attr-ns(%kv.list[0], $uri)
 }
 
+method createAttributeNS($nsUri, $name, $val) {
+    self.new-attr-ns($name => $val, $nsUri);
+}
+
 method new-text(Str $text) {
     my $node = xmlNewText( $text );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
@@ -354,4 +359,27 @@ method new-cdata-block(Str $cdata) {
     my $node = xmlNewCDataBlock( self, $cdata, xmlStrlen($cdata) );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
     $node
+}
+
+method setDocumentElement($e) {
+    my $elem = nativecast(xmlNode, $e);
+
+    if $elem.type != XML_ELEMENT_NODE {
+        die "setDocumentElement: ELEMENT node required";
+        # cw: To properly handle .resume in CATCH {}
+        return;
+    }
+
+    domImportNode(self, $elem, 1, 1);
+    my $oelem = xmlDocGetRootElement(self);
+    if (!$oelem.defined || !$oelem._private.defined) {
+        xmlDocSetRootElement(self, $elem);
+    } else {
+        my $docfrag = self.new-doc-fragment();
+        xmlReplaceNode($oelem, $elem);
+        xmlAddChild($docfrag, $oelem)
+        # PmmFixOwner( ((ProxyNodePtr)oelem->_private), docfrag);
+        #PmmFixOwner( SvPROXYNODE(proxy), PmmPROXYNODE(self));
+        #    if $elem.private !=:= Pointer;
+    } 
 }
