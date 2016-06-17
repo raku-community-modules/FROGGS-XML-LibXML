@@ -227,15 +227,48 @@ my @badnames= ("1A", "<><", "&", "-:");
         "{$nsURI}.x", "{$prefix}:{$foo}", $bar
     );
     # TEST
-    ok $nsAttr.defined, 'created dotted attribute with namespace';
+    ok $nsAttr, 'created attribute with XML namespace';
     $elem.setAttributeNodeNS($nsAttr);
+
+    diag $elem;
+
     # TEST
     ok 
         $elem.hasAttributeNS( "{$nsURI}.x", $foo ), 
-        'found dotted, namespaced attribute in element';
+        'found attribute with XML namespace in element';
+
     $elem.removeAttributeNS( "{$nsURI}.x", $foo );
     # TEST
     ok !$elem.hasAttributeNS("{$nsURI}.x", $foo), 
-        'can remove dotted attribute from element';
+        'can remove attribute with XML namespace from element';
+
+    $elem.setAttributeNS( $nsURI, "{$prefix}:{$attname1}", $attvalue2 );
+    $elem.removeAttributeNS( '', $attname1 );
+
+    # TEST
+    ok  
+        ! $elem.hasAttribute($attname1), 
+        "hasAttribute() should not find attribute '$attname1'";
+    # TEST
+    ok 
+        $elem.hasAttributeNS( $nsURI, $attname1 ), 
+        "hasAttributeNS can find attribute '$attname1'";
+
+    {
+        for @badnames -> $name {
+            try {
+                my $caught = 0;
+                CATCH {
+                    # TEST*$badnames
+                    ok True, "setAttributeNS throws an exception for '$name'";
+                    $caught = 1;
+                    .resume;
+                }
+                $elem.setAttributeNS( Nil, $name, 'X' );
+                nok True, "setAttributeNS did not throw an exception for '$name'"
+                    if $caught == 0;
+            }
+        }
+    }
 
 }

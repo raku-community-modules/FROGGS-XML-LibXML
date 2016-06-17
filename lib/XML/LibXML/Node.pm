@@ -187,7 +187,7 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
             if $attr_ns.chars {
                 $ns = xmlSearchNsByHref(self.doc, self, $attr_ns);
 
-                if $ns.defined && !$ns.prefix {
+                if $ns.defined && !$ns.uri {
                     my @all_ns := nativecast(
                         CArray[xmlNsPtr],
                         xmlGetNsList(self.doc, self)
@@ -198,7 +198,7 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
                         repeat {
                             my $nsp := @all_ns[$i++];
                             $ns = nativecast(xmlNs, $nsp);
-                            last if $ns.prefix && ($ns.uri eq $namespace);
+                            last if $ns.uri && ($ns.uri eq $namespace);
                         } while ($ns);
                         #xmlFree($all_ns);
                     }
@@ -263,10 +263,12 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         return $retVal;
     }
 
-    method hasAttributeNS($ns!, Str $name!) {
-        my $attr_ns;
-        $attr_ns = $ns.subst(/\s/, '') if $ns.defined;
-        $attr_ns := Str if !$ns.defined || !$attr_ns.chars;
+    method hasAttributeNS($_ns!, Str $_name!) {
+        my ($attr_ns, $name;);
+        $attr_ns = $_ns.subst(/\s/, '') if $_ns.defined;
+        $name = $_name.subst(/\s/, '') if $_name.defined;
+
+        $attr_ns := Str if !$_ns.defined || !$attr_ns.chars;
 
         my xmlAttr $attr = nativecast(
             xmlAttr,
@@ -274,7 +276,7 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         );
 
         return ($attr.defined && $attr.type == XML_ATTRIBUTE_NODE) ??
-            1 !! 0;
+            True !! False;
     }
 
     method getAttributeNode($a) {
