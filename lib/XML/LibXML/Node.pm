@@ -125,6 +125,36 @@ role XML::LibXML::Common {
         return nativecast(xmlNode, self);
     }
 
+    method getContent() {
+        sub xmlNodeGetContent(xmlNode) returns Str is native('xml2') { * }
+
+        return xmlNodeGetContent(self.getNode);
+    }
+
+    multi method elems() {
+        sub xmlChildElementCount(xmlNode) returns ulong is native('xml2') { * }
+        xmlChildElementCount(self.getNode());
+    }
+
+    method hasChildNodes {
+        self.elems() > 0;
+    }
+
+    method push($child) is aka<appendChild> {
+        sub xmlAddChild(xmlNode, xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
+        xmlAddChild(self.getNode(), $child);
+    }
+
+    multi method Str(:$level = 0, :$format = 1) {
+        my $buffer = xmlBufferCreate(); # XXX free
+        my $size   = xmlNodeDump($buffer, self.doc, self, $level, $format);
+        $buffer.value;
+    }
+
+    method parentNode() {
+        return self.parent;
+    }
+
     method setNodeName(Str $n) {
         sub xmlNodeSetName(xmlNode, Str)       is native('xml2') { * }
 
@@ -492,21 +522,6 @@ role XML::LibXML::Common {
 class XML::LibXML::Node does XML::LibXML::Nodish {
 
     also does XML::LibXML::Common;
-
-    multi method elems() {
-        sub xmlChildElementCount(xmlNode) returns ulong is native('xml2') { * }
-        xmlChildElementCount(self)
-    }
-    method push($child) is aka<appendChild> {
-        sub xmlAddChild(xmlNode, xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
-        xmlAddChild(self, $child)
-    }
-
-    multi method Str(:$level = 0, :$format = 1) {
-        my $buffer = xmlBufferCreate(); # XXX free
-        my $size   = xmlNodeDump($buffer, self.doc, self, $level, $format);
-        $buffer.value;
-    }
 
     method name() {
         self._name();

@@ -7,6 +7,8 @@ unit class XML::LibXML::Element is xmlElement is repr('CStruct');
 use nqp;
 use NativeCall;
 
+use HTML::Entity;
+
 use XML::LibXML::Enums;
 use XML::LibXML::Node;
 use XML::LibXML::Subs;
@@ -62,7 +64,32 @@ method tagName() {
 	self.name;
 }
 
+method string_value {
+	return decode-entities(self.getContent);
+}
 
+method appendText($text) {
+	sub xmlNodeAddContent(xmlNode, Str) is native('xml2') { * }
+	xmlNodeAddContent(self.getNode(), $text);
+}
 
+multi method appendTextChild(Pair $kv) {
+	sub xmlNewChild(xmlNode, xmlNs, Str, Str) returns xmlNode is native('xml2') { * };
+
+	my $name = $kv.key.subst(/\s/, '');
+	return unless $name.chars;
+
+	my $content = $kv.value;
+	if $content.defined && $content.chars {
+		$content = $content.trim;
+		$content = xmlEncodeEntitiesReentrant(self.doc, $content)
+			if $content.chars;
+	}
+
+	xmlNewChild(self.getNode, xmlNs, $name, $content);
+}
+multi method appendTextChild(Str $name) {
+	self.appendTextChild($name => Str);
+}
 
 

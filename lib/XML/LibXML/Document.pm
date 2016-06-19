@@ -265,7 +265,7 @@ method new-elem(Str $elem) is aka<createElement> {
 
     my $node = xmlNewNode( self, $elem );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self.doc));
-    $node
+    nativecast(::('XML::LibXML::Element'), $node);
 }
 
 multi method new-elem-ns(Pair $kv, $uri) {
@@ -282,7 +282,7 @@ multi method new-elem-ns(Pair $kv, $uri) {
     my $node   = xmlNewDocNode(self, $ns, $name, $buffer);
     nqp::bindattr(nqp::decont($node), xmlNode, '$!nsDef', nqp::decont($ns));
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc',   nqp::decont(self));
-    $node
+    nativecast(::('XML::LibXML::Element'), $node);
 }
 multi method new-elem-ns(%kv where *.elems == 1, $uri) {
     self.new-elem-ns(%kv.list[0], $uri)
@@ -319,7 +319,7 @@ multi method new-attr(Pair $kv) {
     my $buffer = xmlEncodeEntitiesReentrant(self, $kv.value);
     my $attr   = xmlNewDocProp(self, $kv.key, $buffer);
     nqp::bindattr(nqp::decont($attr), xmlAttr, '$!doc', nqp::decont(self));
-    $attr
+    nativecast(::('XML::LibXML::Attr'), $attr);
 }
 multi method new-attr(*%kv where *.elems == 1) {
     self.new-attr(%kv.list[0])
@@ -344,7 +344,7 @@ multi method new-attr-ns(Pair $kv, $uri) {
     my $attr   = xmlNewDocProp(self, $name, $buffer);
     xmlSetNs($attr, $ns);
     nqp::bindattr(nqp::decont($attr), xmlAttr, '$!doc', nqp::decont(self));
-    $attr
+    nativecast(::('XML::LibXML::Attr'), $attr);
 }
 multi method new-attr-ns(%kv where *.elems == 1, $uri) {
     self.new-attr-ns(%kv.list[0], $uri)
@@ -370,6 +370,17 @@ method new-cdata-block(Str $cdata) {
     my $node = xmlNewCDataBlock( self, $cdata, xmlStrlen($cdata) );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
     $node
+}
+
+method createTextNode(Str $content) {
+    my $newText = self.new-text($content);
+    my $docfrag = self.new-doc-fragment();
+    xmlAddChild(
+        nativecast(xmlNodePtr, $docfrag), 
+        nativecast(xmlNodePtr, $newText)
+    );
+
+    $newText;
 }
 
 method setDocumentElement($e) {
