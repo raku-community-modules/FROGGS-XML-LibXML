@@ -7,6 +7,7 @@ use XML::LibXML::Enums;
 unit class XML::LibXML::Parser is xmlParserCtxt is repr('CStruct');
 
 use XML::LibXML::Document;
+use XML::LibXML::Element;
 use XML::LibXML::Subs;
 use XML::LibXML::Error;
 use XML::LibXML::Enums;

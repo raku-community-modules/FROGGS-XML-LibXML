@@ -57,3 +57,7 @@ method isSameNode($n) {
     #     equivalence (unless... possibly... the repr is 'CPointer')
     return self =:= $n;
 }
+
+method ownerDocument {
+    return self.doc;
+}

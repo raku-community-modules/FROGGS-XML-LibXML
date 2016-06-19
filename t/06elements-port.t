@@ -271,4 +271,85 @@ my @badnames= ("1A", "<><", "&", "-:");
         }
     }
 
+    # 2. unbound node
+    $elem = XML::LibXML::Element.new($foo);
+    # TEST
+    isa-ok $elem, XML::LibXML::Element, 'created element object';
+    # TEST
+    is $elem.tagName, $foo, 'element is named properly';
+
+    $elem.setAttribute( $attname1, $attvalue1 );
+    # TEST
+    ok 
+        $elem.hasAttribute($attname1), 
+        "successfully added attribute '$attname1' to element";
+    # TEST
+    is 
+        $elem.getAttribute($attname1), $attvalue1, 
+        'attribute value is correct';
+
+    $attr = $elem.getAttributeNode($attname1);
+    # TEST
+    isa-ok 
+        $attr, XML::LibXML::Attr, 
+        "can retrieve attribute node for '$attname1'";
+    # TEST
+    is $attr.name, $attname1, 'attribute node is named correctly';
+    # TEST
+    is $attr.value, $attvalue1, 'attribute node has correct value';
+
+    $elem.setAttributeNS( $nsURI, $prefix ~ ':' ~ $foo, $attvalue2 );
+    # TEST
+    ok 
+        $elem.hasAttributeNS( $nsURI, $foo ), 
+        'can set attribute with namespace';
+    # warn $elem->toString() , "\n";
+    $tattr = $elem.getAttributeNodeNS( $nsURI, $foo );
+    # TEST
+    ok $tattr, 'can retrieve attribute node with namespace';
+    # TEST
+    is $tattr.localname, $foo, 'attribute node is named correclty';
+    # TEST
+    is 
+        $tattr.name, $prefix ~ ':' ~ $foo, 
+        'attribute node has correct proper name';
+    # TEST
+    is $tattr.value, $attvalue2, 'attribute node has correct value';
+
+    $elem.removeAttributeNode( $tattr );
+    # TEST
+    ok !$elem.hasAttributeNS($nsURI, $foo), 'attribute was properly removed';
+    # warn $elem->toString() , "\n";
+
+    # 3. Namespace handling
+    # 3.1 Namespace switching
+    {
+        my $elem = XML::LibXML::Element.new($foo);
+        # TEST
+        ok $elem, 'created element successfully';
+
+        my $doc = XML::LibXML::Document.new();
+        my $e2 = $doc.createElement($foo);
+        $doc.setDocumentElement($e2);
+        my $nsAttr = $doc.createAttributeNS( 
+            $nsURI, $prefix ~ ':"' ~ $foo, $bar
+        );
+        # TEST
+        ok $nsAttr, 'created attribute with namespace successfully';
+
+        $elem.setAttributeNodeNS($nsAttr);
+        # TEST
+        ok  
+            $elem.hasAttributeNS($nsURI, $foo), 
+            'attribute successfully attached to element';
+
+        # TEST
+        # cw: $nsAttr was created with the document, but was then bound
+        #     to $elem, which is NOT bound to a document. Therefore 
+        #     ownerDocument should not be defined. (???)
+        ok 
+            ! $nsAttr.ownerDocument.defined, 
+            'ownerDocument should not be defined';
+        # warn $elem->toString() , "\n";
+    }
 }

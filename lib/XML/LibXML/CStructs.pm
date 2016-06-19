@@ -134,6 +134,10 @@ my class xmlElement is export(:types) {
     has xmlAttrPtr  $.attributes; # List of declared attributes
     has Str             $.prefix;
     #has xmlRegex    $.contModel; # The validating regexp.
+
+    #method setName(xmlElement:D: $name) {
+    #    $!name = $name;
+    #}
 }
 
 my class xmlNode is export(:types) {

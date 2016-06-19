@@ -42,7 +42,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         xmlElementType(nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlNode, '$!type')))
     }
 
-    method name() {
+    method _name() {
         do given self.type {
             when XML_COMMENT_NODE {
                 "#comment";
@@ -59,6 +59,9 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             when XML_DOCUMENT_FRAG_NODE {
                 "#document-fragment";
             }
+            #when XML_ELEMENT_NODE {
+            #    $!name;
+            #}
             default {
                 self.ns && self.ns.name
                     ?? self.ns.name ~ ':' ~ self.localname
@@ -110,25 +113,14 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             }
         }
     }
+
+    method isSameNode($n) {
+        # cw: Maybe.
+        return self =:= $n;
+    }
 }
 
-class XML::LibXML::Node does XML::LibXML::Nodish {
-
-    multi method elems() {
-        sub xmlChildElementCount(xmlNode)          returns ulong      is native('xml2') { * }
-        xmlChildElementCount(self)
-    }
-    method push($child) is aka<appendChild> {
-        sub xmlAddChild(xmlNode, xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
-        xmlAddChild(self, $child)
-    }
-
-    multi method Str(:$level = 0, :$format = 1) {
-        my $buffer = xmlBufferCreate(); # XXX free
-        my $size   = xmlNodeDump($buffer, self.doc, self, $level, $format);
-        $buffer.value;
-    }
-
+role XML::LibXML::Common {
     method !testNodeName(Str $n) {
         return False if ($n ~~ /^<-[ a..z A..Z \_ : ]>/) !~~ Nil;
 
@@ -143,7 +135,7 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         #xmlNodeSetName(self, $n);
 
         if self!testNodeName($n) {
-            xmlNodeSetName(self, $n);        
+            xmlNodeSetName(nativecast(xmlNode, self), $n);        
         } else {
             die "Bad name";
         }
@@ -156,7 +148,7 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
             # cw: Note, this method locks us into libxml2 versions of 2.6.21 and 
             #     later. libxml2 does -not- provide us a mechanism to test and 
             #     implement backwards compatibility.
-            xmlSetProp(self, $a, $v);
+            xmlSetProp(nativecast(xmlNode, self), $a, $v);
         } else {
             die "Bad name '$a'";
         }
@@ -210,7 +202,9 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
                 if $prefix.defined {
                     my $attr_p = $prefix.subst(/s/, '');
                     if $attr_p.chars {
-                        $ns := xmlNewNs(self, $attr_ns, $attr_p);
+                        $ns := xmlNewNs(
+                            nativecast(xmlNode, self), $attr_ns, $attr_p
+                        );
                     } else {
                         $ns := xmlNs;
                     }
@@ -223,7 +217,7 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
             return            
         }
 
-        xmlSetNsProp(self, $ns, $localname, $val);
+        xmlSetNsProp(nativecast(xmlNode, self), $ns, $localname, $val);
     }
 
     method getAttribute(Str $a) {
@@ -233,7 +227,9 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         return unless $name;
 
         my $ret;
-        unless ($ret = xmlGetNoNsProp(self, $name)) {
+        unless (
+            $ret = xmlGetNoNsProp(nativecast(xmlNode, self), $name)
+        ) {
             my ($prefix, $localname) = $a.split(':');
 
             if !$localname {
@@ -243,7 +239,9 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
             if $localname {
                 my $ns = xmlSearchNs(self.doc, self, $prefix);
                 if $ns {
-                    $ret = xmlGetNsProp(self, $localname, $ns.href);
+                    $ret = xmlGetNsProp(
+                        nativecast(xmlNode, self), $localname, $ns.href
+                    );
                 }
             }
         }
@@ -255,7 +253,9 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
     }
 
     method hasAttribute($a) {
-        my $ret = domGetAttrNode(self, $a);
+        my $ret = domGetAttrNode(
+            nativecast(xmlNode, self), $a
+        );
 
         my $retVal = $ret ?? True !! False;
         #xmlFree($ret)
@@ -272,7 +272,7 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
 
         my xmlAttr $attr = nativecast(
             xmlAttr,
-            xmlHasNsProp(self, $name, $attr_ns)
+            xmlHasNsProp(nativecast(xmlNode, self), $name, $attr_ns)
         );
 
         return ($attr.defined && $attr.type == XML_ATTRIBUTE_NODE) ??
@@ -280,7 +280,9 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
     }
 
     method getAttributeNode($a) {
-        my $ret := domGetAttrNode(self, $a);
+        my $ret := domGetAttrNode(
+            nativecast(xmlNode, self), $a
+        );
         #my $retVal = $ret.clone;
         #xmlFree($ret);
 
@@ -295,7 +297,9 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         return unless $attr_name.chars;
 
         $attr_ns := Str unless $attr_ns.chars;
-        my $ret_p = xmlHasNsProp(self, $attr_name, $attr_ns);
+        my $ret_p = xmlHasNsProp(
+            nativecast(xmlNode, self), $attr_name, $attr_ns
+        );
         my $ret = nativecast(XML::LibXML::Attr, $ret_p);
 
         # cw: Deep XS code that has yet to be grokked.
@@ -322,7 +326,9 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         }
 
         my $ret;
-        $ret = domGetAttrNode(self, $an.name);
+        $ret = domGetAttrNode(
+            nativecast(xmlNode, self), $an.name
+        );
         if $ret {
             return unless $ret !=:= $an;
             
@@ -416,7 +422,9 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         my $nsUri = $_nsUri.defined ?? $_nsUri.subst(/\s/, '') !! Str;
         my $name = $_name.defined ?? $_name.subst(/\s/, '') !! Str;
 
-        my xmlAttr $xattr = xmlHasNsProp(self, $name, $nsUri);
+        my xmlAttr $xattr = xmlHasNsProp(
+            nativecast(xmlNode, self), $name, $nsUri
+        );
         xmlUnlinkNode(nativecast(xmlNodePtr, $xattr)) 
             if $xattr.defined && $xattr.type == XML_ATTRIBUTE_NODE;
 
@@ -426,12 +434,33 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         } else {
             xmlFreeProp(nativecast(xmlAttrPtr, $xattr));
         }
+    }    
+}
+
+class XML::LibXML::Node does XML::LibXML::Nodish {
+
+    also does XML::LibXML::Common;
+
+    multi method elems() {
+        sub xmlChildElementCount(xmlNode)          returns ulong      is native('xml2') { * }
+        xmlChildElementCount(self)
+    }
+    method push($child) is aka<appendChild> {
+        sub xmlAddChild(xmlNode, xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
+        xmlAddChild(self, $child)
     }
 
-    method isSameNode($n) {
-        # cw: Maybe.
-        return self =:= $n;
+    multi method Str(:$level = 0, :$format = 1) {
+        my $buffer = xmlBufferCreate(); # XXX free
+        my $size   = xmlNodeDump($buffer, self.doc, self, $level, $format);
+        $buffer.value;
     }
+
+    method name() {
+        self._name();
+    }
+
+    
     
     #~ multi method Str() {
         #~ my $result = CArray[Str].new();
