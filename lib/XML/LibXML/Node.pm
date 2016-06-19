@@ -7,7 +7,6 @@ use XML::LibXML::Subs;
 use XML::LibXML::C14N;
 use XML::LibXML::Attr;
 use XML::LibXML::Dom;
-#use XML::LibXML::Pmm;
 
 multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
 
@@ -121,21 +120,19 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 }
 
 role XML::LibXML::Common {
-    method !testNodeName(Str $n) {
-        return False if ($n ~~ /^<-[ a..z A..Z \_ : ]>/) !~~ Nil;
 
-        # cw: Missing IS_EXTENDER(c)
-        return ($n ~~ /<-[ \d a..z A..Z : \- \. ]>/) ~~ Nil;
+    method getNode() {
+        return nativecast(xmlNode, self);
     }
 
     method setNodeName(Str $n) {
         sub xmlNodeSetName(xmlNode, Str)       is native('xml2') { * }
 
-        #die "Bad name" if self!testNodeName($n);
+        #die "Bad name" if testNodeName($n);
         #xmlNodeSetName(self, $n);
 
-        if self!testNodeName($n) {
-            xmlNodeSetName(nativecast(xmlNode, self), $n);        
+        if testNodeName($n) {
+            xmlNodeSetName(self.getNode(), $n);        
         } else {
             die "Bad name";
         }
@@ -144,18 +141,18 @@ role XML::LibXML::Common {
     method setAttribute(Str $a, Str $v) {
         sub xmlSetProp(xmlNode, Str, Str)       is native('xml2') { * }
 
-        if self!testNodeName($a) {
+        if testNodeName($a) {
             # cw: Note, this method locks us into libxml2 versions of 2.6.21 and 
             #     later. libxml2 does -not- provide us a mechanism to test and 
             #     implement backwards compatibility.
-            xmlSetProp(nativecast(xmlNode, self), $a, $v);
+            xmlSetProp(self.getNode(), $a, $v);
         } else {
             die "Bad name '$a'";
         }
     }
 
     method setAttributeNS(Str $namespace, Str $name, Str  $val) {
-        if ! self!testNodeName($name) {
+        if ! testNodeName($name) {
             die "Bad name '$name'";
             # cw: Yes, I know this looks weird, but is done incase we 
             #     .return from a CATCH{}
@@ -203,7 +200,7 @@ role XML::LibXML::Common {
                     my $attr_p = $prefix.subst(/s/, '');
                     if $attr_p.chars {
                         $ns := xmlNewNs(
-                            nativecast(xmlNode, self), $attr_ns, $attr_p
+                            self.getNode(), $attr_ns, $attr_p
                         );
                     } else {
                         $ns := xmlNs;
@@ -217,44 +214,12 @@ role XML::LibXML::Common {
             return            
         }
 
-        xmlSetNsProp(nativecast(xmlNode, self), $ns, $localname, $val);
-    }
-
-    method getAttribute(Str $a) {
-        sub xmlGetNoNsProp(xmlNode, Str)  returns Str      is native('xml2') { * }
-
-        my $name = $a.subst(/\s/, '');
-        return unless $name;
-
-        my $ret;
-        unless (
-            $ret = xmlGetNoNsProp(nativecast(xmlNode, self), $name)
-        ) {
-            my ($prefix, $localname) = $a.split(':');
-
-            if !$localname {
-                $localname = $prefix;
-                $prefix := Str;
-            }
-            if $localname {
-                my $ns = xmlSearchNs(self.doc, self, $prefix);
-                if $ns {
-                    $ret = xmlGetNsProp(
-                        nativecast(xmlNode, self), $localname, $ns.href
-                    );
-                }
-            }
-        }
-
-        #my $retval = $ret.clone;
-        #xmlFree($ret);
-
-        return $ret;
+        xmlSetNsProp(self.getNode(), $ns, $localname, $val);
     }
 
     method hasAttribute($a) {
         my $ret = domGetAttrNode(
-            nativecast(xmlNode, self), $a
+            self.getNode(), $a
         );
 
         my $retVal = $ret ?? True !! False;
@@ -272,16 +237,68 @@ role XML::LibXML::Common {
 
         my xmlAttr $attr = nativecast(
             xmlAttr,
-            xmlHasNsProp(nativecast(xmlNode, self), $name, $attr_ns)
+            xmlHasNsProp(self.getNode(), $name, $attr_ns)
         );
 
         return ($attr.defined && $attr.type == XML_ATTRIBUTE_NODE) ??
             True !! False;
     }
 
+    method getAttribute(Str $a) {
+        sub xmlGetNoNsProp(xmlNode, Str)  returns Str      is native('xml2') { * }
+
+        my $name = $a.subst(/\s/, '');
+        return unless $name;
+
+        my $ret;
+        unless (
+            $ret = xmlGetNoNsProp(self.getNode(), $name)
+        ) {
+            my ($prefix, $localname) = $a.split(':');
+
+            if !$localname {
+                $localname = $prefix;
+                $prefix := Str;
+            }
+            if $localname {
+                my $ns = xmlSearchNs(self.doc, self, $prefix);
+                if $ns {
+                    $ret = xmlGetNsProp(
+                        self.getNode(), $localname, $ns.href
+                    );
+                }
+            }
+        }
+
+        #my $retval = $ret.clone;
+        #xmlFree($ret);
+
+        return $ret;
+    }
+
+    method getAttributeNS($_uri, $_name, $_useEncoding = 0) {
+        sub xmlGetProp(xmlNode, Str) returns Str is native('xml2') { * };
+
+        my $name = $_name.subst(/\s/, ' ');
+        return unless $name.defined && $name.chars;
+
+        my $uri = $_uri.subst(/\s/, ' ');
+        my $node = self.getNode();
+        my $ret = $uri.defined && $uri.chars ??
+            xmlGetNsProp($node, $name, $uri) 
+            !!
+            xmlGetProp($node, $name);
+
+        # cw: Encoding NYI.
+        warn "useEncoding NYI" if $_useEncoding;
+
+        return $ret;
+    }
+
+
     method getAttributeNode($a) {
         my $ret := domGetAttrNode(
-            nativecast(xmlNode, self), $a
+            self.getNode(), $a
         );
         #my $retVal = $ret.clone;
         #xmlFree($ret);
@@ -298,7 +315,7 @@ role XML::LibXML::Common {
 
         $attr_ns := Str unless $attr_ns.chars;
         my $ret_p = xmlHasNsProp(
-            nativecast(xmlNode, self), $attr_name, $attr_ns
+            self.getNode(), $attr_name, $attr_ns
         );
         my $ret = nativecast(XML::LibXML::Attr, $ret_p);
 
@@ -327,7 +344,7 @@ role XML::LibXML::Common {
 
         my $ret;
         $ret = domGetAttrNode(
-            nativecast(xmlNode, self), $an.name
+            self.getNode(), $an.name
         );
         if $ret {
             return unless $ret !=:= $an;
@@ -423,7 +440,7 @@ role XML::LibXML::Common {
         my $name = $_name.defined ?? $_name.subst(/\s/, '') !! Str;
 
         my xmlAttr $xattr = xmlHasNsProp(
-            nativecast(xmlNode, self), $name, $nsUri
+            self.getNode(), $name, $nsUri
         );
         xmlUnlinkNode(nativecast(xmlNodePtr, $xattr)) 
             if $xattr.defined && $xattr.type == XML_ATTRIBUTE_NODE;
@@ -434,7 +451,42 @@ role XML::LibXML::Common {
         } else {
             xmlFreeProp(nativecast(xmlAttrPtr, $xattr));
         }
-    }    
+    }
+
+    method setNamespace($_uri, $_prefix = Nil, $flag = 1) {
+        my $ret = 0;
+        my $ns;
+
+        if (! $_uri.defined && ! $_prefix.defined) {
+            $ns = xmlSearchNs(self.doc, self.getNode(), Str);
+            if ($ns.defined && $ns.uri.defined && $ns.uri.chars) {
+                $ret = 0;
+            } elsif $flag {
+                xmlSetNs(self.getNode(), xmlNs);
+                $ret = 1;
+            } else {
+                $ret = 0;
+            }
+        } elsif $flag {
+            $ns = xmlSearchNs(self.doc, self.getNode(), $_prefix);
+
+            if ($ns.defined) {
+                if $ns.uri eq $_uri {
+                    $ret = 1;
+                } else {
+                    $ns = xmlNewNs(self.getNode(), $_uri, $_prefix);
+                }
+            } else {
+                $ns = xmlNewNs(self.getNode(), $_uri, $_prefix);
+            }
+            
+            $ret = $ns.defined;
+        }
+
+        xmlSetNs(self.getNode(), $ns) if $flag && $ns.defined;
+
+        $ret;
+    }
 }
 
 class XML::LibXML::Node does XML::LibXML::Nodish {
@@ -442,7 +494,7 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
     also does XML::LibXML::Common;
 
     multi method elems() {
-        sub xmlChildElementCount(xmlNode)          returns ulong      is native('xml2') { * }
+        sub xmlChildElementCount(xmlNode) returns ulong is native('xml2') { * }
         xmlChildElementCount(self)
     }
     method push($child) is aka<appendChild> {

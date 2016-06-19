@@ -161,7 +161,7 @@ package XML::LibXML::Dom {
 	        }
 	    }
 
-	    if ($n.doc =:= $d) {
+	    if ($n.defined && $n.doc !=:= $d) {
 	        # cw: There is XS memory management code at this point that 
 	        #     I'm hoping we can ignore:
 	        #if (PmmIsPSVITainted(node->doc))
@@ -266,5 +266,16 @@ package XML::LibXML::Dom {
 		$node.setNext(xmlNodePtr);
 		$node.setParent(xmlNodePtr);
 	}
+
+	sub domFixOwner($node_to_fix, $new_parent) {
+
+	}
+
+	sub testNodeName(Str $n) is export {
+        return False if ($n ~~ /^<-[ a..z A..Z \_ : ]>/) !~~ Nil;
+
+        # cw: Missing IS_EXTENDER(c)
+        return ($n ~~ /<-[ \d a..z A..Z : \- \. ]>/) ~~ Nil;
+    }
 
 }

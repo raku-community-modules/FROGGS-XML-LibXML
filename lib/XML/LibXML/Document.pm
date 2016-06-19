@@ -291,6 +291,17 @@ multi method new-elem-ns($name, $uri) {
     self.new-elem-ns($name => Str, $uri)
 }
 
+method createElementNS($_uri, $_name) {
+    if ! testNodeName($_name) {
+        die "bad name";
+        # cw: For .resume inside CATCH
+        return;
+    } 
+
+    self.new-elem-ns($_name, $_uri);
+}
+
+
 multi method createAttribute($key, $value) {
     self.new-attr($key => $value);
 }
@@ -381,5 +392,5 @@ method setDocumentElement($e) {
         # PmmFixOwner( ((ProxyNodePtr)oelem->_private), docfrag);
         #PmmFixOwner( SvPROXYNODE(proxy), PmmPROXYNODE(self));
         #    if $elem.private !=:= Pointer;
-    } 
+    }
 }

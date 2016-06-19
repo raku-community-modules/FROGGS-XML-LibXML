@@ -352,4 +352,35 @@ my @badnames= ("1A", "<><", "&", "-:");
             'ownerDocument should not be defined';
         # warn $elem->toString() , "\n";
     }
+
+    # 3.2 default Namespace and Attributes
+    {
+        my $doc  = XML::LibXML::Document.new();
+        my $elem = $doc.createElementNS( "foo", "root" );
+        $doc.setDocumentElement( $elem );
+
+        $elem.setNamespace( "foo", "bar" );
+
+        $elem.setAttributeNS( "foo", "x:attr",  "test" );
+        $elem.setAttributeNS( Str, "attr2",  "test" );
+
+        # TEST
+
+        is 
+            $elem.getAttributeNS( "foo", "attr" ), "test", 
+            'can retrieve proper attribute value in namespace "foo"';
+        # TEST
+        is  
+            $elem.getAttributeNS( "", "attr2" ), "test", 
+            'can retrieve proper attribute value from blank namespace';
+
+        # warn $doc->toString;
+        # actually this doesn't work correctly with libxml2 <= 2.4.23
+        $elem.setAttributeNS( "foo", "attr2",  "bar" );
+        # TEST
+        is 
+            $elem.getAttributeNS( "foo", "attr2" ), "bar", 
+            'can properly reset an attribute in namespace "foo"';
+        # warn $doc->toString;
+    }
 }
