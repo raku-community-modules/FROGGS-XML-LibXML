@@ -137,7 +137,7 @@ role XML::LibXML::Common {
     }
 
     method hasChildNodes {
-        self.elems() > 0;
+        self.childNodes.defined && self.childNodes.elems;
     }
 
     method push($child) is aka<appendChild> {

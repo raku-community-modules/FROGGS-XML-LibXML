@@ -46,7 +46,10 @@ method doctype is aka<type> {
     #~ This read-only property is an object that implements the DOMImplementation interface.
 
 #| This read-only property is an object that implements the Element interface.
-method documentElement is aka<root> {
+method documentElement 
+    is aka<root> 
+    is aka<getDocumentElement>
+{
     Proxy.new(
         FETCH => -> $ {
             xmlDocGetRootElement(self)

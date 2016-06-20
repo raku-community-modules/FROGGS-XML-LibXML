@@ -3,6 +3,7 @@ use nqp;
 
 use XML::LibXML::CStructs :types;
 use XML::LibXML::Enums;
+use XML::LibXML::Subs;
 
 unit class XML::LibXML::Attr is xmlAttr is repr('CStruct');
 
@@ -44,6 +45,10 @@ multi method gist(XML::LibXML::Attr:D:) {
     self.name ~ '="' ~ self.value ~ '"'
 }
 
+method toString(XML::LibXML::Attr:D:) {
+    self.gist();
+}
+
 # cw: See the need to break out similar operations for all XML nodes into a specific role 
 #     (ala XML::LibXML::Nodish) otherwise we will end up duplicating functionality across
 #     several classes.
@@ -59,5 +64,13 @@ method isSameNode($n) {
 }
 
 method ownerDocument {
-    return self.doc;
+    return nativecast(::('XML::LibXML::Document'), self.doc);
+}
+
+method ownerElement {
+    return nativecast(::('XML::LibXML::Node'), self.parent);
+}
+
+method getContent() {
+    return xmlNodeGetContent( nativecast(::('XML::LibXML::Node'), self) );
 }

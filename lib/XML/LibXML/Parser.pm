@@ -40,6 +40,11 @@ method parse(Str:D $str, Str :$uri, :$flags = self.html == 1 ?? HTML_PARSE_RECOV
     $doc
 }
 
+method parse_string($str) {
+    return unless $str.defined;
+    self.parse($str, :uri(Str));
+}
+
 #~ multi method expand-entities() {
     #~ sub xmlCtxtUseOptions(xmlParserCtxt, int32)                     returns int32 is native('xml2') { * }
     #~ say self.replaceEntities;

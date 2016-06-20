@@ -474,8 +474,8 @@ ok !$elem.hasAttributeNS($nsURI, $foo), 'attribute was properly removed';
         $elem.string_value, $plainstring ~ $stdentstring, 
         'text was properly appended to element text';
 
-    $elem.appendTextChild( "foo");
-    $elem.appendTextChild( "foo" => "foo&bar" );
+    $elem.appendTextChild( "foo" );
+    $elem.appendTextChild( "foo" => "foo\&bar" );
 
     my @cn = $elem.childNodes;
     # TEST
@@ -489,6 +489,67 @@ ok !$elem.hasAttributeNS($nsURI, $foo), 'attribute was properly removed';
     # TEST
     # cw: Missing text node as descendant.
     ok  @cn[2].hasChildNodes, 'third child has descendants';
+    # TEST (new) - See if two methods of counting children agree.
+    # cw: -XXX- Is this a fair test? Why does it fail?
+    ok  
+        @cn[2].childNodes.elems == @cn[2].elems,
+        'child count between perl6 and libxml2 agree';
+}
 
-    diag @cn[2].Str;
+# 6. XML::LibXML::Attr nodes
+{
+    my $dtd = q:to"EOF";
+<!DOCTYPE root [
+<!ELEMENT root EMPTY>
+<!ATTLIST root fixed CDATA  #FIXED "foo">
+<!ATTLIST root a:ns_fixed CDATA  #FIXED "ns_foo">
+<!ATTLIST root name NMTOKEN #IMPLIED>
+<!ENTITY ent "ENT">
+]>
+EOF
+
+    my $ns = 'urn:xx';
+    my $xml_nons = '<root foo="&quot;bar&ent;&quot;" xmlns:a="$ns"/>';
+    my $xml_ns = '<root xmlns="$ns" xmlns:a="$ns" foo="&quot;bar&ent;&quot;"/>';
+
+    # TEST:$xml=2;
+    for ($xml_nons, $xml_ns) -> $xml {
+        my $parser = XML::LibXML.new;
+        # cw: NYI?
+        #$parser.complete_attributes(0);
+        #$parser.expand_entities(0);
+        my $doc = $parser.parse_string($dtd ~ $xml);
+        my $nsorno = $xml eq $xml_nons ?? 'No NS' !! 'NS';
+
+        # TEST*$xml
+
+        ok $doc.defined, 'successfully created parser';
+        my $root = $doc.getDocumentElement;
+        {
+            my $attr = $root.getAttributeNode('foo');
+            # TEST*$xml
+            ok $attr, "[{$nsorno}] successfully retrieved attribute node";
+            # TEST*$xml
+            isa-ok 
+                $attr, XML::LibXML::Attr, 
+                "[{$nsorno}] attribute node is typed correctly";
+            # TEST*$xml
+            ok 
+                $root.isSameNode($attr.ownerElement), 
+                "[{$nsorno}] root and attribute nodes are the same";
+            # TEST*$xml
+            is 
+                $attr.value, '"barENT"', 
+                "[{$nsorno}] attribute has the correct value";
+            # TEST*$xml
+            is 
+                #$attr.serializeContent, '&quot;bar&ent;&quot;', 
+                $attr.getContent(), '&quot;bar&ent;&quot;',
+                "[{$nsorno}] attribute value can be serialized properly";
+            # TEST*$xml
+            is 
+                $attr.toString, ' foo="&quot;bar&ent;&quot;"', 
+                "[{$nsorno}] attribute can be cast to string correctly";
+        }
+    }
 }
