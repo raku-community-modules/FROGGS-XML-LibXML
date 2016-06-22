@@ -118,9 +118,6 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         my $n2 = nativecast(Pointer, $n);
         return +$n1 == +$n2;
     }
-}
-
-role XML::LibXML::Common {
 
     method getNode() {
         return nativecast(xmlNode, self);
@@ -162,7 +159,8 @@ role XML::LibXML::Common {
 
         if testNodeName($n) {
             xmlNodeSetName(self.getNode(), $n);        
-        } else {
+        } 
+        else {
             die "Bad name";
         }
     }
@@ -175,7 +173,8 @@ role XML::LibXML::Common {
             #     later. libxml2 does -not- provide us a mechanism to test and 
             #     implement backwards compatibility.
             xmlSetProp(self.getNode(), $a, $v);
-        } else {
+        } 
+        else {
             die "Bad name '$a'";
         }
     }
@@ -194,11 +193,8 @@ role XML::LibXML::Common {
             $localname = $prefix;
             $prefix := Str;
         }
-
-        # cw: Sublime currently has crappy syntax highlighting so 
-        #     $namespace ~~ s:g/// will break it. 
+ 
         my xmlNs $ns;
-
         my $attr_ns;
         if $namespace.defined {
             $attr_ns = $namespace.subst(/\s/, '');
@@ -231,7 +227,8 @@ role XML::LibXML::Common {
                         $ns := xmlNewNs(
                             self.getNode(), $attr_ns, $attr_p
                         );
-                    } else {
+                    } 
+                    else {
                         $ns := xmlNs;
                     }
                 }
@@ -382,7 +379,8 @@ role XML::LibXML::Common {
                 nativecast(xmlNode, $ret), 
                 nativecast(xmlNode, $an)
             );
-        } else {
+        } 
+        else {
             xmlAddChild(
                 nativecast(xmlNodePtr, self), 
                 nativecast(xmlNodePtr, $an)
@@ -424,7 +422,8 @@ role XML::LibXML::Common {
         if $ret.defined && $ret.type == XML_ATTRIBUTE_NODE {
             return if $ret =:= $an;
             xmlReplaceNode($ret, $an);
-        } else {
+        } 
+        else {
             xmlAddChild(
                 nativecast(xmlNodePtr, self), 
                 nativecast(xmlNodePtr, $an)
@@ -477,7 +476,8 @@ role XML::LibXML::Common {
         if ($xattr.defined && $xattr._private.defined) {
             # cw: ???? XS code
             # PmmFixOwner((ProxyNodePtr)xattr->_private, NULL);
-        } else {
+        } 
+        else {
             xmlFreeProp(nativecast(xmlAttrPtr, $xattr));
         }
     }
@@ -493,7 +493,8 @@ role XML::LibXML::Common {
             } elsif $flag {
                 xmlSetNs(self.getNode(), xmlNs);
                 $ret = 1;
-            } else {
+            } 
+            else {
                 $ret = 0;
             }
         } elsif $flag {
@@ -502,10 +503,12 @@ role XML::LibXML::Common {
             if ($ns.defined) {
                 if $ns.uri eq $_uri {
                     $ret = 1;
-                } else {
+                } 
+                else {
                     $ns = xmlNewNs(self.getNode(), $_uri, $_prefix);
                 }
-            } else {
+            } 
+            else {
                 $ns = xmlNewNs(self.getNode(), $_uri, $_prefix);
             }
             
@@ -520,13 +523,9 @@ role XML::LibXML::Common {
 
 class XML::LibXML::Node does XML::LibXML::Nodish {
 
-    also does XML::LibXML::Common;
-
     method name() {
         self._name();
     }
-
-    
     
     #~ multi method Str() {
         #~ my $result = CArray[Str].new();

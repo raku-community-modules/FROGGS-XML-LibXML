@@ -13,7 +13,6 @@ use XML::LibXML::Node;
 use XML::LibXML::Subs;
 
 also does XML::LibXML::Nodish;
-also does XML::LibXML::Common;
 
 method new($name) {
 	sub xmlNewNode(xmlNs, Str) is native('xml2') returns XML::LibXML::Element { * };
