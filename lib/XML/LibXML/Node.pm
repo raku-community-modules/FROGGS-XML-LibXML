@@ -114,8 +114,9 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     }
 
     method isSameNode($n) {
-        # cw: Maybe.
-        return self =:= $n;
+        my $n1 = nativecast(Pointer, self);
+        my $n2 = nativecast(Pointer, $n);
+        return +$n1 == +$n2;
     }
 }
 
@@ -126,8 +127,6 @@ role XML::LibXML::Common {
     }
 
     method getContent() {
-        sub xmlNodeGetContent(xmlNode) returns Str is native('xml2') { * }
-
         return xmlNodeGetContent(self.getNode);
     }
 
@@ -248,10 +247,10 @@ role XML::LibXML::Common {
     }
 
     method hasAttribute($a) {
-        my $ret = domGetAttrNode(
-            self.getNode(), $a
-        );
-
+        my $ret = domGetAttrNode(self.getNode(), $a);
+        
+        # cw: If we want to use xmlFree() then we might need to adopt this
+        #     pattern for all unused values we get from libxml2
         my $retVal = $ret ?? True !! False;
         #xmlFree($ret)
 
@@ -270,8 +269,7 @@ role XML::LibXML::Common {
             xmlHasNsProp(self.getNode(), $name, $attr_ns)
         );
 
-        return ($attr.defined && $attr.type == XML_ATTRIBUTE_NODE) ??
-            True !! False;
+        return $attr.defined && $attr.type == XML_ATTRIBUTE_NODE;
     }
 
     method getAttribute(Str $a) {
@@ -337,13 +335,14 @@ role XML::LibXML::Common {
         return nativecast(XML::LibXML::Attr, $ret);
     }
 
-    method getAttributeNodeNS(Str $ns!, Str $name!) {
-        my $attr_ns = $ns.subst(/\s/, '');
-        my $attr_name = $name.subst(/\s/, '');
+    method getAttributeNodeNS(Str $ns, Str $name!) {
+        my ($attr_ns, $attr_name);
+        $attr_ns = $ns.subst(/\s/, '') if $ns.defined;
+        $attr_name = $name.subst(/\s/, '') if $name.defined;
 
-        return unless $attr_name.chars;
+        return unless $attr_name ~~ Str && $attr_name.chars;
 
-        $attr_ns := Str unless $attr_ns.chars;
+        $attr_ns := Str unless $attr_ns.defined && $attr_ns.chars;
         my $ret_p = xmlHasNsProp(
             self.getNode(), $attr_name, $attr_ns
         );

@@ -54,23 +54,23 @@ method toString(XML::LibXML::Attr:D:) {
 #     several classes.
 
 method isSameNode($n) {
-    # cw: Maybe.
-
-    # cw: Not. The issue here is that P6 is creating these objects from 
-    #     the backing C-pointer which is lost in the shuffle. So two objects
-    #     can be created from the -same- pointer but have no sense of 
-    #     equivalence (unless... possibly... the repr is 'CPointer')
-    return self =:= $n;
+    my $n1 = nativecast(Pointer, self);
+    my $n2 = nativecast(Pointer, $n);
+    return +$n1 == +$n2;
 }
 
 method ownerDocument {
+    nqp::nativecallrefresh(self);
     return nativecast(::('XML::LibXML::Document'), self.doc);
 }
 
 method ownerElement {
+    nqp::nativecallrefresh(self);
     return nativecast(::('XML::LibXML::Node'), self.parent);
 }
 
 method getContent() {
-    return xmlNodeGetContent( nativecast(::('XML::LibXML::Node'), self) );
+    #return xmlNodeGetContent( nativecast(::('XML::LibXML::Node'), self) );
+    sub xmlXPathCastNodeToString(xmlNode)   returns Str   is native('xml2') { * }
+    xmlXPathCastNodeToString( nativecast(::('XML::LibXML::Node'), self) );
 }

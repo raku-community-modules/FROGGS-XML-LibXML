@@ -40,7 +40,7 @@ method parse(Str:D $str, Str :$uri, :$flags = self.html == 1 ?? HTML_PARSE_RECOV
     $doc
 }
 
-method parse_string($str) {
+method parse-string($str) {
     return unless $str.defined;
     self.parse($str, :uri(Str));
 }

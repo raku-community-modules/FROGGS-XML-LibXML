@@ -4,8 +4,6 @@ use NativeCall;
 
 constant XML_XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace";
 
-my $LIBXML_VERSION := cglobal('libc.so.6', 'LIBXML_VERSION', int32);
-
 my class CStruct is repr('CStruct') is export(:types) { }
 
 my class  xmlAttr                    is repr('CStruct')  { ... }
@@ -133,7 +131,7 @@ my class xmlElement is export(:types) {
     has OpaquePointer  $.content; # The allowed element content
     has xmlAttrPtr  $.attributes; # List of declared attributes
     has Str             $.prefix;
-    #has xmlRegex    $.contModel; # The validating regexp.
+    has OpaquePointer   $.contModel; # The validating regexp.
 
     #method setName(xmlElement:D: $name) {
     #    $!name = $name;

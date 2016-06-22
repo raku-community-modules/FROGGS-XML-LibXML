@@ -295,7 +295,7 @@ multi method new-elem-ns($name, $uri) {
 }
 
 method createElementNS($_uri, $_name) {
-    if ! testNodeName($_name) {
+    unless testNodeName($_name) {
         die "bad name";
         # cw: For .resume inside CATCH
         return;
@@ -341,7 +341,7 @@ multi method new-attr-ns(Pair $kv, $uri) {
     }
 
     my $ns = xmlSearchNsByHref(self, $root, $uri)
-          || xmlNewNs($root, $uri, $prefix); # create a new NS if the NS does not already exists
+        || xmlNewNs($root, $uri, $prefix); # create a new NS if the NS does not already exists
 
     my $buffer = xmlEncodeEntitiesReentrant(self, $kv.value);
     my $attr   = xmlNewDocProp(self, $name, $buffer);
@@ -399,7 +399,8 @@ method setDocumentElement($e) {
     my $oelem = xmlDocGetRootElement(self);
     if (!$oelem.defined || !$oelem._private.defined) {
         xmlDocSetRootElement(self, $elem);
-    } else {
+    } 
+    else {
         my $docfrag = self.new-doc-fragment();
         xmlReplaceNode($oelem, $elem);
         xmlAddChild($docfrag, $oelem)

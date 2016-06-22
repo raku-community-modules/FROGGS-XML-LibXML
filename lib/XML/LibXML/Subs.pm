@@ -42,11 +42,7 @@ sub xmlUnsetProp(xmlNode, Str)               returns int32      is native('xml2'
 #~ multi xmlChildElementCount(xmlNode)          returns ulong      is native('xml2') is export { * }
 #~ multi xmlChildElementCount(xmlDoc)           returns ulong      is native('xml2') is export { * }
 sub xmlEncodeEntitiesReentrant(xmlDoc, Str)  returns Str        is native('xml2') is export { * }
-
-sub xmlHasNsProp(xmlNode, Str, Str)          
-	returns xmlAttr
-    is native('xml2') is export { * }
-
+sub xmlHasNsProp(xmlNode, Str, Str)          returns xmlAttr    is native('xml2') is export { * }
 sub xmlGetNsProp(xmlNode, Str, Str)          returns Str        is native('xml2') is export { * }
 sub xmlSearchNs(xmlDoc, xmlNode, Str)        returns xmlNs      is native('xml2') is export { * }
 sub xmlReplaceNode(xmlNode, xmlNode)         returns xmlNode    is native('xml2') is export { * }

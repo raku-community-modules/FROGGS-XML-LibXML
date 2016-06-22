@@ -7,8 +7,7 @@ unit class XML::LibXML::Element is xmlElement is repr('CStruct');
 use nqp;
 use NativeCall;
 
-use HTML::Entity;
-
+use XML::LibXML::CStructs :types;
 use XML::LibXML::Enums;
 use XML::LibXML::Node;
 use XML::LibXML::Subs;
@@ -65,7 +64,16 @@ method tagName() {
 }
 
 method string_value {
-	return decode-entities(self.getContent);
+	# cw: Must use libxml2 to properly decode entities!
+
+	sub xmlXPathCastNodeToString(xmlNode)   returns Str   is native('xml2') { * }
+	sub xmlSubstituteEntitiesDefault(int32) returns int32 is native('xml2') { * }
+
+	my $old = xmlSubstituteEntitiesDefault(0);
+
+	# cw: I've been doing this a lot... however I do worry that not using
+	#     xmlFree will have consequences.
+	xmlXPathCastNodeToString(self.getNode);
 }
 
 method appendText($text) {
