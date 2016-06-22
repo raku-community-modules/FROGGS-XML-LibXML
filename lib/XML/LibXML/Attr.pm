@@ -21,7 +21,7 @@ method value() {
     nqp::nativecallrefresh(self);
     Proxy.new(
         FETCH => -> $ {
-            self.children.value
+            nativecast(xmlNode, self.children).value;
         },
         STORE => -> $, Str $new {
             nqp::bindattr(nqp::decont(self.children), xmlNode, '$!value', $new);

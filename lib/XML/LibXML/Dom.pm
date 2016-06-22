@@ -2,13 +2,6 @@ use v6.c;
 
 use XML::LibXML::CStructs :types;
 
-class XML::LibXML::xmlNs is xmlNs {
-
-    method setNext(xmlNs $n) {
-        $.next = $n;
-    }
-
-}
 
 package XML::LibXML::Dom {
 
@@ -24,7 +17,7 @@ package XML::LibXML::Dom {
         while $i !=:= xmlNsPtr && $i !=:= $ns {
             $i = nativecast(xmlNs, $i).next;
             if $i =:= xmlNsPtr {
-                nativecast(xmlNs, $ns).setNext($c);
+                nativecast(xmlNs, $ns).next = $c;
                 return $ns;
             }
         }
@@ -140,7 +133,7 @@ package XML::LibXML::Dom {
         $i = $i.next while $i.defined && $i !=:= $ns;
 
         unless $i.defined {
-            $ns.setNext($t.nsDef);
+            $ns.next = $t.nsDef;
             $t.setNsDef($ns);
         }
     }
@@ -227,14 +220,14 @@ package XML::LibXML::Dom {
 
         if ($ns =:= $tree.nsDef) {
             $tree.setNsDef($tree.nsDef.next);
-            $ns.setNext(xmlNs);
+            $ns.next = xmlNs;
             return 1;
         }
 
         while $i.defined {
             if $i.next =:= $ns {
-                $i.setNext(nativecast(xmlNodePtr, $ns.next));
-                $ns.setNext(xmlNsPtr);
+                $i.next = nativecast(xmlNodePtr, $ns.next);
+                $ns.next = xmlNsPtr;
                 return 1;
             }
             $i = $i.next;
@@ -247,30 +240,29 @@ package XML::LibXML::Dom {
         my $node = nativecast(xmlNode, $n);
 
         return if 
-            !$n.defined || [&&](
-                $node.prev   =:= xmlNodePtr &&
-                $node.parent =:= xmlNodePtr
-            );
+            !$n.defined || !($node.prev.defined || $node.parent.defined);
         
-        if ($node.type = XML_DTD_NODE) {
+        if $node.type == XML_DTD_NODE {
             xmlUnlinkNode($node);
             return;
         }
 
-        $node.prev.setNext($node.next) if $node.prev !=:= xmlNodePtr;
-        $node.next.setPrev($node.prev) if $node.next !=:= xmlNodePtr;
+        nativecast(xmlNode, $node.prev).next = $node.next 
+            if $node.prev.defined;
+        nativecast(xmlNode, $node.next).prev = $node.prev 
+            if $node.next.defined;
 
         if ($node.parent.defined) {
-            $node.parent.setLast($node.prev) 
-                if $node.parent.last =:= $node.prev;
+            nativecast(xmlNode, $node.parent).last = $node.prev
+                if $node =:= $node.parent.last;
 
-            $node.parent.setChildren($node.next)
-                if $node.parent.children =:= $node.next;
+            nativecast(xmlNode, $node.parent).children = $node.next
+                if $node =:= $node.parent.children;
         }
 
-        $node.setPrev(xmlNodePtr);
-        $node.setNext(xmlNodePtr);
-        $node.setParent(xmlNodePtr);
+        $node.prev = xmlNodePtr;
+        $node.next = xmlNodePtr;
+        $node.parent = xmlNodePtr;
     }
 
     sub domFixOwner($node_to_fix, $new_parent) {
