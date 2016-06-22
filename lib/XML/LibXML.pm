@@ -10,6 +10,8 @@ method parser-version() {
     Version.new($ver.match(/ (.)? (..)+ $/).list.join: '.')
 }
 
+method parser-version-num()
+
 sub parse-xml(Str $xml) is export {
     XML::LibXML::Parser.new.parse($xml)
 }
