@@ -346,7 +346,7 @@ my class xmlXPathContext is export(:types) {
     has int32                            $.tmpNsNr; # number of namespaces in scope error rep
     has OpaquePointer                   $.userData; # user specific data block
     has xmlStructuredErrorFunc             $.error; # the callback in case of errors
-    has xmlError                       $.lastError; # the last error
+    HAS xmlError                       $.lastError; # the last error
     has xmlNodePtr                     $.debugNode; # the source node XSLT dictionary
     has xmlDictPtr                          $.dict; # dictionary if any
     has int32                              $.flags; # flags to control compilation Cache for
