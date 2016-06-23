@@ -3,6 +3,7 @@ use nqp;
 
 use XML::LibXML::CStructs :types;
 use XML::LibXML::Enums;
+use XML::LibXML::Subs;
 
 unit class XML::LibXML::Attr is xmlAttr is repr('CStruct');
 
@@ -20,7 +21,7 @@ method value() {
     nqp::nativecallrefresh(self);
     Proxy.new(
         FETCH => -> $ {
-            self.children.value
+            nativecast(xmlNode, self.children).value;
         },
         STORE => -> $, Str $new {
             nqp::bindattr(nqp::decont(self.children), xmlNode, '$!value', $new);
@@ -44,16 +45,33 @@ multi method gist(XML::LibXML::Attr:D:) {
     self.name ~ '="' ~ self.value ~ '"'
 }
 
+method toString(XML::LibXML::Attr:D:) {
+    self.gist();
+}
+
 # cw: See the need to break out similar operations for all XML nodes into a specific role 
 #     (ala XML::LibXML::Nodish) otherwise we will end up duplicating functionality across
 #     several classes.
 
 method isSameNode($n) {
-    # cw: Maybe.
+    my $n1 = nativecast(Pointer, self);
+    my $n2 = nativecast(Pointer, $n);
+    return +$n1 == +$n2;
+}
 
-    # cw: Not. The issue here is that P6 is creating these objects from 
-    #     the backing C-pointer which is lost in the shuffle. So two objects
-    #     can be created from the -same- pointer but have no sense of 
-    #     equivalence (unless... possibly... the repr is 'CPointer')
-    return self =:= $n;
+method ownerDocument {
+    nqp::nativecallrefresh(self);
+    return nativecast(::('XML::LibXML::Document'), self.doc);
+}
+
+method ownerElement {
+    nqp::nativecallrefresh(self);
+    return nativecast(::('XML::LibXML::Node'), self.parent);
+}
+
+method getContent() {
+    #return xmlNodeGetContent( nativecast(::('XML::LibXML::Node'), self) );
+    sub xmlXPathCastNodeToString(xmlNode)   returns Str   is native('xml2') { * }
+    xmlXPathCastNodeToString( nativecast(::('XML::LibXML::Node'), self) );
+>>>>>>> upstream/master
 }

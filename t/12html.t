@@ -8,10 +8,11 @@ ok(1, 'alive');
 
 my $html = "example/test.html";
 
-my $parser = XML::LibXML.new();
+my $parser = XML::LibXML.new(:html);
+
 {
-    my $doc = $parser.parse-html($html);
-    ok($doc, 'parse-html');
+    my $doc = $parser.parse($html);
+    ok($doc, 'parsing HTML');
 }
 
 =finish

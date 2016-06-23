@@ -41,7 +41,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         xmlElementType(nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlNode, '$!type')))
     }
 
-    method name() {
+    method _name() {
         do given self.type {
             when XML_COMMENT_NODE {
                 "#comment";
@@ -58,6 +58,9 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             when XML_DOCUMENT_FRAG_NODE {
                 "#document-fragment";
             }
+            #when XML_ELEMENT_NODE {
+            #    $!name;
+            #}
             default {
                 self.ns && self.ns.name
                     ?? self.ns.name ~ ':' ~ self.localname
@@ -109,17 +112,32 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             }
         }
     }
-}
 
-class XML::LibXML::Node does XML::LibXML::Nodish {
+    method isSameNode($n) {
+        my $n1 = nativecast(Pointer, self);
+        my $n2 = nativecast(Pointer, $n);
+        return +$n1 == +$n2;
+    }
+
+    method getNode() {
+        return nativecast(xmlNode, self);
+    }
+
+    method getContent() {
+        return xmlNodeGetContent(self.getNode);
+    }
 
     multi method elems() {
-        sub xmlChildElementCount(xmlNode)          returns ulong      is native('xml2') { * }
-        xmlChildElementCount(self)
+        sub xmlChildElementCount(xmlNode) returns ulong is native('xml2') { * }
+        xmlChildElementCount(self.getNode());
+    }
+
+    method hasChildNodes {
+        self.childNodes.defined && self.childNodes.elems;
     }
     method push($child) is aka<appendChild> {
         sub xmlAddChild(xmlNode, xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
-        xmlAddChild(self, $child)
+        xmlAddChild(self.getNode(), $child);
     }
 
     multi method Str(:$level = 0, :$format = 1) {
@@ -128,22 +146,37 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         $buffer.value;
     }
 
+<<<<<<< HEAD
     method !testNodeName(Str $n) {
         return False if ($n ~~ /^<-[ a..z A..Z \_ : ]>/) !~~ Nil;
 
         # cw: Missing IS_EXTENDER(c)
         return ($n ~~ /<-[ \d a..z A..Z : \- \. ]>/) ~~ Nil;
+=======
+    method parentNode() {
+        return self.parent;
+>>>>>>> upstream/master
     }
 
     method setNodeName(Str $n) {
         sub xmlNodeSetName(xmlNode, Str)       is native('xml2') { * }
 
+<<<<<<< HEAD
         #die "Bad name" if self!testNodeName($n);
         #xmlNodeSetName(self, $n);
 
         if self!testNodeName($n) {
             xmlNodeSetName(self, $n);        
         } else {
+=======
+        #die "Bad name" if testNodeName($n);
+        #xmlNodeSetName(self, $n);
+
+        if testNodeName($n) {
+            xmlNodeSetName(self.getNode(), $n);        
+        } 
+        else {
+>>>>>>> upstream/master
             die "Bad name";
         }
     }
@@ -151,18 +184,32 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
     method setAttribute(Str $a, Str $v) {
         sub xmlSetProp(xmlNode, Str, Str)       is native('xml2') { * }
 
+<<<<<<< HEAD
         if self!testNodeName($a) {
             # cw: Note, this method locks us into libxml2 versions of 2.6.21 and 
             #     later. libxml2 does -not- provide us a mechanism to test and 
             #     implement backwards compatibility.
             xmlSetProp(self, $a, $v);
         } else {
+=======
+        if testNodeName($a) {
+            # cw: Note, this method locks us into libxml2 versions of 2.6.21 and 
+            #     later. libxml2 does -not- provide us a mechanism to test and 
+            #     implement backwards compatibility.
+            xmlSetProp(self.getNode(), $a, $v);
+        } 
+        else {
+>>>>>>> upstream/master
             die "Bad name '$a'";
         }
     }
 
     method setAttributeNS(Str $namespace, Str $name, Str  $val) {
+<<<<<<< HEAD
         if ! self!testNodeName($name) {
+=======
+        if ! testNodeName($name) {
+>>>>>>> upstream/master
             die "Bad name '$name'";
             # cw: Yes, I know this looks weird, but is done incase we 
             #     .return from a CATCH{}
@@ -175,18 +222,27 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
             $localname = $prefix;
             $prefix := Str;
         }
+<<<<<<< HEAD
 
         # cw: Sublime currently has crappy syntax highlighting so 
         #     $namespace ~~ s:g/// will break it. 
         my xmlNs $ns;
 
+=======
+ 
+        my xmlNs $ns;
+>>>>>>> upstream/master
         my $attr_ns;
         if $namespace.defined {
             $attr_ns = $namespace.subst(/\s/, '');
             if $attr_ns.chars {
                 $ns = xmlSearchNsByHref(self.doc, self, $attr_ns);
 
+<<<<<<< HEAD
                 if $ns.defined && !$ns.prefix {
+=======
+                if $ns.defined && !$ns.uri {
+>>>>>>> upstream/master
                     my @all_ns := nativecast(
                         CArray[xmlNsPtr],
                         xmlGetNsList(self.doc, self)
@@ -197,7 +253,11 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
                         repeat {
                             my $nsp := @all_ns[$i++];
                             $ns = nativecast(xmlNs, $nsp);
+<<<<<<< HEAD
                             last if $ns.prefix && ($ns.uri eq $namespace);
+=======
+                            last if $ns.uri && ($ns.uri eq $namespace);
+>>>>>>> upstream/master
                         } while ($ns);
                         #xmlFree($all_ns);
                     }
@@ -209,8 +269,16 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
                 if $prefix.defined {
                     my $attr_p = $prefix.subst(/s/, '');
                     if $attr_p.chars {
+<<<<<<< HEAD
                         $ns := xmlNewNs(self, $attr_ns, $attr_p);
                     } else {
+=======
+                        $ns := xmlNewNs(
+                            self.getNode(), $attr_ns, $attr_p
+                        );
+                    } 
+                    else {
+>>>>>>> upstream/master
                         $ns := xmlNs;
                     }
                 }
@@ -222,7 +290,37 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
             return            
         }
 
+<<<<<<< HEAD
         xmlSetNsProp(self, $ns, $localname, $val);
+=======
+        xmlSetNsProp(self.getNode(), $ns, $localname, $val);
+    }
+
+    method hasAttribute($a) {
+        my $ret = domGetAttrNode(self.getNode(), $a);
+        
+        # cw: If we want to use xmlFree() then we might need to adopt this
+        #     pattern for all unused values we get from libxml2
+        my $retVal = $ret ?? True !! False;
+        #xmlFree($ret)
+
+        return $retVal;
+    }
+
+    method hasAttributeNS($_ns!, Str $_name!) {
+        my ($attr_ns, $name;);
+        $attr_ns = $_ns.subst(/\s/, '') if $_ns.defined;
+        $name = $_name.subst(/\s/, '') if $_name.defined;
+
+        $attr_ns := Str if !$_ns.defined || !$attr_ns.chars;
+
+        my xmlAttr $attr = nativecast(
+            xmlAttr,
+            xmlHasNsProp(self.getNode(), $name, $attr_ns)
+        );
+
+        return $attr.defined && $attr.type == XML_ATTRIBUTE_NODE;
+>>>>>>> upstream/master
     }
 
     method getAttribute(Str $a) {
@@ -232,7 +330,13 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         return unless $name;
 
         my $ret;
+<<<<<<< HEAD
         unless ($ret = xmlGetNoNsProp(self, $name)) {
+=======
+        unless (
+            $ret = xmlGetNoNsProp(self.getNode(), $name)
+        ) {
+>>>>>>> upstream/master
             my ($prefix, $localname) = $a.split(':');
 
             if !$localname {
@@ -242,7 +346,13 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
             if $localname {
                 my $ns = xmlSearchNs(self.doc, self, $prefix);
                 if $ns {
+<<<<<<< HEAD
                     $ret = xmlGetNsProp(self, $localname, $ns.href);
+=======
+                    $ret = xmlGetNsProp(
+                        self.getNode(), $localname, $ns.href
+                    );
+>>>>>>> upstream/master
                 }
             }
         }
@@ -253,6 +363,7 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         return $ret;
     }
 
+<<<<<<< HEAD
     method hasAttribute(Str $a) {
         my $ret = domGetAttrNode(self, $a);
 
@@ -277,6 +388,32 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
 
     method getAttributeNode($a) {
         my $ret := domGetAttrNode(self, $a);
+=======
+    method getAttributeNS($_uri, $_name, $_useEncoding = 0) {
+        sub xmlGetProp(xmlNode, Str) returns Str is native('xml2') { * };
+
+        my $name = $_name.subst(/\s/, ' ');
+        return unless $name.defined && $name.chars;
+
+        my $uri = $_uri.subst(/\s/, ' ');
+        my $node = self.getNode();
+        my $ret = $uri.defined && $uri.chars ??
+            xmlGetNsProp($node, $name, $uri) 
+            !!
+            xmlGetProp($node, $name);
+
+        # cw: Encoding NYI.
+        warn "useEncoding NYI" if $_useEncoding;
+
+        return $ret;
+    }
+
+
+    method getAttributeNode($a) {
+        my $ret := domGetAttrNode(
+            self.getNode(), $a
+        );
+>>>>>>> upstream/master
         #my $retVal = $ret.clone;
         #xmlFree($ret);
 
@@ -284,6 +421,32 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         return nativecast(XML::LibXML::Attr, $ret);
     }
 
+<<<<<<< HEAD
+=======
+    method getAttributeNodeNS(Str $ns, Str $name!) {
+        my ($attr_ns, $attr_name);
+        $attr_ns = $ns.subst(/\s/, '') if $ns.defined;
+        $attr_name = $name.subst(/\s/, '') if $name.defined;
+
+        return unless $attr_name ~~ Str && $attr_name.chars;
+
+        $attr_ns := Str unless $attr_ns.defined && $attr_ns.chars;
+        my $ret_p = xmlHasNsProp(
+            self.getNode(), $attr_name, $attr_ns
+        );
+        my $ret = nativecast(XML::LibXML::Attr, $ret_p);
+
+        # cw: Deep XS code that has yet to be grokked.
+        #my $retVal = PmmNodeToSv(
+        #    $ret_p,
+        #    PmmOWNERPO(PmmPROXYNODE(self))
+        #);
+
+        return $ret.type == XML_ATTRIBUTE_NODE ??
+            $ret !! Nil;
+    }
+
+>>>>>>> upstream/master
     method setAttributeNode(xmlAttr $an) {
         unless $an {
             die "Lost attribute";
@@ -293,14 +456,23 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
 
         return unless $an.type == XML_ATTRIBUTE_NODE;
 
+<<<<<<< HEAD
         # cw: -XXX- currently performing an endless loop. Check dom* functions.
 
+=======
+>>>>>>> upstream/master
         if $an.doc =:= self.doc {
             domImportNode(self.doc, $an, 1, 1);
         }
 
         my $ret;
+<<<<<<< HEAD
         $ret = domGetAttrNode(self, $an.name);
+=======
+        $ret = domGetAttrNode(
+            self.getNode(), $an.name
+        );
+>>>>>>> upstream/master
         if $ret {
             return unless $ret !=:= $an;
             
@@ -308,7 +480,12 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
                 nativecast(xmlNode, $ret), 
                 nativecast(xmlNode, $an)
             );
+<<<<<<< HEAD
         } else {
+=======
+        } 
+        else {
+>>>>>>> upstream/master
             xmlAddChild(
                 nativecast(xmlNodePtr, self), 
                 nativecast(xmlNodePtr, $an)
@@ -328,9 +505,137 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
         return $retVal;
     }
 
+<<<<<<< HEAD
     method isSameNode($n) {
         # cw: Maybe.
         return self =:= $n;
+=======
+    method setAttributeNodeNS(xmlAttr $an!) {
+        sub xmlReconciliateNs(xmlDoc, xmlNode) returns int32 is native('xml2') { * }
+
+        if !$an.defined {
+            die "lost attribute node";
+            # cw: For .resume in CATCH{}
+            return;
+        }
+
+        return unless $an.type != XML_ATTRIBUTE_NODE;
+
+        domImportNode(self.doc, $an, 1, 1) if $an.doc !=:= self.doc;
+        my xmlNs $ns = $an.ns;
+        my $ret = xmlHasNsProp(
+            self, 
+            $ns.defined ?? $ns.uri !! Str,
+            $an.localname
+        );
+
+        if $ret.defined && $ret.type == XML_ATTRIBUTE_NODE {
+            return if $ret =:= $an;
+            xmlReplaceNode($ret, $an);
+        } 
+        else {
+            xmlAddChild(
+                nativecast(xmlNodePtr, self), 
+                nativecast(xmlNodePtr, $an)
+            );
+            xmlReconciliateNs(self.doc, self);
+        }
+
+        # cw: ??? XS
+        #if ( attr->_private != NULL ) {
+        #    PmmFixOwner( SvPROXYNODE(attr_node), PmmPROXYNODE(self) );
+        #}
+
+        return $ret;
+    }
+
+    method removeAttributeNode(xmlAttr $an!) {
+        if !$an.defined {
+            die "lost attribute node";
+            # cw: For .resume in CATCH{}
+            return;
+        }
+
+        return unless 
+            $an.type == XML_ATTRIBUTE_NODE
+            &&
+            $an.parent !=:= self;
+
+        my $an_p = nativecast(xmlNodePtr, $an);
+        xmlUnlinkNode($an_p);
+
+        # cw: ????
+        # $ret = PmmNodeToSv($ret_p, NUL)
+        # PmmFixOwner( SvPROXYNODE($ret), NULL)
+
+        return $an;
+    }
+
+    method removeAttributeNS($_nsUri, $_name) {
+        sub xmlFreeProp(xmlAttrPtr) is native('xml2') { * }
+
+        my $nsUri = $_nsUri.defined ?? $_nsUri.subst(/\s/, '') !! Str;
+        my $name = $_name.defined ?? $_name.subst(/\s/, '') !! Str;
+
+        my xmlAttr $xattr = xmlHasNsProp(
+            self.getNode(), $name, $nsUri
+        );
+        xmlUnlinkNode(nativecast(xmlNodePtr, $xattr)) 
+            if $xattr.defined && $xattr.type == XML_ATTRIBUTE_NODE;
+
+        if ($xattr.defined && $xattr._private.defined) {
+            # cw: ???? XS code
+            # PmmFixOwner((ProxyNodePtr)xattr->_private, NULL);
+        } 
+        else {
+            xmlFreeProp(nativecast(xmlAttrPtr, $xattr));
+        }
+    }
+
+    method setNamespace($_uri, $_prefix = Nil, $flag = 1) {
+        my $ret = 0;
+        my $ns;
+
+        if (! $_uri.defined && ! $_prefix.defined) {
+            $ns = xmlSearchNs(self.doc, self.getNode(), Str);
+            if ($ns.defined && $ns.uri.defined && $ns.uri.chars) {
+                $ret = 0;
+            } elsif $flag {
+                xmlSetNs(self.getNode(), xmlNs);
+                $ret = 1;
+            } 
+            else {
+                $ret = 0;
+            }
+        } elsif $flag {
+            $ns = xmlSearchNs(self.doc, self.getNode(), $_prefix);
+
+            if ($ns.defined) {
+                if $ns.uri eq $_uri {
+                    $ret = 1;
+                } 
+                else {
+                    $ns = xmlNewNs(self.getNode(), $_uri, $_prefix);
+                }
+            } 
+            else {
+                $ns = xmlNewNs(self.getNode(), $_uri, $_prefix);
+            }
+            
+            $ret = $ns.defined;
+        }
+
+        xmlSetNs(self.getNode(), $ns) if $flag && $ns.defined;
+
+        $ret;
+    }
+}
+
+class XML::LibXML::Node does XML::LibXML::Nodish {
+
+    method name() {
+        self._name();
+>>>>>>> upstream/master
     }
     
     #~ multi method Str() {

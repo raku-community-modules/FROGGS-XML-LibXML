@@ -4,8 +4,6 @@ use NativeCall;
 
 constant XML_XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace";
 
-my $LIBXML_VERSION := cglobal('libc.so.6', 'LIBXML_VERSION', int32);
-
 my class CStruct is repr('CStruct') is export(:types) { }
 
 my class  xmlAttr                    is repr('CStruct')  { ... }
@@ -53,11 +51,11 @@ my class xmlAttr is export(:types) {
     has Pointer       $._private; # application data
     has int8              $.type; # (xmlElementType) XML_ATTRIBUTE_NODE, must be second !
     has Str          $.localname; # the name of the property
-    has xmlNode       $.children; # the value of the property
-    has xmlNodePtr        $.last; # NULL
-    has xmlNodePtr      $.parent; # child->parent link
-    has xmlAttr           $.next; # next sibling link
-    has xmlAttrPtr        $.prev; # previous sibling link
+    has xmlNodePtr       $.children is rw; # the value of the property
+    has xmlNodePtr           $.last is rw; # NULL
+    has xmlNodePtr         $.parent is rw; # child->parent link
+    has xmlAttrPtr           $.next is rw; # next sibling link
+    has xmlAttrPtr           $.prev is rw; # previous sibling link
     has xmlDoc             $.doc; # the containing document
     has xmlNs               $.ns; # pointer to the associated namespace
     has xmlAttributeType $.atype; # the attribute type if validating
@@ -76,11 +74,11 @@ my class xmlDoc is export(:types) {
     has OpaquePointer $._private; # application data
     has int8              $.type; # (xmlElementType) XML_DOCUMENT_NODE, must be second !
     has Str          $.localname; # name/filename/URI of the document
-    has xmlNodePtr    $.children; # the document tree
-    has xmlNodePtr        $.last; # last child link
-    has xmlNodePtr      $.parent; # child->parent link
-    has xmlNodePtr        $.next; # next sibling link
-    has xmlNodePtr        $.prev; # previous sibling link
+    has xmlNodePtr       $.children is rw; # the value of the property
+    has xmlNodePtr           $.last is rw; # NULL
+    has xmlNodePtr         $.parent is rw; # child->parent link
+    has xmlAttrPtr           $.next is rw; # next sibling link
+    has xmlAttrPtr           $.prev is rw; # previous sibling link
     has xmlDoc             $.doc; # autoreference to itself End of common p
     has int32      $.compression; # level of zlib compression
     has int32       $.standalone; # standalone document (no external refs)
@@ -123,28 +121,32 @@ my class xmlElement is export(:types) {
     has OpaquePointer $.private;  # application data
     has int8             $.type;  # xmlElementType type number, must be second!
     has Str              $.name;  # Element name
-    has xmlNodePtr   $.children;  # parent->childs link
-    has xmlNodePtr        $.last; # last child link
-    has xmlNodePtr      $.parent; # child->parent link
-    has xmlNodePtr        $.next; # next sibling link
-    has xmlNodePtr        $.prev; # previous sibling link
+    has xmlNodePtr       $.children is rw; # the value of the property
+    has xmlNodePtr           $.last is rw; # NULL
+    has xmlNodePtr         $.parent is rw; # child->parent link
+    has xmlAttrPtr           $.next is rw; # next sibling link
+    has xmlAttrPtr           $.prev is rw; # previous sibling link
     has xmlDoc             $.doc; # autoreference to itself End of common p
     has int8             $.etype; # The type
     has OpaquePointer  $.content; # The allowed element content
     has xmlAttrPtr  $.attributes; # List of declared attributes
     has Str             $.prefix;
-    #has xmlRegex    $.contModel; # The validating regexp.
+    has OpaquePointer   $.contModel; # The validating regexp.
+
+    #method setName(xmlElement:D: $name) {
+    #    $!name = $name;
+    #}
 }
 
 my class xmlNode is export(:types) {
     has OpaquePointer $._private; # application data
     has int8              $.type; # (xmlElementType) type number, must be second !
     has Str          $.localname; # name/filename/URI of the document
-    has xmlNodePtr    $.children; # parent->childs link
-    has xmlNodePtr        $.last; # last child link
-    has xmlNodePtr      $.parent; # child->parent link
-    has xmlNodePtr        $.next; # next sibling link
-    has xmlNodePtr        $.prev; # previous sibling link
+    has xmlNodePtr       $.children is rw; # the value of the property
+    has xmlNodePtr           $.last is rw; # NULL
+    has xmlNodePtr         $.parent is rw; # child->parent link
+    has xmlAttrPtr           $.next is rw; # next sibling link
+    has xmlAttrPtr           $.prev is rw; # previous sibling link
     has xmlDoc             $.doc; # autoreference to itself End of common p
     has xmlNs               $.ns; # pointer to the associated namespace
     has Str              $.value; # the content
@@ -156,28 +158,8 @@ my class xmlNode is export(:types) {
     #~ unsigned short	extra	: extra data for XPath/XSLT
     has uint16 $.extra;
 
-
-    # cw: Looks like having methods in these classes will be unavoidable unless we 
-    #     decide to make the attributes rw... which might be workable as long as 
-    #     we can protect them in descendent classes
-    method setNext(xmlNodePtr $n) {
-        $!next = $n;
-    }
-
-    method setPrev(xmlNodePtr $p) {
-        $!prev = $p;
-    }
-
-    method setParent(xmlNodePtr $p) {
-        $!parent = $p;
-    }
-
-    method setChildren(xmlNodePtr $c) {
-        $!children = $c;
-    }
-
-    method setLast(xmlNodePtr $l) {
-        $!last = $l;
+    method setNsDef(xmlNs $n) {
+        $!nsDef = $n;
     }
 }
 
@@ -393,7 +375,7 @@ my class xmlXPathContext is export(:types) {
     has int32                            $.tmpNsNr; # number of namespaces in scope error rep
     has OpaquePointer                   $.userData; # user specific data block
     has xmlStructuredErrorFunc             $.error; # the callback in case of errors
-    has xmlError                       $.lastError; # the last error
+    HAS xmlError                       $.lastError; # the last error
     has xmlNodePtr                     $.debugNode; # the source node XSLT dictionary
     has xmlDictPtr                          $.dict; # dictionary if any
     has int32                              $.flags; # flags to control compilation Cache for

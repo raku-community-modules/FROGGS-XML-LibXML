@@ -25,7 +25,7 @@ sub xmlGetNsList(xmlDoc, xmlNode)            returns xmlNs  is native('xml2') is
 
 # XPath
 sub xmlXPathCompile(Str)                                        returns xmlXPathCompExprPtr  is native('xml2') is export { * }
-sub xmlXPathNewContext(xmlDocPtr)                               returns xmlXPathContext      is native('xml2') is export { * }
+sub xmlXPathNewContext(xmlDoc)                                  returns xmlXPathContext      is native('xml2') is export { * }
 sub xmlXPathCompiledEval(xmlXPathCompExprPtr, xmlXPathContext)  returns xmlXPathObject       is native('xml2') is export { * }
 
 # Serialization
@@ -37,20 +37,29 @@ sub xmlC14NDocDumpMemory(xmlDoc, xmlNodeSet, int32, CArray[Str], int32, CArray[S
 sub xmlBufferCreate()                        returns xmlBuffer  is native('xml2') is export { * }
 sub xmlKeepBlanksDefault(int32)              returns int32      is native('xml2') is export { * }
 sub xmlIsBlankNode(xmlNode)                  returns int32      is native('xml2') is export { * }
-sub xmlUnlinkNode(xmlNode)                                      is native('xml2') is export { * }
+sub xmlUnlinkNode(xmlNodePtr)                                   is native('xml2') is export { * }
 sub xmlUnsetProp(xmlNode, Str)               returns int32      is native('xml2') is export { * }
 #~ multi xmlChildElementCount(xmlNode)          returns ulong      is native('xml2') is export { * }
 #~ multi xmlChildElementCount(xmlDoc)           returns ulong      is native('xml2') is export { * }
 sub xmlEncodeEntitiesReentrant(xmlDoc, Str)  returns Str        is native('xml2') is export { * }
+<<<<<<< HEAD
 
 sub xmlHasNsProp(xmlNode, Str, Str)          
 	returns Pointer[xmlAttr]
     is native('xml2') is export { * }
 
+=======
+sub xmlHasNsProp(xmlNode, Str, Str)          returns xmlAttr    is native('xml2') is export { * }
+>>>>>>> upstream/master
 sub xmlGetNsProp(xmlNode, Str, Str)          returns Str        is native('xml2') is export { * }
 sub xmlSearchNs(xmlDoc, xmlNode, Str)        returns xmlNs      is native('xml2') is export { * }
 sub xmlReplaceNode(xmlNode, xmlNode)         returns xmlNode    is native('xml2') is export { * }
 sub xmlSetTreeDoc(xmlNode, xmlDoc) 								is native('xml2') is export { * }
 sub xmlCopyNamespace(xmlNsPtr)               returns xmlNsPtr   is native('xml2') is export { * }
 sub xmlAddChild(xmlNodePtr, xmlNodePtr)      returns xmlNodePtr is native('xml2') is export { * }
+<<<<<<< HEAD
 sub xmlSetNsProp(xmlNode, xmlNs, Str, Str)   returns xmlAttrPtr is native('xml2') is export { * }
+=======
+sub xmlSetNsProp(xmlNode, xmlNs, Str, Str)   returns xmlAttrPtr is native('xml2') is export { * }
+sub xmlNodeGetContent(xmlNode)               returns Str        is native('xml2') is export { * }
+>>>>>>> upstream/master
