@@ -135,6 +135,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     method hasChildNodes {
         self.childNodes.defined && self.childNodes.elems;
     }
+
     method push($child) is aka<appendChild> {
         sub xmlAddChild(xmlNode, xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
         xmlAddChild(self.getNode(), $child);
@@ -146,29 +147,13 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         $buffer.value;
     }
 
-<<<<<<< HEAD
-    method !testNodeName(Str $n) {
-        return False if ($n ~~ /^<-[ a..z A..Z \_ : ]>/) !~~ Nil;
-
-        # cw: Missing IS_EXTENDER(c)
-        return ($n ~~ /<-[ \d a..z A..Z : \- \. ]>/) ~~ Nil;
-=======
     method parentNode() {
         return self.parent;
->>>>>>> upstream/master
     }
 
     method setNodeName(Str $n) {
         sub xmlNodeSetName(xmlNode, Str)       is native('xml2') { * }
 
-<<<<<<< HEAD
-        #die "Bad name" if self!testNodeName($n);
-        #xmlNodeSetName(self, $n);
-
-        if self!testNodeName($n) {
-            xmlNodeSetName(self, $n);        
-        } else {
-=======
         #die "Bad name" if testNodeName($n);
         #xmlNodeSetName(self, $n);
 
@@ -176,7 +161,6 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             xmlNodeSetName(self.getNode(), $n);        
         } 
         else {
->>>>>>> upstream/master
             die "Bad name";
         }
     }
@@ -184,14 +168,6 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     method setAttribute(Str $a, Str $v) {
         sub xmlSetProp(xmlNode, Str, Str)       is native('xml2') { * }
 
-<<<<<<< HEAD
-        if self!testNodeName($a) {
-            # cw: Note, this method locks us into libxml2 versions of 2.6.21 and 
-            #     later. libxml2 does -not- provide us a mechanism to test and 
-            #     implement backwards compatibility.
-            xmlSetProp(self, $a, $v);
-        } else {
-=======
         if testNodeName($a) {
             # cw: Note, this method locks us into libxml2 versions of 2.6.21 and 
             #     later. libxml2 does -not- provide us a mechanism to test and 
@@ -199,17 +175,12 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             xmlSetProp(self.getNode(), $a, $v);
         } 
         else {
->>>>>>> upstream/master
             die "Bad name '$a'";
         }
     }
 
     method setAttributeNS(Str $namespace, Str $name, Str  $val) {
-<<<<<<< HEAD
-        if ! self!testNodeName($name) {
-=======
         if ! testNodeName($name) {
->>>>>>> upstream/master
             die "Bad name '$name'";
             # cw: Yes, I know this looks weird, but is done incase we 
             #     .return from a CATCH{}
@@ -222,27 +193,15 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             $localname = $prefix;
             $prefix := Str;
         }
-<<<<<<< HEAD
-
-        # cw: Sublime currently has crappy syntax highlighting so 
-        #     $namespace ~~ s:g/// will break it. 
-        my xmlNs $ns;
-
-=======
  
         my xmlNs $ns;
->>>>>>> upstream/master
         my $attr_ns;
         if $namespace.defined {
             $attr_ns = $namespace.subst(/\s/, '');
             if $attr_ns.chars {
                 $ns = xmlSearchNsByHref(self.doc, self, $attr_ns);
 
-<<<<<<< HEAD
-                if $ns.defined && !$ns.prefix {
-=======
                 if $ns.defined && !$ns.uri {
->>>>>>> upstream/master
                     my @all_ns := nativecast(
                         CArray[xmlNsPtr],
                         xmlGetNsList(self.doc, self)
@@ -253,11 +212,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
                         repeat {
                             my $nsp := @all_ns[$i++];
                             $ns = nativecast(xmlNs, $nsp);
-<<<<<<< HEAD
-                            last if $ns.prefix && ($ns.uri eq $namespace);
-=======
                             last if $ns.uri && ($ns.uri eq $namespace);
->>>>>>> upstream/master
                         } while ($ns);
                         #xmlFree($all_ns);
                     }
@@ -269,16 +224,11 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
                 if $prefix.defined {
                     my $attr_p = $prefix.subst(/s/, '');
                     if $attr_p.chars {
-<<<<<<< HEAD
-                        $ns := xmlNewNs(self, $attr_ns, $attr_p);
-                    } else {
-=======
                         $ns := xmlNewNs(
                             self.getNode(), $attr_ns, $attr_p
                         );
                     } 
                     else {
->>>>>>> upstream/master
                         $ns := xmlNs;
                     }
                 }
@@ -290,9 +240,6 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             return            
         }
 
-<<<<<<< HEAD
-        xmlSetNsProp(self, $ns, $localname, $val);
-=======
         xmlSetNsProp(self.getNode(), $ns, $localname, $val);
     }
 
@@ -320,7 +267,6 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         );
 
         return $attr.defined && $attr.type == XML_ATTRIBUTE_NODE;
->>>>>>> upstream/master
     }
 
     method getAttribute(Str $a) {
@@ -330,13 +276,9 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         return unless $name;
 
         my $ret;
-<<<<<<< HEAD
-        unless ($ret = xmlGetNoNsProp(self, $name)) {
-=======
         unless (
             $ret = xmlGetNoNsProp(self.getNode(), $name)
         ) {
->>>>>>> upstream/master
             my ($prefix, $localname) = $a.split(':');
 
             if !$localname {
@@ -346,13 +288,9 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             if $localname {
                 my $ns = xmlSearchNs(self.doc, self, $prefix);
                 if $ns {
-<<<<<<< HEAD
-                    $ret = xmlGetNsProp(self, $localname, $ns.href);
-=======
                     $ret = xmlGetNsProp(
                         self.getNode(), $localname, $ns.href
                     );
->>>>>>> upstream/master
                 }
             }
         }
@@ -363,32 +301,6 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         return $ret;
     }
 
-<<<<<<< HEAD
-    method hasAttribute(Str $a) {
-        my $ret = domGetAttrNode(self, $a);
-
-        my $retVal = $ret ?? True !! False;
-        #xmlFree($ret)
-
-        return $retVal;
-    }
-
-    method hasAttributeNS(Str $ns!, Str $name!) {
-        my $attr_ns = $ns.subst(/\s/, '');
-        $attr_ns := Str if !$attr_ns.chars;
-
-        my xmlAttr $attr = nativecast(
-            xmlAttr,
-            xmlHasNsProp(self, $name, $attr_ns)
-        );
-
-        return ($attr.defined && $attr.type == XML_ATTRIBUTE_NODE) ??
-            1 !! 0;
-    }
-
-    method getAttributeNode($a) {
-        my $ret := domGetAttrNode(self, $a);
-=======
     method getAttributeNS($_uri, $_name, $_useEncoding = 0) {
         sub xmlGetProp(xmlNode, Str) returns Str is native('xml2') { * };
 
@@ -413,7 +325,6 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         my $ret := domGetAttrNode(
             self.getNode(), $a
         );
->>>>>>> upstream/master
         #my $retVal = $ret.clone;
         #xmlFree($ret);
 
@@ -421,8 +332,6 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         return nativecast(XML::LibXML::Attr, $ret);
     }
 
-<<<<<<< HEAD
-=======
     method getAttributeNodeNS(Str $ns, Str $name!) {
         my ($attr_ns, $attr_name);
         $attr_ns = $ns.subst(/\s/, '') if $ns.defined;
@@ -446,7 +355,6 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             $ret !! Nil;
     }
 
->>>>>>> upstream/master
     method setAttributeNode(xmlAttr $an) {
         unless $an {
             die "Lost attribute";
@@ -456,23 +364,14 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
         return unless $an.type == XML_ATTRIBUTE_NODE;
 
-<<<<<<< HEAD
-        # cw: -XXX- currently performing an endless loop. Check dom* functions.
-
-=======
->>>>>>> upstream/master
         if $an.doc =:= self.doc {
             domImportNode(self.doc, $an, 1, 1);
         }
 
         my $ret;
-<<<<<<< HEAD
-        $ret = domGetAttrNode(self, $an.name);
-=======
         $ret = domGetAttrNode(
             self.getNode(), $an.name
         );
->>>>>>> upstream/master
         if $ret {
             return unless $ret !=:= $an;
             
@@ -480,12 +379,8 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
                 nativecast(xmlNode, $ret), 
                 nativecast(xmlNode, $an)
             );
-<<<<<<< HEAD
-        } else {
-=======
         } 
         else {
->>>>>>> upstream/master
             xmlAddChild(
                 nativecast(xmlNodePtr, self), 
                 nativecast(xmlNodePtr, $an)
@@ -505,11 +400,6 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         return $retVal;
     }
 
-<<<<<<< HEAD
-    method isSameNode($n) {
-        # cw: Maybe.
-        return self =:= $n;
-=======
     method setAttributeNodeNS(xmlAttr $an!) {
         sub xmlReconciliateNs(xmlDoc, xmlNode) returns int32 is native('xml2') { * }
 
@@ -635,7 +525,6 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
 
     method name() {
         self._name();
->>>>>>> upstream/master
     }
     
     #~ multi method Str() {
