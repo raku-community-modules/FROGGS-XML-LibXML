@@ -7,6 +7,7 @@ use XML::LibXML::CStructs :types;
 use XML::LibXML::Dom;
 use XML::LibXML::Enums;
 use XML::LibXML::Subs;
+use XML::LibXML::XPath;
 
 multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
 
@@ -85,14 +86,16 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     }
 
     method find($xpath) is aka<findnodes> {
+        # Override sub definition
+        sub xmlXPathNewContext(xmlDoc) returns XML::LibXML::XPathContext is native('xml2') { * }
+
         my $comp = xmlXPathCompile($xpath);
         die "Invalid XPath expression '{$xpath}'" unless $comp;
+
         my $ctxt = xmlXPathNewContext(self.doc);
-        $ctxt.node = nativecast(xmlNode, self);
+        $ctxt.setNode(self.getNode());
+
         my $res  = xmlXPathCompiledEval($comp, $ctxt);
-
-        say "RES: " ~ $res.defined ?? $res !! "NULL";
-
         return unless $res.defined;
 
         do given xmlXPathObjectType($res.type) {
@@ -100,17 +103,11 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
                 Nil
             }
             when XPATH_NODESET {
-                my $ret;
                 my $set = $res.nodesetval;
 
-                say "0: " ~ $set.nodeTab[0].name 
-                    if $set.nodeTab[0].defined;
-                say "1: " ~ $set.nodeTab[1].name;
-
-                $ret = (^$set.nodeNr).map({
+                (^$set.nodeNr).map({
                     nativecast(XML::LibXML::Node, $set.nodeTab[$_])
                 }).cache if $set.defined;
-                $ret;
             }
             when XPATH_BOOLEAN {
                 so $res.boolval

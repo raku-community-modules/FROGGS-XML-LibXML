@@ -21,3 +21,7 @@ sub parse-html(Str $html) is export {
 sub parse-string(Str $s) is export {
 	XML::LibXML::Parser.new.parse-string($s);
 }
+
+sub parse-file(Str $s) is export {
+	XML::LibXML::Parser.new.parse-file($) 
+}
