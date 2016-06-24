@@ -51,3 +51,4 @@ sub xmlCopyNamespace(xmlNsPtr)               returns xmlNsPtr   is native('xml2'
 sub xmlAddChild(xmlNodePtr, xmlNodePtr)      returns xmlNodePtr is native('xml2') is export { * }
 sub xmlSetNsProp(xmlNode, xmlNs, Str, Str)   returns xmlAttrPtr is native('xml2') is export { * }
 sub xmlNodeGetContent(xmlNode)               returns Str        is native('xml2') is export { * }
+sub xmlFreeNodeList(xmlNodePtr)									is native('xml2') is export { * }

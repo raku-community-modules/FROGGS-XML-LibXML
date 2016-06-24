@@ -10,6 +10,8 @@ package XML::LibXML::Dom {
     use XML::LibXML::Enums;
     use XML::LibXML::Subs;
 
+    my &_nc = &nativecast;
+
     sub _domAddNsChain(xmlNsPtr $c, xmlNsPtr $ns) {
         return $ns unless $c =:= xmlNsPtr;
 
@@ -274,6 +276,34 @@ package XML::LibXML::Dom {
 
         # cw: Missing IS_EXTENDER(c)
         return ($n ~~ /<-[ \d a..z A..Z : \- \. ]>/) ~~ Nil;
+    }
+
+    sub domSetNodeValue(xmlNode $n, Str $_val) is export {
+        sub xmlNodeSetContent(xmlNode, Str) is native('xml2') { * }
+        sub xmlNewText(Str) returns xmlNode is native('xml2') { * }
+
+        return unless $n.defined;
+        my $val = $_val || '';
+
+        given $n.type {
+            when XML_ATTRIBUTE_NODE {
+                if $n.children.defined {
+                    $n.last = xmlNodePtr;
+                    xmlFreeNodeList($n.children);
+                }
+            
+                $n.children = xmlNewText($val);
+                $n.last = $n.children;
+
+                my $child = &_nc(xmlNode, $n.children);
+                $child.parent = &_nc(xmlNodePtr, $n);
+                $child.doc = $n.doc;
+            }
+
+            default {
+                xmlNodeSetContent($n, $val);
+            }
+        }
     }
 
 }

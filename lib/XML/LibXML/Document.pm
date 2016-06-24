@@ -221,7 +221,7 @@ method base-uri() {
         xmlAddChild(self, $child)
     }
 
-    method Str(:$format = 0) {
+    multi method Str(:$format = 0) {
         my $result = CArray[Str].new();
         my $len    = CArray[int32].new();
         $result[0] = "";

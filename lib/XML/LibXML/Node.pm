@@ -1,12 +1,12 @@
 use v6;
 use nqp;
 use NativeCall;
+use XML::LibXML::Attr;
+use XML::LibXML::C14N;
 use XML::LibXML::CStructs :types;
+use XML::LibXML::Dom;
 use XML::LibXML::Enums;
 use XML::LibXML::Subs;
-use XML::LibXML::C14N;
-use XML::LibXML::Attr;
-use XML::LibXML::Dom;
 
 multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
 
@@ -88,15 +88,20 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         my $comp = xmlXPathCompile($xpath);
         my $ctxt = xmlXPathNewContext(self.doc);
         my $res  = xmlXPathCompiledEval($comp, $ctxt);
+
+        return unless $res.defined;
+
         do given xmlXPathObjectType($res.type) {
             when XPATH_UNDEFINED {
                 Nil
             }
             when XPATH_NODESET {
+                my $ret;
                 my $set = $res.nodesetval;
-                (^$set.nodeNr).map({
+                $ret = (^$set.nodeNr).map({
                     nativecast(XML::LibXML::Node, $set.nodeTab[$_])
-                }).cache
+                }).cache if $set.defined;
+                $ret;
             }
             when XPATH_BOOLEAN {
                 so $res.boolval
@@ -519,6 +524,14 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
         $ret;
     }
+
+    method setData($value) 
+        is aka<setValue>
+        is aka<_setData>
+    {
+        domSetNodeValue(self.getNode(), $value);
+    }
+
 }
 
 class XML::LibXML::Node does XML::LibXML::Nodish {
