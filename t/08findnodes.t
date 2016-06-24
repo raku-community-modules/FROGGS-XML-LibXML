@@ -1,6 +1,8 @@
 use v6.c;
 use Test;
 
+use NativeCall;
+
 # Should be 45.
 plan 44;
 
@@ -20,7 +22,7 @@ my $file    = "example/dromeds.xml";
 
 # init the file parser
 my $parser = XML::LibXML::Parser.new();
-my $dom    = $parser.parse( $file );
+my $dom    = $parser.parse-file( $file );
 
 if $dom.defined {
     # get the root document
@@ -28,12 +30,11 @@ if $dom.defined {
 
     # first very simple path starting at root
     my @list   = $elem.find( "species" );
-    # TEST
     ok 
-        @list.defined &&
-        @list.elems, 3, 'found the right number of elements ';
-    my @list2   = $elem.findnodes( 'species' );
-    
+        @list.defined && @list.elems == 3, 
+        'found the right number of elements ';
+
+    my @list2 = $elem.findnodes( 'species' );
     ok
         @list2.defined && @list eqv @list2,
         'alias to findnodes works';

@@ -84,10 +84,14 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         xmlUnsetProp(self, $name)
     }
 
-    method find($xpath) {
+    method find($xpath) is aka<findnodes> {
         my $comp = xmlXPathCompile($xpath);
+        die "Invalid XPath expression '{$xpath}'" unless $comp;
         my $ctxt = xmlXPathNewContext(self.doc);
+        $ctxt.node = nativecast(xmlNode, self);
         my $res  = xmlXPathCompiledEval($comp, $ctxt);
+
+        say "RES: " ~ $res.defined ?? $res !! "NULL";
 
         return unless $res.defined;
 
@@ -98,6 +102,11 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             when XPATH_NODESET {
                 my $ret;
                 my $set = $res.nodesetval;
+
+                say "0: " ~ $set.nodeTab[0].name 
+                    if $set.nodeTab[0].defined;
+                say "1: " ~ $set.nodeTab[1].name;
+
                 $ret = (^$set.nodeNr).map({
                     nativecast(XML::LibXML::Node, $set.nodeTab[$_])
                 }).cache if $set.defined;
@@ -196,7 +205,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
         if !$localname {
             $localname = $prefix;
-            $prefix := Str;
+            $prefix = Str;
         }
  
         my xmlNs $ns;
@@ -215,7 +224,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
                     if (@all_ns.defined) {
                         my $i = 0;
                         repeat {
-                            my $nsp := @all_ns[$i++];
+                            my $nsp = @all_ns[$i++];
                             $ns = nativecast(xmlNs, $nsp);
                             last if $ns.uri && ($ns.uri eq $namespace);
                         } while ($ns);
@@ -229,12 +238,12 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
                 if $prefix.defined {
                     my $attr_p = $prefix.subst(/s/, '');
                     if $attr_p.chars {
-                        $ns := xmlNewNs(
+                        $ns = xmlNewNs(
                             self.getNode(), $attr_ns, $attr_p
                         );
                     } 
                     else {
-                        $ns := xmlNs;
+                        $ns = xmlNs;
                     }
                 }
             }
@@ -264,7 +273,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         $attr_ns = $_ns.subst(/\s/, '') if $_ns.defined;
         $name = $_name.subst(/\s/, '') if $_name.defined;
 
-        $attr_ns := Str if !$_ns.defined || !$attr_ns.chars;
+        $attr_ns = Str if !$_ns.defined || !$attr_ns.chars;
 
         my xmlAttr $attr = nativecast(
             xmlAttr,
@@ -288,7 +297,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
             if !$localname {
                 $localname = $prefix;
-                $prefix := Str;
+                $prefix = Str;
             }
             if $localname {
                 my $ns = xmlSearchNs(self.doc, self, $prefix);
@@ -344,7 +353,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
         return unless $attr_name ~~ Str && $attr_name.chars;
 
-        $attr_ns := Str unless $attr_ns.defined && $attr_ns.chars;
+        $attr_ns = Str unless $attr_ns.defined && $attr_ns.chars;
         my $ret_p = xmlHasNsProp(
             self.getNode(), $attr_name, $attr_ns
         );

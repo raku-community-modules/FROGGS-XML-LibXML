@@ -13,7 +13,7 @@ package XML::LibXML::Dom {
     my &_nc = &nativecast;
 
     sub _domAddNsChain(xmlNsPtr $c, xmlNsPtr $ns) {
-        return $ns unless $c =:= xmlNsPtr;
+        return $ns unless !$c.defined;
 
         my $i = $c;
         while $i !=:= xmlNsPtr && $i !=:= $ns {
@@ -185,7 +185,7 @@ package XML::LibXML::Dom {
         return unless $name;
 
         my $ret;
-        unless $ret := nativecast(
+        unless $ret = nativecast(
             xmlAttr, xmlHasNsProp($n, $a, Str)
         ) {
             my ($prefix, $localname) = $a.split(':');
@@ -197,7 +197,7 @@ package XML::LibXML::Dom {
             if $localname {
                 my $ns = xmlSearchNs($n.doc, $n, $prefix);
                 if $ns {
-                    $ret := nativecast(
+                    $ret = nativecast(
                         xmlAttr, xmlHasNsProp($n, $localname, $ns.uri)
                     );
                 }

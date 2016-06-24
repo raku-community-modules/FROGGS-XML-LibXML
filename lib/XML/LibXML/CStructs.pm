@@ -342,7 +342,7 @@ my class xmlParserCtxt is export(:types) {
 
 my class xmlXPathContext is export(:types) {
     has xmlDoc                               $.doc; # The current document
-    has xmlNode                             $.node; # The current node
+    has xmlNode                             $.node is rw; # The current node
     has int32                $.nb_variables_unused; # unused (hash table)
     has int32               $.max_variables_unused; # unused (hash table)
     has xmlHashTablePtr                  $.varHash; # Hash table of defined variables

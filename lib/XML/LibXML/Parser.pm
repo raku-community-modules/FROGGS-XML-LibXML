@@ -6,6 +6,10 @@ use XML::LibXML::Enums;
 
 unit class XML::LibXML::Parser is xmlParserCtxt is repr('CStruct');
 
+my $ERRNO = cglobal(Str, 'errno', int32);
+
+sub strerror(int32) is native { * }
+
 use XML::LibXML::Document;
 use XML::LibXML::Element;
 use XML::LibXML::Subs;
@@ -13,13 +17,14 @@ use XML::LibXML::Error;
 use XML::LibXML::Enums;
 
 sub xmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, int32)  returns XML::LibXML::Document is native('xml2') { * }
+sub xmlCtxtReadFile(xmlParserCtxt, Str, Str, int32)      returns XML::LibXML::Document is native('xml2') { * }
 sub xmlNewParserCtxt                                     returns XML::LibXML::Parser   is native('xml2') { * }
 sub xmlReadDoc(Str, Str, Str, int32)                     returns XML::LibXML::Document is native('xml2') { * }
 sub xmlReadMemory(Str, int32, Str, Str, int32)           returns XML::LibXML::Document is native('xml2') { * }
 sub htmlNewParserCtxt                                    returns XML::LibXML::Parser   is native('xml2') { * }
 sub htmlParseFile(Str, Str)                              returns XML::LibXML::Document is native('xml2') { * }
 sub htmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, int32) returns XML::LibXML::Document is native('xml2') { * }
-
+sub htmlCtxtReadFile(xmlParserCtxt, Str, Str, int32)     returns XML::LibXML::Document is native('xml2') { * }
 
 method new(:$html = False) {
     xmlKeepBlanksDefault($html ?? 0 !! 1);
@@ -43,6 +48,24 @@ method parse(Str:D $str, Str :$uri, :$flags = self.html == 1 ?? HTML_PARSE_RECOV
 method parse-string($str) {
     return unless $str.defined;
     self.parse($str, :uri(Str));
+}
+
+multi method parse-file(Str $s) {
+    unless $s.chars && $s.IO.e {
+        warn "Attempted to parse using" ~ (!$s.defined || !$s.chars) ??
+            "null filename" !! "bad filename '{$s}'";
+        return;
+    }
+
+    # cw: Should we assume unicode, here or just use default?
+    # cw: What about defined options? -- For now we set blank, but that might 
+    #     come a-haunting in the future.
+    self.html ?? 
+        #htmlCtxtReadFile(self, $s, "UTF8", self.options)
+        htmlCtxtReadFile(self, $s, Str, 0)
+        !!
+        #xmlCtxtReadFile(self, $s, "UTF8", self.options)
+        xmlCtxtReadFile(self, $s, Str, 0)
 }
 
 #~ multi method expand-entities() {
