@@ -17,6 +17,8 @@ method name() {
     self.ns && self.ns.name ?? self.ns.name ~ ':' ~ self.localname !! self.localname
 }
 
+# cw: This might be better off in XML::LibXML::Nodish if Attrs are actually 
+#     xmlNodes
 method value() {
     nqp::nativecallrefresh(self);
     Proxy.new(

@@ -16,12 +16,12 @@ also does XML::LibXML::Nodish;
 
 method new($name) {
 	sub xmlNewNode(xmlNs, Str) is native('xml2') returns XML::LibXML::Element { * };
-
+	
 	xmlNewNode(xmlNs, $name);
 }
 
 method type() {
-    xmlElementType(
+	xmlElementType(
     	nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlElement, '$!type'))
 	);
 }

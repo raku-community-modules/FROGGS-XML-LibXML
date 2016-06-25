@@ -278,13 +278,13 @@ package XML::LibXML::Dom {
         return ($n ~~ /<-[ \d a..z A..Z : \- \. ]>/) ~~ Nil;
     }
 
-    sub domSetNodeValue(xmlNode $n, Str $_val) is export {
+    sub domSetNodeValue(xmlNode $n, $_val) is export {
         sub xmlNodeSetContent(xmlNode, Str) is native('xml2') { * }
         sub xmlNewText(Str) returns xmlNode is native('xml2') { * }
 
         return unless $n.defined;
-        my $val = $_val || '';
 
+        my $val = $_val.Str || '';
         given $n.type {
             when XML_ATTRIBUTE_NODE {
                 if $n.children.defined {
@@ -304,6 +304,55 @@ package XML::LibXML::Dom {
                 xmlNodeSetContent($n, $val);
             }
         }
+    }
+
+    sub domGetNodeValue($n) is export {
+        sub xmlBufferFree(xmlBuffer)                      is native('xml2') { * }
+        sub xmlXPathCastNodeToString(xmlNode) returns Str is native('xml2') { * }
+
+        return unless $n.defined;
+
+        my $retVal;
+        return unless $n.type == any(
+            XML_ATTRIBUTE_NODE,
+            XML_ENTITY_DECL,
+            XML_TEXT_NODE,      
+            XML_COMMENT_NODE,
+            XML_CDATA_SECTION_NODE,
+            XML_PI_NODE,
+            XML_ENTITY_REF_NODE
+        );
+
+
+
+        if $n.type == XML_ENTITY_DECL {
+            $retVal = xmlXPathCastNodeToString($n);
+        }
+        else {
+            if $n.value.defined {
+                $retVal = $n.value;
+            }
+            else {
+                if $n.children.defined {
+                    my $cnode = $n.children;
+                    my $c_o = nativecast(xmlNode, $cnode);
+
+                    while $cnode.defined {
+                        my $buffer = xmlBufferCreate();
+
+                        xmlNodeDump($buffer, $n.doc, $c_o, 0, 0);
+                        if $buffer.value.defined {
+                            $retVal = $retVal.defined ??
+                                $retVal ~ $buffer.value !! $buffer.value;
+                        }
+                        xmlBufferFree($buffer);
+                        $cnode = $c_o.next;
+                    }
+                }
+            }
+        }
+
+        $retVal;
     }
 
 }

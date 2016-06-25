@@ -39,7 +39,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     #~ }
 
     method type() {
-        xmlElementType(nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlNode, '$!type')))
+        xmlElementType(nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlNode, '$!type')));
     }
 
     method _name() {
@@ -156,6 +156,11 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         my $buffer = xmlBufferCreate(); # XXX free
         my $size   = xmlNodeDump($buffer, self.doc, self, $level, $format);
         $buffer.value;
+    }
+
+    # subclasses can override this if they have their own Str method.
+    method toString {
+        self.Str(:level<0>, :format<1>);
     }
 
     method parentNode() {
@@ -536,6 +541,13 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         is aka<_setData>
     {
         domSetNodeValue(self.getNode(), $value);
+    }
+
+    method nodeValue 
+        is aka<getValue>
+        is aka<getData>
+    {
+        domGetNodeValue(self);
     }
 
 }

@@ -8,8 +8,9 @@ plan 44;
 
 use XML::LibXML;
 use XML::LibXML::CStructs :types;
-use XML::LibXML::Node;
 use XML::LibXML::Element;
+use XML::LibXML::Node;
+use XML::LibXML::Text;
 
 # to test if findnodes works.
 # i added findnodes to the node class, so a query can be started
@@ -46,31 +47,24 @@ if $dom.defined {
     # a simple query starting somewhere ...
     my $node = @list[0];
     my @slist = $node.find( "humps" );
-    # TEST
     is @slist.elems, 1, 'find from element level works properly';
 
     # find a single node
     @list   = $elem.find( "species[\@name='Llama']" );
-    # TEST
     is @list.elems, 1, 'find using attribute works properly';
 
     # find with not conditions
     @list   = $elem.find( "species[\@name!='Llama']/disposition" );
-    # TEST
     is @list.elems, 2, 'find using negated attribute spec works properly';
 
     @list   = $elem.find( 'species/@name' );
-    # warn $elem->toString();
-    # TEST
     ok 
         @list.elems && @list[0].toString eq ' name="Camel"', 
         'attribute retrieval via find() works properly';
 
-    # cw: Eep! New class. Although looks like it is an xmlNode
-    #     in different clothing. 
     my $x = XML::LibXML::Text.new( 1234 );
-    ok $
-        x.defined && $x.getData() eq "1234", 
+    ok 
+        $x.defined && $x.getData() eq "1234", 
         'creation of text node was successful';
 
     my $telem = $dom.createElement('test');

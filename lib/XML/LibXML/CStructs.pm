@@ -139,24 +139,24 @@ my class xmlElement is export(:types) {
 }
 
 my class xmlNode is export(:types) {
-    has OpaquePointer $._private; # application data
-    has int8              $.type; # (xmlElementType) type number, must be second !
-    has Str          $.localname; # name/filename/URI of the document
-    has xmlNodePtr       $.children is rw; # the value of the property
-    has xmlNodePtr           $.last is rw; # NULL
-    has xmlNodePtr         $.parent is rw; # child->parent link
-    has xmlAttrPtr           $.next is rw; # next sibling link
-    has xmlAttrPtr           $.prev is rw; # previous sibling link
-    has xmlDoc             $.doc; # autoreference to itself End of common p
-    has xmlNs               $.ns; # pointer to the associated namespace
-    has Str              $.value; # the content
-    has xmlAttr     $.properties; # properties list
-    has xmlNs            $.nsDef; # namespace definitions on this node
-    has OpaquePointer $.psvi; # for type/PSVI informations
+    has OpaquePointer   $._private; # application data
+    has int8            $.type; # (xmlElementType) type number, must be second !
+    has Str             $.localname; # name/filename/URI of the document
+    has xmlNodePtr      $.children is rw; # the value of the property
+    has xmlNodePtr      $.last is rw; # NULL
+    has xmlNodePtr      $.parent is rw; # child->parent link
+    has xmlAttrPtr      $.next is rw; # next sibling link
+    has xmlAttrPtr      $.prev is rw; # previous sibling link
+    has xmlDoc          $.doc; # autoreference to itself End of common p
+    has xmlNs           $.ns; # pointer to the associated namespace
+    has Str             $.value; # the content
+    has xmlAttr         $.properties; # properties list
+    has xmlNs           $.nsDef; # namespace definitions on this node
+    has OpaquePointer   $.psvi; # for type/PSVI informations
     #~ unsigned short	line	: line number
-    has uint16 $.line;
+    has uint16          $.line;
     #~ unsigned short	extra	: extra data for XPath/XSLT
-    has uint16 $.extra;
+    has uint16          $.extra;
 
     method setNsDef(xmlNs $n) {
         $!nsDef = $n;
@@ -342,7 +342,7 @@ my class xmlParserCtxt is export(:types) {
 
 my class xmlXPathContext is export(:types) {
     has xmlDoc                               $.doc; # The current document
-    has xmlNode                             $.node is rw; # The current node
+    has xmlNode                             $.node; # The current node
     has int32                $.nb_variables_unused; # unused (hash table)
     has int32               $.max_variables_unused; # unused (hash table)
     has xmlHashTablePtr                  $.varHash; # Hash table of defined variables
