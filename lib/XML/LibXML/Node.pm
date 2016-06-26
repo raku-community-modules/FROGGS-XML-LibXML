@@ -85,31 +85,32 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         xmlUnsetProp(self, $name)
     }
 
-    method find($xpath, :$opts) is aka<findnodes> {
-        my $ctxt = XML::LibXML::XPath.new(self.doc);
-        $ctxt.setNode(self.getNode());
-
-        # Used to handle namespace limitation of libxml2
-        if $opts.defined {
-            # cw: Process any other options we may need to hack
-            #     libxml back into shape.
-            if $opts<namespaces>.defined && $opts<namespaces> ~~ List {
-                my $nsdefs = $opts<namespaces>;
+    # cw: Maybe move this to XML::LibXML::XPath?
+    method !regns($ctxt, $ns_list) {
+        given $ns_list {
+            when Pair {
+                $ctxt.register-namespace($_.key, $_.value);
+            }
+                
+            when List {
                 # If the first element is not a list, then assume it is
                 # a namespace definition.
-                given ($nsdefs[0]) {
+                given ($_[0]) {
                     when Str {
-                        $ctxt.register-namespace($nsdefs[0], $nsdefs[1])
+                        $ctxt.register-namespace($ns_list[0], $ns_list[1]);
                     }
 
                     when List {
-                        for $nsdefs -> $ns_def {
+                        for $ns_list -> $ns_def {
                             given $ns_def {
-                                $ctxt.register-namespace($ns_def[0], $ns_def[1]) 
+                                $ctxt.register-namespace($_[0], $_[1]) 
                                     when Array;
 
+                                $ctxt.register-namespace($_.key, $_.value)
+                                    when Pair;
+
                                 $ctxt.register_namespace(
-                                    $ns_def<namespace>, $ns_def<uri>
+                                    $_<namespace>, $_<uri>
                                 ) when Hash;    
                             }
                         }
@@ -120,6 +121,23 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
                     }
                 }
             }
+
+            default {
+                die "Invalid type [{$_.^name}] passed to namespace option";
+            }
+        }
+    }
+
+    method find($xpath, :$opts) is aka<findnodes> {
+        my $ctxt = XML::LibXML::XPath.new(self.doc);
+        $ctxt.setNode(self.getNode());
+
+        # Used to handle namespace limitation of libxml2
+        if $opts.defined {
+            # cw: Process any other options we may need to hack
+            #     libxml back into shape.
+            self!regns($ctxt, $opts<namespaces>) 
+                if $opts<namespaces>.defined;
         }
 
         my $comp = xmlXPathCompile($xpath);
