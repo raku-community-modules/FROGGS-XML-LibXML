@@ -143,7 +143,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         my $comp = xmlXPathCompile($xpath);
         die "Invalid XPath expression '{$xpath}'" unless $comp;
 
-        my $res  = xmlXPathCompiledEval($comp, $ctxt);
+        my $res = xmlXPathCompiledEval($comp, $ctxt);
         return unless $res.defined;
 
         do given xmlXPathObjectType($res.type) {

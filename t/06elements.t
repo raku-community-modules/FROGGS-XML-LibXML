@@ -42,7 +42,7 @@ my $doc = XML::LibXML::Document.new();
 my $elem = $doc.createElement( $foo );
 # TEST
 ok $elem, 'created element';
-ok $elem ~~ XML::LibXML::Common, 'element object looks like a node';
+ok $elem ~~ XML::LibXML::Nodish, 'element object looks like a node';
 # TEST
 is $elem.name, $foo, 'element has correct tag name';
 
@@ -307,7 +307,7 @@ $tattr = $elem.getAttributeNodeNS( $nsURI, $foo );
 # TEST
 ok $tattr, 'can retrieve attribute node with namespace';
 # TEST
-is $tattr.localname, $foo, 'attribute node is named correclty';
+is $tattr.localname, $foo, 'attribute node is named correctly';
 # TEST
 is 
     $tattr.name, $prefix ~ ':' ~ $foo, 

@@ -10,7 +10,6 @@ use NativeCall;
 use XML::LibXML::CStructs :types;
 use XML::LibXML::Enums;
 use XML::LibXML::Node;
-use XML::LibXML::Parser;
 use XML::LibXML::Subs;
 
 also does XML::LibXML::Nodish;

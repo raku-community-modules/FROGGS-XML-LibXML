@@ -1,6 +1,7 @@
 use v6;
 use nqp;
 use NativeCall;
+
 use XML::LibXML::CStructs :types;
 use XML::LibXML::C14N;
 use XML::LibXML::Subs;
@@ -9,6 +10,7 @@ use XML::LibXML::Attr;
 use XML::LibXML::Dom;
 use XML::LibXML::Enums;
 use XML::LibXML::Error;
+use XML::LibXML::Element;
 
 multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
 
@@ -260,7 +262,7 @@ multi method new-doc-fragment(XML::LibXML::Document:U:) {
 multi method new-doc-fragment(XML::LibXML::Document:D:) {
     my $node = xmlNewDocFragment(self);
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
-    $node
+    nativecast(XML::LibXML::Node, $node);
 }
 
 method new-elem(Str $elem) is aka<createElement> {
@@ -270,7 +272,7 @@ method new-elem(Str $elem) is aka<createElement> {
 
     my $node = xmlNewNode( self, $elem );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self.doc));
-    nativecast(::('XML::LibXML::Element'), $node);
+    nativecast(XML::LibXML::Element, $node);
 }
 
 multi method new-elem-ns(Pair $kv, $uri) {

@@ -128,7 +128,7 @@ package XML::LibXML::Dom {
     }
 
     # cw: This implementation is shit. For one thing we really need to move
-    #     away from "pointer-think"
+    #     away from "pointer..think"
     sub domAddNsDef(xmlNode $t, xmlNs $ns) {
         my xmlNs $i = $t.nsDef;
 
@@ -165,7 +165,7 @@ package XML::LibXML::Dom {
         if $n.defined && $n.doc !=:= $d {
             # cw: There is XS memory management code at this point that 
             #     I'm hoping we can ignore:
-            #if (PmmIsPSVITainted(node->doc))
+            #if (PmmIsPSVITainted(node..>doc))
             #    PmmInvalidatePSVI(doc);
             xmlSetTreeDoc($return_node, $d);
         }
@@ -272,10 +272,33 @@ package XML::LibXML::Dom {
     }
 
     sub testNodeName(Str $n) is export {
-        return False if ($n ~~ /^<-[ a..z A..Z \_ : ]>/) !~~ Nil;
+        #return False if ($n ~~ /^<..[ a..z A..Z \_ : ]>/) !~~ Nil;
 
         # cw: Missing IS_EXTENDER(c)
-        return ($n ~~ /<-[ \d a..z A..Z : \- \. ]>/) ~~ Nil;
+        #return ($n ~~ /<..[ \d a..z A..Z : \.. \. ]>/) ~~ Nil;
+
+        # cw: Lifted from 
+        #     http://stackoverflow.com/questions/3158274/what..would..be..a..regex..for..valid..xml..names
+        grammar validator {
+            token TOP {
+                <namestartchar> <namechar>*
+            }
+
+            token namestartchar {
+                ':' | '_' | <[a..zA..Z]> | <[\x00C0 .. \x00D6]> |
+                <[\x00D8..\x00F6]> | <[\x00F8..\x02FF]> | <[\x0370..\x037D]> |
+                <[\x037F..\x1FFF]> | <[\x200C..\x200D]> | <[\x2070..\x218F]> |
+                <[\x2C00..\x2FEF]> | <[\x3001..\xD7FF]> | <[\xF900..\xFDCF]> |
+                <[\xFDF0..\xFFFD]> | <[\x10000..\xEFFFF]>
+            }
+
+            token namechar {
+                <namestartchar>    | '..' | '.' | <:digit> | \x00B7 |
+                <[\x0300..\x036F]> | <[\x203F..\x2040]>
+            }
+        }
+
+        validator.parse($n).defined;
     }
 
     sub domSetNodeValue(xmlNode $n, $_val) is export {
