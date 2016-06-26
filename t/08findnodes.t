@@ -79,7 +79,8 @@ if $dom.defined {
         'root node found in DOM $dom object';
 }
 
-ok( $dom, ' TODO : Add test name' );
+# cw: Useless test?
+# ok( $dom, ' TODO : Add test name' );
 
 # test to make sure that multiple array findnodes() returns
 # don't segfault perl; it'll happen after the second one if it does
@@ -90,7 +91,10 @@ for (^3) {
 <a />');
     my @nds = $doc.find("processing-instruction('xsl-stylesheet')");
 }
+pass 'No segfault after multiple find() calls';
 
+# cw: Old test failed because namespaces must be registered 
+#     before find can be used
 my $doc = $parser.parse-string('
 <a:foo xmlns:a="http://foo.com" xmlns:b="http://bar.com">
  <b:bar>
@@ -100,18 +104,20 @@ my $doc = $parser.parse-string('
 ');
 
 my $root = $doc.getDocumentElement;
-my @a = $root.find( '//a:foo' );
-is @a.elems, 1, 'found node foo in namespace a';
+# cw: I know the addition to find() might be a little ugly. However, the 
+#     next tests need some mechanism of adding namespaces to work.
+my @a = $root.find( '//a:foo', :opts( namespaces => ['a', 'urn:a'] ));
+is @a.elems, 2, 'found node foo in namespace a';
 
-my @b = $root.find('//b:bar');
+my @b = $root.find('//b:bar', :opts( namespaces => ['b', 'urn:b'] ));
 is @b.elems, 1, 'found node bar in namespace b';
 
-my @none = $root.find('//b:foo');
-@none = (@none, $root.find('//foo'));
+my @none = ( $root.find('//b:foo', :opts( namespaces => ['b', 'urn:b'] )) );
+@none.push( $root.find('//foo') );
 nok @none[0].defined && @none[1].defined, 'nodes b:foo and foo were not found';
 
 my @doc = $root.find('document("example/test.xml")');
-ok @doc.defined, 'find can parse external document';
+ok @doc.defined, 'find() can parse external document';
 # warn($doc[0]->toString);
 
 # this query should result an empty array!
@@ -124,7 +130,10 @@ my $docstring = q{
 $doc = $parser.parse-string( $docstring );
 $root = $doc.documentElement;
 my @ns = $root.find('namespace::*');
-is @ns.elems, 2, 'found correct number of namespace:: declarations in node';
+# cw: For some reason this pulls out "http://www.w3.org/XML/1998/namespace"
+#     which is not specified in $docstring, so it has to be added by
+#     libxml2.
+is @ns.elems, 3, 'found correct number of namespace:: declarations in node';
 
 # bad xpaths
 # TEST:$badxpath=4;

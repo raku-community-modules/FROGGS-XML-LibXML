@@ -24,9 +24,8 @@ sub xmlSetNs(xmlNode, xmlNs)                                is native('xml2') is
 sub xmlGetNsList(xmlDoc, xmlNode)            returns xmlNs  is native('xml2') is export { * }
 
 # XPath
-sub xmlXPathNewContext(xmlDoc)                                  returns ::('XML::LibXML::xPathContext')  is native('xml2') is export { * }
-
 sub xmlXPathCompile(Str)                                        returns xmlXPathCompExprPtr  is native('xml2') is export { * }
+sub xmlXPathNewContext(xmlDoc)                                  returns xmlXPathContext      is native('xml2') is export { * }
 sub xmlXPathCompiledEval(xmlXPathCompExprPtr, xmlXPathContext)  returns xmlXPathObject       is native('xml2') is export { * }
 
 # Serialization

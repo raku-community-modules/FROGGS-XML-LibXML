@@ -9,9 +9,9 @@ use XML::LibXML::Enums;
 use XML::LibXML::Subs;
 use XML::LibXML::XPath;
 
-multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
-
 class XML::LibXML::Node is xmlNode is repr('CStruct') { ... }
+
+multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
 
 role XML::LibXML::Nodish does XML::LibXML::C14N {
 
@@ -85,15 +85,45 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         xmlUnsetProp(self, $name)
     }
 
-    method find($xpath) is aka<findnodes> {
-        # Override sub definition
-        sub xmlXPathNewContext(xmlDoc) returns XML::LibXML::XPathContext is native('xml2') { * }
+    method find($xpath, :$opts) is aka<findnodes> {
+        my $ctxt = XML::LibXML::XPath.new(self.doc);
+        $ctxt.setNode(self.getNode());
+
+        # Used to handle namespace limitation of libxml2
+        if $opts.defined {
+            # cw: Process any other options we may need to hack
+            #     libxml back into shape.
+            if $opts<namespaces>.defined && $opts<namespaces> ~~ List {
+                my $nsdefs = $opts<namespaces>;
+                # If the first element is not a list, then assume it is
+                # a namespace definition.
+                given ($nsdefs[0]) {
+                    when Str {
+                        $ctxt.register-namespace($nsdefs[0], $nsdefs[1])
+                    }
+
+                    when List {
+                        for $nsdefs -> $ns_def {
+                            given $ns_def {
+                                $ctxt.register-namespace($ns_def[0], $ns_def[1]) 
+                                    when Array;
+
+                                $ctxt.register_namespace(
+                                    $ns_def<namespace>, $ns_def<uri>
+                                ) when Hash;    
+                            }
+                        }
+                    }
+
+                    default {
+                        die "Invalid type [{$_.^name}] passed to namespace option";
+                    }
+                }
+            }
+        }
 
         my $comp = xmlXPathCompile($xpath);
         die "Invalid XPath expression '{$xpath}'" unless $comp;
-
-        my $ctxt = xmlXPathNewContext(self.doc);
-        $ctxt.setNode(self.getNode());
 
         my $res  = xmlXPathCompiledEval($comp, $ctxt);
         return unless $res.defined;

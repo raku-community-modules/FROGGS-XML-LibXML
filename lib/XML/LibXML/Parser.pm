@@ -4,7 +4,8 @@ use nqp;
 
 use NativeCall;
 use XML::LibXML::CStructs :types;
-use XML::LibXML::Enums;
+
+multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
 
 unit class XML::LibXML::Parser is xmlParserCtxt is repr('CStruct');
 
@@ -14,10 +15,9 @@ sub strerror(int32) is native { * }
 
 use XML::LibXML::Document;
 use XML::LibXML::Dom;
-#use XML::LibXML::Element;
-use XML::LibXML::Subs;
-use XML::LibXML::Error;
 use XML::LibXML::Enums;
+use XML::LibXML::Error;
+use XML::LibXML::Subs;
 
 sub xmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, int32)  returns XML::LibXML::Document is native('xml2') { * }
 sub xmlCtxtReadFile(xmlParserCtxt, Str, Str, int32)      returns XML::LibXML::Document is native('xml2') { * }

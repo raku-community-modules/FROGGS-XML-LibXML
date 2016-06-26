@@ -10,9 +10,9 @@ use XML::LibXML::Dom;
 use XML::LibXML::Enums;
 use XML::LibXML::Error;
 
-unit class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::Nodish;
+multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
 
-multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
+unit class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::Nodish;
 
 sub xmlNewDoc(Str)                          returns XML::LibXML::Document  is native('xml2') { * }
 sub xmlDocGetRootElement(xmlDoc)            returns XML::LibXML::Node      is native('xml2') { * }
@@ -25,7 +25,6 @@ sub xmlReplaceNode(xmlNode, xmlNode)        returns XML::LibXML::Node      is na
 sub xmlNewDocFragment(xmlDoc)               returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlNewDocProp(xmlDoc, Str, Str)         returns XML::LibXML::Attr      is native('xml2') { * }
 sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)  returns XML::LibXML::Node      is native('xml2') { * }
-
 
 method process-xincludes {
     sub xmlXIncludeProcessFlags(xmlDoc, int32) returns int32 is native('xml2') { * }
