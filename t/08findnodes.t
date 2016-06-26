@@ -187,13 +187,13 @@ for @badxpath -> $xp {
     # this seems not to be a problem by XML::LibXML itself, but newer versions
     # of libxml2 (newer is 2.4.27 or later)
     #
-    my $doc = XML::LibXML.createDocument();
+    my $doc = XML::LibXML::Document.new();
     my $root= $doc.createElement( "A" );
     $doc.setDocumentElement($root);
 
     my $b = $doc.createElement( "B" );
     $root.appendChild( $b );
-    ok $b.defined, 'created node B as \$b';
+    ok $b.defined, 'created node B as $b';
 
     my @list = $doc.find( '//A' );
     ok @list, 'found procedurally created node A...';
@@ -201,7 +201,7 @@ for @badxpath -> $xp {
 
     @list = $doc.find( '//B' );
     ok @list, 'found node B ...';
-    ok @list[0].isSameNode( $b ), '...which is equivalent to \$b';
+    ok @list[0].isSameNode( $b ), '...which is equivalent to $b';
 
     # @list = $doc->getElementsByTagName( "A" );
     # ok( scalar @list );
@@ -209,7 +209,7 @@ for @badxpath -> $xp {
 
     @list = $root.getElementsByTagName( 'B' );
     ok @list, 'getElementsByTagName() found node B...';
-    ok @list[0].isSameNode( $b ), '...which is also equivalent \$b';
+    ok @list[0].isSameNode( $b ), '...which is also equivalent $b';
 }
 
 {

@@ -15,6 +15,8 @@ use XML::LibXML::Subs;
 
 also does XML::LibXML::Nodish;
 
+multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
+
 method new($name) {
 	sub xmlNewNode(xmlNs, Str) is native('xml2') returns XML::LibXML::Element { * };
 
@@ -27,35 +29,42 @@ method type() {
 	);
 }
 
-method getChildrenByTagNameNS($_nsUri, $_name) {
+method getChildrenByTagNameNS($_nsUri, $_name) is aka<getElementsByTagNameNS> {
 	my ($ns_wildcard, $name_wildcard);
 
-	$ns_wildcard = True if $_nsUri eq '*';
+	$ns_wildcard = True if $_nsUri.defined && $_nsUri eq '*';
 	$name_wildcard = True if $_name eq '*';
 
-	my @cldList;
+	my @ret;
 	if self.type != XML_ATTRIBUTE_NODE {
-		my xmlNodePtr $cld = self.children;
+		my $c = self.children;
 
-		while ($cld.defined) {
-			my $cld_o = nativecast(xmlNode, $cld);
+		while ($c.defined) {
+			next if $c ~~ xmlAttr;
 
-			if 	($name_wildcard || $_name eq $cld_o.name) &&
+			my $c_o = nativecast(xmlNode, $c);
+			if 	($name_wildcard || $_name eq $c_o.localname) &&
 				($ns_wildcard || 
-					($cld_o.ns.defined && $_nsUri eq $cld_o.ns.uri) ||
-					(!$cld.ns.defined && !$_nsUri.defined)
-				) 
+					($c_o.ns.defined && 
+						$c_o.ns.uri.defined && 
+						$_nsUri eq $c_o.ns.uri
+					) ||
+					(!$c_o.ns.defined && !$_nsUri.defined)
+				)
 			{
-				@cldList.push: nativecast(XML::LibXML::Element, $cld);
+				@ret.push: nativecast(XML::LibXML::Element, $c);
 			}
-			$cld = $cld_o.next;
+			$c = $c_o.next;
 		}
 	}
 
-	@cldList;
+	@ret;
 }
 
-method getChildrenByTagName($_name) {
+method getChildrenByTagName($_name)
+	is aka<getElementsByTagName>
+	is aka<getElementsByLocalName> 
+{
 	self.getChildrenByTagNameNS(Nil, $_name);
 }
 
@@ -105,5 +114,3 @@ method appendWellBalancedChunk($chunk) {
 	my $frag = $parser.parse-xml-chunk($chunk);
 	self.appendChild($frag);
 }
-
-
