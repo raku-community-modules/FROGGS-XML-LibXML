@@ -1,6 +1,7 @@
 use v6;
 
 use NativeCall;
+use XML::LibXML::Document;
 use XML::LibXML::Parser;
 
 unit class XML::LibXML is XML::LibXML::Parser;
@@ -11,17 +12,29 @@ method parser-version() {
 }
 
 sub parse-xml(Str $xml) is export {
-    XML::LibXML::Parser.new.parse($xml)
+    nativecast(
+    	XML::LibXML::Document, 
+    	XML::LibXML::Parser.new.parse($xml)
+	);
 }
 
 sub parse-html(Str $html) is export {
-    XML::LibXML::Parser.new(:html).parse($html)
+	nativecast(
+		XML::LibXML::Document,
+    	XML::LibXML::Parser.new(:html).parse($html)
+	);
 }
 
 sub parse-string(Str $s) is export {
-	XML::LibXML::Parser.new.parse-string($s);
+	nativecast(
+		XML::LibXML::Document,
+		XML::LibXML::Parser.new.parse-string($s)
+	);
 }
 
-sub parse-file(Str $s) is export {
-	XML::LibXML::Parser.new.parse-file($) 
+sub parse-file(Str $filename) is export {
+	nativecast(
+		XML::LibXML::Document,
+		XML::LibXML::Parser.new.parse-file($filename) 
+	);
 }

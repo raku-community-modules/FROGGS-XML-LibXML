@@ -256,13 +256,8 @@ method new(:$version = '1.0', :$encoding) {
     $doc
 }
 
-multi method new-doc-fragment(XML::LibXML::Document:U:) {
-    nativecast(XML::LibXML::Node, xmlNewDocFragment(xmlDoc));
-}
-multi method new-doc-fragment(XML::LibXML::Document:D:) {
-    my $node = xmlNewDocFragment(self);
-    nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
-    nativecast(XML::LibXML::Node, $node);
+method new-doc-fragment(XML::LibXML::Document:D:) {
+    nativecast(XML::LibXML::Node, domNewDocFragment(self));
 }
 
 method new-elem(Str $elem) is aka<createElement> {

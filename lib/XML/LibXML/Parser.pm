@@ -13,21 +13,21 @@ my $ERRNO = cglobal(Str, 'errno', int32);
 
 sub strerror(int32) is native { * }
 
-use XML::LibXML::Document;
 use XML::LibXML::Dom;
 use XML::LibXML::Enums;
 use XML::LibXML::Error;
 use XML::LibXML::Subs;
 
-sub xmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, int32)  returns XML::LibXML::Document is native('xml2') { * }
-sub xmlCtxtReadFile(xmlParserCtxt, Str, Str, int32)      returns XML::LibXML::Document is native('xml2') { * }
+sub xmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, int32)  returns xmlDoc is native('xml2') { * }
+sub xmlCtxtReadFile(xmlParserCtxt, Str, Str, int32)      returns xmlDoc is native('xml2') { * }
+sub xmlReadDoc(Str, Str, Str, int32)                     returns xmlDoc is native('xml2') { * }
+sub xmlReadMemory(Str, int32, Str, Str, int32)           returns xmlDoc is native('xml2') { * }
+sub htmlParseFile(Str, Str)                              returns xmlDoc is native('xml2') { * }
+sub htmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, int32) returns xmlDoc is native('xml2') { * }
+sub htmlCtxtReadFile(xmlParserCtxt, Str, Str, int32)     returns xmlDoc is native('xml2') { * }
 sub xmlNewParserCtxt                                     returns XML::LibXML::Parser   is native('xml2') { * }
-sub xmlReadDoc(Str, Str, Str, int32)                     returns XML::LibXML::Document is native('xml2') { * }
-sub xmlReadMemory(Str, int32, Str, Str, int32)           returns XML::LibXML::Document is native('xml2') { * }
 sub htmlNewParserCtxt                                    returns XML::LibXML::Parser   is native('xml2') { * }
-sub htmlParseFile(Str, Str)                              returns XML::LibXML::Document is native('xml2') { * }
-sub htmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, int32) returns XML::LibXML::Document is native('xml2') { * }
-sub htmlCtxtReadFile(xmlParserCtxt, Str, Str, int32)     returns XML::LibXML::Document is native('xml2') { * }
+
 
 method new(:$html = False) {
     xmlKeepBlanksDefault($html ?? 0 !! 1);
@@ -83,8 +83,7 @@ method parse-xml-chunk($_xml) {
     if $ret.defined {
         my $end;
 
-        # cw: Could we make class methods for these?
-        $frag = XML::LibXML::Document.new-doc-fragment;
+        $frag = domNewDocFragment(); 
         # cw: Also might want to make a helper function for this.
         nqp::bindattr(
             nqp::decont($frag),

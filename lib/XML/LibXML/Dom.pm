@@ -92,7 +92,7 @@ package XML::LibXML::Dom {
                 $tree.ns = $ns;
             } 
             else {
-        # cw: Endless loop here...            
+        # cw: -XXX- Endless loop here...          
 	            if domRemoveNsDef($tree, $tree.ns) {
 	    #           domAddNsDef($tree, $tree.ns);
 	    #       } else {
@@ -165,7 +165,7 @@ package XML::LibXML::Dom {
         if $n.defined && $n.doc !=:= $d {
             # cw: There is XS memory management code at this point that 
             #     I'm hoping we can ignore:
-            #if (PmmIsPSVITainted(node..>doc))
+            #if (PmmIsPSVITainted(node->doc))
             #    PmmInvalidatePSVI(doc);
             xmlSetTreeDoc($return_node, $d);
         }
@@ -272,13 +272,8 @@ package XML::LibXML::Dom {
     }
 
     sub testNodeName(Str $n) is export {
-        #return False if ($n ~~ /^<..[ a..z A..Z \_ : ]>/) !~~ Nil;
-
-        # cw: Missing IS_EXTENDER(c)
-        #return ($n ~~ /<..[ \d a..z A..Z : \.. \. ]>/) ~~ Nil;
-
         # cw: Lifted from 
-        #     http://stackoverflow.com/questions/3158274/what..would..be..a..regex..for..valid..xml..names
+        #     http://stackoverflow.com/questions/3158274/what-would-be-a-regex-for-valid-xml-names
         grammar validator {
             token TOP {
                 <namestartchar> <namechar>*
@@ -293,7 +288,7 @@ package XML::LibXML::Dom {
             }
 
             token namechar {
-                <namestartchar>    | '..' | '.' | <:digit> | \x00B7 |
+                <namestartchar>    | '-' | '.' | <:digit> | \x00B7 |
                 <[\x0300..\x036F]> | <[\x203F..\x2040]>
             }
         }
@@ -398,4 +393,15 @@ package XML::LibXML::Dom {
         $nodes;
     }
 
+    sub domNewDocFragment($_parent?) is export {
+        use nqp;
+        sub xmlNewDocFragment(xmlDoc) returns xmlNode is native('xml2') { * };
+
+        my $parent = $_parent.defined ?? $_parent !! xmlDoc;
+        my $node = xmlNewDocFragment($parent);
+        nqp::bindattr(
+            nqp::decont($node), xmlNode, '$!doc', nqp::decont($parent)
+        ) if $parent.defined;
+        $node;
+    }
 }

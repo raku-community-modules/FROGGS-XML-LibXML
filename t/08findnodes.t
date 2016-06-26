@@ -1,8 +1,6 @@
 use v6.c;
 use Test;
 
-use NativeCall;
-
 # Should be 45.
 plan 44;
 
@@ -21,9 +19,11 @@ use XML::LibXML::Text;
 
 my $file    = "example/dromeds.xml";
 
-# init the file parser
-my $parser = XML::LibXML::Parser.new();
-my $dom    = $parser.parse-file( $file );
+# cw: To get the proper objects, must use exported subs. If the object
+#     method is to be supported, we need to look at adding methods
+#     to XML:;LibXML, however it is subclassed to XML::LibXML::Parser
+#my $parser = XML::LibXML.new();
+my $dom    = parse-file( $file );
 
 if $dom.defined {
     # get the root document
@@ -85,7 +85,7 @@ if $dom.defined {
 # test to make sure that multiple array findnodes() returns
 # don't segfault perl; it'll happen after the second one if it does
 for (^3) {
-    my $doc = XML::LibXML.new.parse-string(
+    my $doc = parse-string(
 '<?xml version="1.0" encoding="UTF-8"?>
 <?xsl-stylesheet type="text/xsl" href="a.xsl"?>
 <a />');
@@ -99,7 +99,7 @@ pass 'No segfault after multiple find() calls';
 #     Just noticed that the first <a:foo> tag defines both 
 #     namespaces. Still...libxml2 chokes on the //a:foo 
 #     and //b:bar expressions without these changes.
-my $doc = $parser.parse-string('
+my $doc = parse-string('
 <a:foo xmlns:a="http://foo.com" xmlns:b="http://bar.com">
  <b:bar>
   <a:foo xmlns:a="http://other.com"/>
@@ -138,7 +138,7 @@ nok @nodes, 'invalid expression properly returns no results';
 my $docstring = q{
 <foo xmlns="http://kungfoo" xmlns:bar="http://foo"/>
 };
-$doc = $parser.parse-string( $docstring );
+$doc = parse-string( $docstring );
 $root = $doc.documentElement;
 my @ns = $root.find('namespace::*');
 # cw: For some reason this pulls out "http://www.w3.org/XML/1998/namespace"
@@ -242,7 +242,7 @@ for @badxpath -> $xp {
 
     my $xmlstr = "<a><b><c>1</c><c>2</c></b></a>";
 
-    my $doc       = $parser.parse-string( $xmlstr );
+    my $doc       = parse-string( $xmlstr );
     my $root      = $doc.documentElement;
     my ( $lastc ) = $root.find( 'b/c[last()]' );
     ok $lastc.defined && $lastc.value == 2, 'found last c node in node b';
