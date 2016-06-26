@@ -213,7 +213,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         my xmlNs $ns;
         my $attr_ns;
         if $namespace.defined {
-            $attr_ns = $namespace.subst(/\s/, '');
+            $attr_ns = $namespace.trim;
             if $attr_ns.chars {
                 $ns = xmlSearchNsByHref(self.doc, self, $attr_ns);
 
@@ -272,8 +272,8 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
     method hasAttributeNS($_ns!, Str $_name!) {
         my ($attr_ns, $name;);
-        $attr_ns = $_ns.subst(/\s/, '') if $_ns.defined;
-        $name = $_name.subst(/\s/, '') if $_name.defined;
+        $attr_ns = $_ns.trim if $_ns.defined;
+        $name = $_name.trim if $_name.defined;
 
         $attr_ns = Str if !$_ns.defined || !$attr_ns.chars;
 
@@ -288,7 +288,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     method getAttribute(Str $a) {
         sub xmlGetNoNsProp(xmlNode, Str)  returns Str      is native('xml2') { * }
 
-        my $name = $a.subst(/\s/, '');
+        my $name = $a.defined ?? $a.trim !! Nil;
         return unless $name;
 
         my $ret;
@@ -320,10 +320,10 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     method getAttributeNS($_uri, $_name, $_useEncoding = 0) {
         sub xmlGetProp(xmlNode, Str) returns Str is native('xml2') { * };
 
-        my $name = $_name.subst(/\s/, ' ');
+        my $name = $_name.defined ?? $_name.trim !! Nil;
         return unless $name.defined && $name.chars;
 
-        my $uri = $_uri.subst(/\s/, ' ');
+        my $uri = $_uri.defined ?? $_uri.trim !! Nil;
         my $node = self.getNode();
         my $ret = $uri.defined && $uri.chars ??
             xmlGetNsProp($node, $name, $uri) 
@@ -350,8 +350,8 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
     method getAttributeNodeNS(Str $ns, Str $name!) {
         my ($attr_ns, $attr_name);
-        $attr_ns = $ns.subst(/\s/, '') if $ns.defined;
-        $attr_name = $name.subst(/\s/, '') if $name.defined;
+        $attr_ns = $ns.trim if $ns.defined;
+        $attr_name = $name.trim if $name.defined;
 
         return unless $attr_name ~~ Str && $attr_name.chars;
 
@@ -480,8 +480,8 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     method removeAttributeNS($_nsUri, $_name) {
         sub xmlFreeProp(xmlAttrPtr) is native('xml2') { * }
 
-        my $nsUri = $_nsUri.defined ?? $_nsUri.subst(/\s/, '') !! Str;
-        my $name = $_name.defined ?? $_name.subst(/\s/, '') !! Str;
+        my $nsUri = $_nsUri.defined ?? $_nsUri.trim !! Str;
+        my $name = $_name.defined ?? $_name.trim !! Str;
 
         my xmlAttr $xattr = xmlHasNsProp(
             self.getNode(), $name, $nsUri

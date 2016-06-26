@@ -181,7 +181,7 @@ package XML::LibXML::Dom {
     }
 
     sub domGetAttrNode(xmlNode $n, Str $a) is export {
-        my $name = $a.subst(/\s/, '');
+        my $name = $a.defined ?? $a.trim !! Nil;
         return unless $name;
 
         my $ret;
@@ -323,8 +323,6 @@ package XML::LibXML::Dom {
             XML_ENTITY_REF_NODE
         );
 
-
-
         if $n.type == XML_ENTITY_DECL {
             $retVal = xmlXPathCastNodeToString($n);
         }
@@ -353,6 +351,28 @@ package XML::LibXML::Dom {
         }
 
         $retVal;
+    }
+
+    sub domReadWellBalancedString(xmlDoc $doc, $xml, $repair) is export {
+        sub xmlParseBalancedChunkMemory(
+            xmlDoc, Pointer, Pointer, int32, Str, xmlNode
+        ) returns int32 is native('xml2') { * };
+        sub xmlSetListDoc(xmlNode, xmlDoc) is native('xml2') { * };
+
+        return unless $xml.defined && $xml.trim.chars;
+
+        my $nodes = xmlNode.new;
+        my $ret = xmlParseBalancedChunkMemory(
+            $doc, Pointer, Pointer, 0, $xml, $nodes
+        );
+        if ($ret != 0 && !$repair) {
+            xmlFreeNodeList($nodes);
+            $nodes = Nil;
+        }
+        else {
+            xmlSetListDoc($nodes, $doc);
+        }
+        $nodes;
     }
 
 }

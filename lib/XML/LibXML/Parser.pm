@@ -1,5 +1,7 @@
 use v6;
 
+use nqp;
+
 use NativeCall;
 use XML::LibXML::CStructs :types;
 use XML::LibXML::Enums;
@@ -11,7 +13,8 @@ my $ERRNO = cglobal(Str, 'errno', int32);
 sub strerror(int32) is native { * }
 
 use XML::LibXML::Document;
-use XML::LibXML::Element;
+use XML::LibXML::Dom;
+#use XML::LibXML::Element;
 use XML::LibXML::Subs;
 use XML::LibXML::Error;
 use XML::LibXML::Enums;
@@ -66,6 +69,48 @@ multi method parse-file(Str $s) {
         !!
         #xmlCtxtReadFile(self, $s, "UTF8", self.options)
         xmlCtxtReadFile(self, $s, Str, 0)
+}
+
+method parse-xml-chunk($_xml) {
+    die "parse-xml-chunk is not a class method" unless self.defined;
+
+    my $xml = $_xml.defined ?? $_xml.trim !! Nil;
+    return unless $xml.defined && $xml.chars;
+
+    # cw: The naked 0 below may not be correct.
+    my $ret = domReadWellBalancedString(xmlDoc, $xml, 0);
+    my $frag;
+    if $ret.defined {
+        my $end;
+
+        # cw: Could we make class methods for these?
+        $frag = XML::LibXML::Document.new-doc-fragment;
+        # cw: Also might want to make a helper function for this.
+        nqp::bindattr(
+            nqp::decont($frag),
+            xmlNode,
+            '$!children',
+            nqp::decont(nativecast(xmlNodePtr, $ret))
+        );
+        $end = $ret;
+        while $end.next.defined {
+            $end.parent = nativecast(xmlNodePtr, $frag);
+            $end = nativecast(xmlNode, $end.next);
+        }
+        nqp::bindattr(
+            nqp::decont($end),
+            xmlNode,
+            '$!parent',
+            nqp::decont(nativecast(xmlNodePtr, $frag))
+        );
+        nqp::bindattr(
+            nqp::decont(nativecast(xmlNode, $frag)),
+            xmlNode,
+            '$!last',
+            nqp::decont(nativecast(xmlNodePtr, $end))
+        );
+    }
+    $frag;
 }
 
 #~ multi method expand-entities() {

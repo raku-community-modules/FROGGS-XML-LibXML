@@ -71,11 +71,13 @@ if $dom.defined {
     $telem.appendWellBalancedChunk('<b>c</b>');
     
     # TEST
-    isa-ok 
-        finddoc($dom), xmlDoc, 
-        'DOM element returns proper object type';
+    $x = finddoc($dom);
+    ok 
+        $x.defined && 
+        $x ~~ List && 
+        $x[0] ~~ XML::LibXML::Node, 
+        'root node found in DOM $dom object';
 }
-# TEST
 
 ok( $dom, ' TODO : Add test name' );
 
@@ -97,26 +99,21 @@ my $doc = $parser.parse-string('
 </a:foo>
 ');
 
-# TEST
 my $root = $doc.getDocumentElement;
 my @a = $root.find( '//a:foo' );
 is @a.elems, 1, 'found node foo in namespace a';
 
-# TEST
 my @b = $root.find('//b:bar');
 is @b.elems, 1, 'found node bar in namespace b';
 
-# TEST
 my @none = $root.find('//b:foo');
 @none = (@none, $root.find('//foo'));
 nok @none[0].defined && @none[1].defined, 'nodes b:foo and foo were not found';
 
-# TEST
 my @doc = $root.find('document("example/test.xml")');
 ok @doc.defined, 'find can parse external document';
 # warn($doc[0]->toString);
 
-# TEST
 # this query should result an empty array!
 my @nodes = $root.find( "/humpty/dumpty" );
 nok @nodes, 'invalid expression properly returns no results';

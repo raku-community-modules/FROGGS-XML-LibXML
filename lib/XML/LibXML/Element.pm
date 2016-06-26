@@ -10,13 +10,14 @@ use NativeCall;
 use XML::LibXML::CStructs :types;
 use XML::LibXML::Enums;
 use XML::LibXML::Node;
+use XML::LibXML::Parser;
 use XML::LibXML::Subs;
 
 also does XML::LibXML::Nodish;
 
 method new($name) {
 	sub xmlNewNode(xmlNs, Str) is native('xml2') returns XML::LibXML::Element { * };
-	
+
 	xmlNewNode(xmlNs, $name);
 }
 
@@ -83,7 +84,7 @@ method appendText($text) {
 multi method appendTextChild(Pair $kv) {
 	sub xmlNewChild(xmlNode, xmlNs, Str, Str) returns xmlNode is native('xml2') { * };
 
-	my $name = $kv.key.subst(/\s/, '');
+	my $name = $kv.key.trim;
 	return unless $name.chars;
 
 	my $content = $kv.value;
@@ -97,6 +98,12 @@ multi method appendTextChild(Pair $kv) {
 }
 multi method appendTextChild(Str $name) {
 	self.appendTextChild($name => Str);
+}
+
+method appendWellBalancedChunk($chunk) {
+	my $parser = XML::LibXML::Parser.new;
+	my $frag = $parser.parse-xml-chunk($chunk);
+	self.appendChild($frag);
 }
 
 

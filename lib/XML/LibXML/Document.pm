@@ -52,7 +52,7 @@ method documentElement
 {
     Proxy.new(
         FETCH => -> $ {
-            xmlDocGetRootElement(self)
+            nativecast(XML::LibXML::Document, xmlDocGetRootElement(self))
         },
         STORE => -> $, $new {
             my $root = xmlDocGetRootElement(self);
@@ -255,8 +255,11 @@ method new(:$version = '1.0', :$encoding) {
     $doc
 }
 
-method new-doc-fragment() {
-    my $node = xmlNewDocFragment( self );
+multi method new-doc-fragment(XML::LibXML::Document:U:) {
+    nativecast(XML::LibXML::Node, xmlNewDocFragment(xmlDoc));
+}
+multi method new-doc-fragment(XML::LibXML::Document:D:) {
+    my $node = xmlNewDocFragment(self);
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
     $node
 }
