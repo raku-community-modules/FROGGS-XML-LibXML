@@ -24,7 +24,6 @@ sub xmlNewText(Str)                         returns XML::LibXML::Node      is na
 sub xmlNewDocComment(xmlDoc, Str)           returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlNewCDataBlock(xmlDoc, Str, int32)    returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlReplaceNode(xmlNode, xmlNode)        returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlNewDocFragment(xmlDoc)               returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlNewDocProp(xmlDoc, Str, Str)         returns XML::LibXML::Attr      is native('xml2') { * }
 sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)  returns XML::LibXML::Node      is native('xml2') { * }
 
@@ -80,6 +79,10 @@ method xmlEncoding is aka<encoding> {
             $new
         }
     )
+}
+
+method setEncoding(xmlCharEncoding $enc) {
+    self.charset = $enc;
 }
 
 #| This property is a String and can raise an object that implements the DOMException interface on setting.

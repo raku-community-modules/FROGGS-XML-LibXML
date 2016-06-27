@@ -1,7 +1,8 @@
 use v6.c;
 
-use XML::LibXML::CStructs :types;
+use nqp;
 
+use XML::LibXML::CStructs :types;
 
 package XML::LibXML::Dom {
 
@@ -10,6 +11,7 @@ package XML::LibXML::Dom {
     use XML::LibXML::Enums;
     use XML::LibXML::Subs;
 
+    # cw: Save some typing.
     my &_nc = &nativecast;
 
     sub _domAddNsChain(xmlNsPtr $c, xmlNsPtr $ns) {
@@ -17,9 +19,9 @@ package XML::LibXML::Dom {
 
         my $i = $c;
         while $i !=:= xmlNsPtr && $i !=:= $ns {
-            $i = nativecast(xmlNs, $i).next;
+            $i = _nc(xmlNs, $i).next;
             if $i =:= xmlNsPtr {
-                nativecast(xmlNs, $ns).next = $c;
+                _nc(xmlNs, $ns).next = $c;
                 return $ns;
             }
         }
@@ -30,10 +32,10 @@ package XML::LibXML::Dom {
     sub _domReconcileNsAttr(xmlAttrPtr $a, xmlNsPtr $unused) {
         return unless $a.defined;
 
-        my $attr = nativecast(xmlAttr, $a);
+        my $attr = _nc(xmlAttr, $a);
 
         my xmlNodePtr $tree = $attr.parent;
-        my xmlNode $tree_o = nativecast(xmlNode, $tree);
+        my xmlNode $tree_o = _nc(xmlNode, $tree);
 
         return unless $tree.defined;
 
@@ -49,7 +51,7 @@ package XML::LibXML::Dom {
                 $ns = xmlSearchNs($tree_o.doc, $tree_o.parent, $attr.ns.name);
             }
 
-            my $nso = nativecast(xmlNs, $ns);
+            my $nso = _nc(xmlNs, $ns);
             if [&&](
                 $ns.defined,
                 $nso.uri.defined,
@@ -74,10 +76,10 @@ package XML::LibXML::Dom {
     }
 
     #sub _domReconcileNs(xmlNode $tree, xmlNs $unused) {
-    sub _domReconcileNs($tree, $unused) {
+    sub _domReconcileNs($tree, $unused is rw) {
         sub xmlCopyNamespace(xmlNs) returns xmlNs is native('xml2') { * }
 
-        if  $tree.ns !~~ Nil     
+        if  $tree.ns.defined   
          	&& ($tree.type == XML_ELEMENT_NODE || 
          		$tree.type == XML_ATTRIBUTE_NODE) {
             my $ns = xmlSearchNs($tree.doc, $tree.parent, $tree.ns.uri);
@@ -103,19 +105,20 @@ package XML::LibXML::Dom {
         }
 
         if $tree.type == XML_ELEMENT_NODE {
-            my xmlElement $ele = nativecast(xmlElement, $tree);
+            my xmlElement $ele = _nc(xmlElement, $tree);
 
             my xmlAttrPtr $a_p = $ele.attributes;
             while $a_p.defined {
                 _domReconcileNsAttr($a_p, $unused);
-                $a_p = nativecast(xmlAttr, $a_p).next;
+                $a_p = _nc(xmlAttr, $a_p).next;
             }
         }
 
-        my xmlNodePtr $c_p = $tree.children;
+        my $c_p = $tree.children;
         while $c_p.defined {
-            _domReconcileNs($c_p, $unused);
-            $c_p = nativecast(xmlNode, $c_p).next;
+            my $cp_o = _nc(xmlNode, $c_p);
+            _domReconcileNs($cp_o, $unused);
+            $c_p = $cp_o.next;
         }
     }
 
@@ -148,13 +151,13 @@ package XML::LibXML::Dom {
 
         if $move {
             $return_node = $n;
-            domUnlinkNode(nativecast(xmlNodePtr, $n));
+            domUnlinkNode(_nc(xmlNodePtr, $n));
         } 
         else {
             if ($n.type == XML_DTD_NODE) {
                 # cw: Pointer should be xmlDtd, but that hasn't been defined, yet.
-                $return_node = nativecast(
-                    xmlNode, xmlCopyDtd(nativecast(Pointer, $n));
+                $return_node = _nc(
+                    xmlNode, xmlCopyDtd(_nc(Pointer, $n));
                 );
             } 
             else {
@@ -185,7 +188,7 @@ package XML::LibXML::Dom {
         return unless $name;
 
         my $ret;
-        unless $ret = nativecast(
+        unless $ret = _nc(
             xmlAttr, xmlHasNsProp($n, $a, Str)
         ) {
             my ($prefix, $localname) = $a.split(':');
@@ -197,7 +200,7 @@ package XML::LibXML::Dom {
             if $localname {
                 my $ns = xmlSearchNs($n.doc, $n, $prefix);
                 if $ns {
-                    $ret = nativecast(
+                    $ret = _nc(
                         xmlAttr, xmlHasNsProp($n, $localname, $ns.uri)
                     );
                 }
@@ -214,9 +217,9 @@ package XML::LibXML::Dom {
     #    
     sub domRemoveNsDef($_tree, $_ns) {
         my $tree = $_tree ~~ xmlNodePtr ??
-            nativecast(xmlNode, $_tree) !! $_tree;
+            _nc(xmlNode, $_tree) !! $_tree;
         my $ns = $_ns ~~ xmlNsPtr ??
-            nativecast(xmlNs, $_ns) !! $_ns;
+            _nc(xmlNs, $_ns) !! $_ns;
 
         my xmlNs $i = $tree.nsDef;
 
@@ -228,7 +231,7 @@ package XML::LibXML::Dom {
 
         while $i.defined {
             if $i.next =:= $ns {
-                $i.next = nativecast(xmlNodePtr, $ns.next);
+                $i.next = _nc(xmlNodePtr, $ns.next);
                 $ns.next = xmlNsPtr;
                 return 1;
             }
@@ -238,8 +241,9 @@ package XML::LibXML::Dom {
         return 0;
     }
 
-    sub domUnlinkNode(xmlNodePtr $n) {
-        my $node = nativecast(xmlNode, $n);
+    #sub domUnlinkNode(xmlNodePtr $n) is export {
+    sub domUnlinkNode($n) is export {
+        my $node = _nc(xmlNode, $n);
 
         return if 
             !$n.defined || !($node.prev.defined || $node.parent.defined);
@@ -249,22 +253,27 @@ package XML::LibXML::Dom {
             return;
         }
 
-        nativecast(xmlNode, $node.prev).next = $node.next 
+        sub setPtr($obj, $attr, $val) {
+            nqp::bindattr(nqp::decont($obj), xmlNode, $attr, nqp::decont($val));    
+        }
+
+        setPtr(_nc(xmlNode, $node.prev), '$!next', $node.next)
             if $node.prev.defined;
-        nativecast(xmlNode, $node.next).prev = $node.prev 
+
+        setPtr(_nc(xmlNode, $node.next), '$!prev', $node.prev) 
             if $node.next.defined;
 
         if ($node.parent.defined) {
-            nativecast(xmlNode, $node.parent).last = $node.prev
-                if $node =:= $node.parent.last;
+            setPtr(_nc(xmlNode, $node.parent), '$!last', $node.prev)
+                if $node =:= _nc(xmlNode, $node.parent).last;
 
-            nativecast(xmlNode, $node.parent).children = $node.next
-                if $node =:= $node.parent.children;
+            setPtr(_nc(xmlNode, $node.parent), '$!children', $node.next)
+                if $node =:= _nc(xmlNode, $node.parent).children;
         }
 
-        $node.prev = xmlNodePtr;
-        $node.next = xmlNodePtr;
-        $node.parent = xmlNodePtr;
+        setPtr($node,   '$!prev', xmlNodePtr);
+        setPtr($node,   '$!next', xmlNodePtr);
+        setPtr($node, '$!parent', xmlNodePtr);
     }
 
     sub domFixOwner($node_to_fix, $new_parent) {
@@ -351,7 +360,7 @@ package XML::LibXML::Dom {
             else {
                 if $n.children.defined {
                     my $cnode = $n.children;
-                    my $c_o = nativecast(xmlNode, $cnode);
+                    my $c_o = _nc(xmlNode, $cnode);
 
                     while $cnode.defined {
                         my $buffer = xmlBufferCreate();
@@ -407,8 +416,8 @@ package XML::LibXML::Dom {
 
     sub domReparentRemovedNode($node) is export {
         xmlAddChild(
-            nativecast(xmlNodePtr, domNewDocFragment($node.doc)), 
-            nativecast(xmlNodePtr, $node)
+            _nc(xmlNodePtr, domNewDocFragment($node.doc)), 
+            _nc(xmlNodePtr, $node)
         ) if $node.type != any(XML_ATTRIBUTE_NODE, XML_DTD_NODE);
     }
 }

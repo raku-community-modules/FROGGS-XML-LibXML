@@ -616,6 +616,19 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         domReparentRemovedNode(self);
     }
 
+    method removeChild(XML::LibXML::Nodish:D: $old) {
+        return unless $old.defined;
+        return if $old.type == any(XML_ATTRIBUTE_NODE, XML_NAMESPACE_DECL);
+        return unless nativecast(xmlNodePtr, self) != $old.parent;
+
+        domUnlinkNode($old);
+        if $old.type == XML_ELEMENT_NODE {
+            domReconcileNs($old);
+        }
+        domReparentRemovedNode($old);
+        $old;
+    }
+
 }
 
 class XML::LibXML::Node does XML::LibXML::Nodish {
