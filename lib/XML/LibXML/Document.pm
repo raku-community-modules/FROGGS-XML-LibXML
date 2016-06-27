@@ -10,9 +10,9 @@ use XML::LibXML::Dom;
 use XML::LibXML::Enums;
 use XML::LibXML::Error;
 
-unit class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::Nodish;
-
 multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
+
+unit class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::Nodish;
 
 sub xmlNewDoc(Str)                          returns XML::LibXML::Document  is native('xml2') { * }
 sub xmlDocGetRootElement(xmlDoc)            returns XML::LibXML::Node      is native('xml2') { * }
@@ -221,7 +221,7 @@ method base-uri() {
         xmlAddChild(self, $child)
     }
 
-    method Str(:$format = 0) {
+    multi method Str(:$format = 0) {
         my $result = CArray[Str].new();
         my $len    = CArray[int32].new();
         $result[0] = "";
@@ -303,7 +303,6 @@ method createElementNS($_uri, $_name) {
 
     self.new-elem-ns($_name, $_uri);
 }
-
 
 multi method createAttribute($key, $value) {
     self.new-attr($key => $value);

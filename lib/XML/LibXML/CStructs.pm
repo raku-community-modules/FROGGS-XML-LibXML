@@ -159,7 +159,7 @@ my class xmlNode is export(:types) {
     has uint16 $.extra;
 
     method setNsDef(xmlNs $n) {
-        $!nsDef = $n
+        $!nsDef = $n;
     }
 }
 
