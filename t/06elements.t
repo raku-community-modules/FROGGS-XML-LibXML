@@ -514,12 +514,12 @@ EOF
 
     # TEST:$xml=2;
     for ($xml_nons, $xml_ns) -> $xml {
-        my $parser = XML::LibXML.new;
+        #my $parser = XML::LibXML.new;
         # cw: NYI?
         #$parser.complete_attributes(0);
-        $parser.replace-entities = 0;
+        #$parser.replace-entities = 0;
         #$parser.expand_entities(0);
-        my $doc = $parser.parse-string($dtd ~ $xml);
+        my $doc = parse-string($dtd ~ $xml);
         my $nsorno = $xml eq $xml_nons ?? 'No NS' !! 'NS';
 
         # TEST*$xml
