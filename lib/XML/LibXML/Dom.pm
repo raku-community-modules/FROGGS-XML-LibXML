@@ -338,7 +338,7 @@ package XML::LibXML::Dom {
             XML_COMMENT_NODE,
             XML_CDATA_SECTION_NODE,
             XML_PI_NODE,
-            XML_ENTITY_REF_NODE
+            XML_ENTITY_REF_NODE,
         );
 
         if $n.type == XML_ENTITY_DECL {
@@ -403,5 +403,12 @@ package XML::LibXML::Dom {
             nqp::decont($node), xmlNode, '$!doc', nqp::decont($parent)
         ) if $parent.defined;
         $node;
+    }
+
+    sub domReparentRemovedNode($node) is export {
+        xmlAddChild(
+            nativecast(xmlNodePtr, domNewDocFragment($node.doc)), 
+            nativecast(xmlNodePtr, $node)
+        ) if $node.type != any(XML_ATTRIBUTE_NODE, XML_DTD_NODE);
     }
 }

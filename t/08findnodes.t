@@ -6,6 +6,7 @@ plan 44;
 
 use XML::LibXML;
 use XML::LibXML::CStructs :types;
+use XML::LibXML::Document;
 use XML::LibXML::Element;
 use XML::LibXML::Node;
 use XML::LibXML::Text;
@@ -188,7 +189,7 @@ for @badxpath -> $xp {
     # of libxml2 (newer is 2.4.27 or later)
     #
     my $doc = XML::LibXML::Document.new();
-    my $root= $doc.createElement( "A" );
+    my $root = $doc.createElement( "A" );
     $doc.setDocumentElement($root);
 
     my $b = $doc.createElement( "B" );
@@ -208,13 +209,15 @@ for @badxpath -> $xp {
     # ok( $list[0]->isSameNode( $root ) );
 
     @list = $root.getElementsByTagName( 'B' );
-    ok @list, 'getElementsByTagName() found node B...';
-    ok @list[0].isSameNode( $b ), '...which is also equivalent $b';
+    ok  @list.elems, 'getElementsByTagName() found node B...';
+    ok 
+        @list.elems && @list[0].isSameNode( $b ), 
+        '...which is also equivalent $b';
 }
 
 {
     # test potential unbinding-segfault-problem
-    my $doc = XML::LibXML.createDocument();
+    my $doc = XML::LibXML::Document.new();
     my $root= $doc.createElement( "A" );
     $doc.setDocumentElement($root);
 
@@ -244,10 +247,14 @@ for @badxpath -> $xp {
 
     my $doc       = parse-string( $xmlstr );
     my $root      = $doc.documentElement;
-    my ( $lastc ) = $root.find( 'b/c[last()]' );
-    ok $lastc.defined && $lastc.value == 2, 'found last c node in node b';
+    my @lastc     = $root.find( 'b/c[last()]' );
+    my $c_val;
+    $c_val = @lastc[0].string_value
+        if @lastc.defined  && @lastc.elems == 1   && 
+           @lastc[0].string_value.defined;
+    is $c_val, '2', 'found last c node in node b';
 
-    $root.removeChild( $lastc );
+    $root.removeChild( @lastc[0] ) if @lastc.defined && @lastc[0].defined;
     is $root.toString(), $xmlstr, 'DOM remained unchained after bad removal';
 }
 

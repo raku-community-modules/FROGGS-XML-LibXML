@@ -200,15 +200,24 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         xmlAddChild(self.getNode(), $child);
     }
 
+    # subclasses can override this if they have their own Str method.
     multi method Str(:$level = 0, :$format = 1) {
         my $buffer = xmlBufferCreate(); # XXX free
         my $size   = xmlNodeDump($buffer, self.doc, self, $level, $format);
         $buffer.value;
     }
 
-    # subclasses can override this if they have their own Str method.
-    method toString {
-        self.Str(:level<0>, :format<1>);
+    method toString 
+        is aka<to_literal>
+        is aka<textContent>
+        is aka<string_value>
+    {
+        # cw: Must use libxml2 to properly decode entities!
+        sub xmlXPathCastNodeToString(xmlNode)   returns Str   is native('xml2') { * }
+        sub xmlSubstituteEntitiesDefault(int32) returns int32 is native('xml2') { * }
+
+        my $old = xmlSubstituteEntitiesDefault(0);
+        xmlXPathCastNodeToString(self.getNode);
     }
 
     method parentNode() {
@@ -591,11 +600,20 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         domSetNodeValue(self.getNode(), $value);
     }
 
-    method nodeValue 
+    method nodeValue() 
         is aka<getValue>
         is aka<getData>
     {
         domGetNodeValue(self);
+    }
+
+    method unbindNode() 
+        is aka<unlink>
+        is aka<unlinkNode>
+    {
+        xmlUnlinkNode(nativecast(xmlNodePtr, self))
+            if self.type != any(XML_DOCUMENT_NODE, XML_DOCUMENT_FRAG_NODE);
+        domReparentRemovedNode(self);
     }
 
 }

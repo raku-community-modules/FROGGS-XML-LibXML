@@ -43,13 +43,19 @@ method getChildrenByTagNameNS($_nsUri, $_name) is aka<getElementsByTagNameNS> {
 			next if $c ~~ xmlAttr;
 
 			my $c_o = nativecast(xmlNode, $c);
-			if 	($name_wildcard || $_name eq $c_o.localname) &&
+			my $no_ns = !(
+				$c_o.ns.defined        &&
+				$c_o.ns.uri.defined    &&
+				$c.o.ns.uri.trim.chars &&
+				$_nsUri.defined		   &&
+				$_nsUri.trim.chars		 
+			);
+			if 	($name_wildcard || $_name.lc eq $c_o.localname.lc) &&
 				($ns_wildcard || 
-					($c_o.ns.defined && 
-						$c_o.ns.uri.defined && 
-						$_nsUri eq $c_o.ns.uri
-					) ||
-					(!$c_o.ns.defined && !$_nsUri.defined)
+					($c_o.ns.defined && $c_o.ns.uri.defined && 
+						$_nsUri.defined && $_nsUri.lc eq $c_o.ns.uri.lc
+					) || 
+					$no_ns
 				)
 			{
 				@ret.push: nativecast(XML::LibXML::Element, $c);
@@ -70,19 +76,6 @@ method getChildrenByTagName($_name)
 
 method tagName() {
 	self.name;
-}
-
-method string_value {
-	# cw: Must use libxml2 to properly decode entities!
-
-	sub xmlXPathCastNodeToString(xmlNode)   returns Str   is native('xml2') { * }
-	sub xmlSubstituteEntitiesDefault(int32) returns int32 is native('xml2') { * }
-
-	my $old = xmlSubstituteEntitiesDefault(0);
-
-	# cw: I've been doing this a lot... however I do worry that not using
-	#     xmlFree will have consequences.
-	xmlXPathCastNodeToString(self.getNode);
 }
 
 method appendText($text) {
