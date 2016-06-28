@@ -159,13 +159,14 @@ my @badxpath = (
 );
 
 for @badxpath -> $xp {
-    my $res;
 
-    try $res = $root.find( $xp ); 
-    nok $!, "find throws exception with expression '{$xp}'";
+    dies-ok 
+        { $root.find( $xp ); }, 
+        "find throws exception with expression '{$xp}'";
 
-    try $res = $root.findvalue( $xp );
-    nok $!, "findvalue throws exception with expression '{$xp}";
+    dies-ok
+        { $root.findvalue( $xp ); },
+        "findvalue throws exception with expression '{$xp}";
 
     # cw: Aren't these meaningless in Perl6 since it's already unicode-aware?
     #
@@ -175,7 +176,6 @@ for @badxpath -> $xp {
     #try $res = $root.find( encodeToUTF8( "iso-8859-1", $xp ) );
     #nok $!, "findvalue throws exception with UTF8 expression '{$res}";
 }
-
 
 {
     # as reported by jian lou:
