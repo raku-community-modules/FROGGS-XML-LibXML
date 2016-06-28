@@ -1,7 +1,7 @@
 use v6.c;
 use Test;
 
-plan 35;
+plan 37;
 
 use XML::LibXML;
 use XML::LibXML::CStructs :types;
@@ -60,7 +60,7 @@ if $dom.defined {
     @list   = $elem.find( "species[\@name!='Llama']/disposition" );
     is @list.elems, 2, 'find using negated attribute spec works properly';
 
-    @list   = $elem.find( 'species/@name' );
+    @list = $elem.find( 'species/@name' );
     ok 
         @list.elems && @list[0].Str eq ' name="Camel"', 
         'attribute retrieval via find() works properly';

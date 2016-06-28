@@ -323,7 +323,7 @@ package XML::LibXML::Dom {
                 $n.last = $n.children;
 
                 my $child = &_nc(xmlNode, $n.children);
-                $child.parent = &_nc(xmlNodePtr, $n);
+                $child.parent = _nc(xmlNodePtr, $n);
                 $child.doc = $n.doc;
             }
 

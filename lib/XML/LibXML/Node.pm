@@ -12,24 +12,25 @@ use XML::LibXML::XPath;
 class XML::LibXML::Node is xmlNode is repr('CStruct') { ... }
 
 multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
+my &_nc = &nativecast;
 
 role XML::LibXML::Nodish does XML::LibXML::C14N {
 
     method childNodes() is aka<list> {
-        my $elem = nativecast(XML::LibXML::Node, self.children);
+        my $elem = _nc(XML::LibXML::Node, self.children);
         my @ret;
         while $elem {
             push @ret, $elem; # unless $elem.type == XML_ATTRIBUTE_NODE;
-            $elem = nativecast(XML::LibXML::Node, $elem.next);
+            $elem = _nc(XML::LibXML::Node, $elem.next);
         }
         @ret
     }
 
     method AT-POS(Int $idx) {
-        my $elem = nativecast(XML::LibXML::Node, self.children);
+        my $elem = _nc(XML::LibXML::Node, self.children);
         my $i    = 0;
         while $elem && $i++ < $idx {
-            $elem = nativecast(XML::LibXML::Node, $elem.next);
+            $elem = _nc(XML::LibXML::Node, $elem.next);
         }
         $elem
     }
@@ -71,11 +72,11 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     }
 
     method attrs() {
-        my $elem = nativecast(XML::LibXML::Attr, self.properties);
+        my $elem = _nc(XML::LibXML::Attr, self.properties);
         my @ret;
         while $elem {
             push @ret, $elem;
-            $elem = nativecast(XML::LibXML::Attr, $elem.next);
+            $elem = _nc(XML::LibXML::Attr, $elem.next);
         }
         @ret
     }
@@ -142,7 +143,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
         my $comp = xmlXPathCompile($xpath);
         die "Invalid XPath expression '{$xpath}'" 
-            unless $comp.defined && $comp !=:= xmlXPathCompExprPtr; 
+            unless $comp.defined; 
 
         my $res = xmlXPathCompiledEval($comp, $ctxt);
         return unless $res.defined;
@@ -155,7 +156,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
                 my $set = $res.nodesetval;
 
                 (^$set.nodeNr).map({
-                    nativecast(XML::LibXML::Node, $set.nodeTab[$_])
+                    _nc(XML::LibXML::Node, $set.nodeTab[$_])
                 }).cache if $set.defined;
             }
             when XPATH_BOOLEAN {
@@ -174,17 +175,17 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     }
 
     method isSameNode($n) {
-        my $n1 = nativecast(Pointer, self);
-        my $n2 = nativecast(Pointer, $n);
+        my $n1 = _nc(Pointer, self);
+        my $n2 = _nc(Pointer, $n);
         return +$n1 == +$n2;
     }
 
     method getNode() {
-        return nativecast(xmlNode, self);
+        return _nc(xmlNode, self);
     }
 
     method getNodePtr() {
-        return nativecast(xmlNodePtr, self);
+        return _nc(xmlNodePtr, self);
     }
 
     method getContent() {
@@ -280,7 +281,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
                 $ns = xmlSearchNsByHref(self.doc, self, $attr_ns);
 
                 if $ns.defined && !$ns.uri {
-                    my @all_ns := nativecast(
+                    my @all_ns := _nc(
                         CArray[xmlNsPtr],
                         xmlGetNsList(self.doc, self)
                     );
@@ -289,7 +290,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
                         my $i = 0;
                         repeat {
                             my $nsp = @all_ns[$i++];
-                            $ns = nativecast(xmlNs, $nsp);
+                            $ns = _nc(xmlNs, $nsp);
                             last if $ns.uri && ($ns.uri eq $namespace);
                         } while ($ns);
                         #xmlFree($all_ns);
@@ -339,7 +340,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
         $attr_ns = Str if !$_ns.defined || !$attr_ns.chars;
 
-        my xmlAttr $attr = nativecast(
+        my xmlAttr $attr = _nc(
             xmlAttr,
             xmlHasNsProp(self.getNode(), $name, $attr_ns)
         );
@@ -407,7 +408,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         #xmlFree($ret);
 
         # cw: Returns CStruct allocated from libxml2!
-        return nativecast(XML::LibXML::Attr, $ret);
+        return _nc(XML::LibXML::Attr, $ret);
     }
 
     method getAttributeNodeNS(Str $ns, Str $name!) {
@@ -421,7 +422,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         my $ret_p = xmlHasNsProp(
             self.getNode(), $attr_name, $attr_ns
         );
-        my $ret = nativecast(XML::LibXML::Attr, $ret_p);
+        my $ret = _nc(XML::LibXML::Attr, $ret_p);
 
         # cw: Deep XS code that has yet to be grokked.
         #my $retVal = PmmNodeToSv(
@@ -454,14 +455,14 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             return unless $ret !=:= $an;
             
             xmlReplaceNode(
-                nativecast(xmlNode, $ret), 
-                nativecast(xmlNode, $an)
+                _nc(xmlNode, $ret), 
+                _nc(xmlNode, $an)
             );
         } 
         else {
             xmlAddChild(
-                nativecast(xmlNodePtr, self), 
-                nativecast(xmlNodePtr, $an)
+                self.getNodePtr, 
+                $an.getAttrPtr
             );
         }
 
@@ -471,7 +472,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         #}
 
         return unless $ret;
-        my $retVal = nativecast(XML::LibXML::Node, $ret);
+        my $retVal = _nc(XML::LibXML::Node, $ret);
 
         # cw: ?????
         #PmmFixOwner( SvPROXYNODE(RETVAL), NULL );
@@ -503,8 +504,8 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         } 
         else {
             xmlAddChild(
-                nativecast(xmlNodePtr, self), 
-                nativecast(xmlNodePtr, $an)
+                self.getNodePtr, 
+                $an.getNodePtr
             );
             xmlReconciliateNs(self.doc, self);
         }
@@ -529,8 +530,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             &&
             $an.parent !=:= self;
 
-        my $an_p = nativecast(xmlNodePtr, $an);
-        xmlUnlinkNode($an_p);
+        xmlUnlinkNode(_nc(xmlNodePtr, $an));
 
         # cw: ????
         # $ret = PmmNodeToSv($ret_p, NUL)
@@ -548,7 +548,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         my xmlAttr $xattr = xmlHasNsProp(
             self.getNode(), $name, $nsUri
         );
-        xmlUnlinkNode(nativecast(xmlNodePtr, $xattr)) 
+        xmlUnlinkNode($xattr.getNodePtr) 
             if $xattr.defined && $xattr.type == XML_ATTRIBUTE_NODE;
 
         if ($xattr.defined && $xattr._private.defined) {
@@ -556,7 +556,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             # PmmFixOwner((ProxyNodePtr)xattr->_private, NULL);
         } 
         else {
-            xmlFreeProp(nativecast(xmlAttrPtr, $xattr));
+            xmlFreeProp(_nc(xmlAttrPtr, $xattr));
         }
     }
 
@@ -616,7 +616,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         is aka<unlink>
         is aka<unlinkNode>
     {
-        xmlUnlinkNode(nativecast(xmlNodePtr, self))
+        xmlUnlinkNode(self.getNodePtr)
             if self.type != any(XML_DOCUMENT_NODE, XML_DOCUMENT_FRAG_NODE);
         domReparentRemovedNode(self);
     }
@@ -624,7 +624,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     method removeChild(XML::LibXML::Nodish:D: $old) {
         return unless $old.defined;
         return if $old.type == any(XML_ATTRIBUTE_NODE, XML_NAMESPACE_DECL);
-        return unless nativecast(xmlNodePtr, self) =:= $old.parent;
+        return unless self.getNodePtr =:= $old.parent;
 
         domUnlinkNode($old);
         if $old.type == XML_ELEMENT_NODE {
