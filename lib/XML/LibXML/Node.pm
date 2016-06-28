@@ -182,6 +182,10 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         return nativecast(xmlNode, self);
     }
 
+    method getNodePtr() {
+        return nativecast(xmlNodePtr, self);
+    }
+
     method getContent() {
         return xmlNodeGetContent(self.getNode);
     }
