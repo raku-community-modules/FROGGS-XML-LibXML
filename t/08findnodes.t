@@ -1,8 +1,7 @@
 use v6.c;
 use Test;
 
-# Should be 45.
-plan 44;
+plan 35;
 
 use XML::LibXML;
 use XML::LibXML::CStructs :types;
@@ -63,7 +62,7 @@ if $dom.defined {
 
     @list   = $elem.find( 'species/@name' );
     ok 
-        @list.elems && @list[0].toString eq ' name="Camel"', 
+        @list.elems && @list[0].Str eq ' name="Camel"', 
         'attribute retrieval via find() works properly';
 
     my $x = XML::LibXML::Text.new( 1234 );
@@ -74,7 +73,6 @@ if $dom.defined {
     my $telem = $dom.createElement('test');
     $telem.appendWellBalancedChunk('<b>c</b>');
     
-    # TEST
     $x = finddoc($dom);
     ok 
         $x.defined && 
@@ -157,16 +155,17 @@ my @badxpath = (
     'foo///bar',
     '...',
     '/-',
+    '!@$%'
 );
 
 for @badxpath -> $xp {
     my $res;
 
     try $res = $root.find( $xp ); 
-    nok $!, "find throws exception with expression '{$res}'";
+    nok $!, "find throws exception with expression '{$xp}'";
 
     try $res = $root.findvalue( $xp );
-    nok $!, "findvalue throws exception with expression '{$res}";
+    nok $!, "findvalue throws exception with expression '{$xp}";
 
     # cw: Aren't these meaningless in Perl6 since it's already unicode-aware?
     #
