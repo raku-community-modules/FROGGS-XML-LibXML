@@ -12,6 +12,8 @@ use XML::LibXML::Enums;
 use XML::LibXML::Node;
 use XML::LibXML::Text;
 
+use NativeCall;
+
 # to test if findnodes works.
 # i added findnodes to the node class, so a query can be started
 # everywhere.
@@ -250,14 +252,13 @@ for @badxpath -> $xp {
     my $root      = $doc.documentElement;
     my @lastc     = $root.find( 'b/c[last()]' );
     my $c_val;
-    $doc.setEncoding(XML_CHAR_ENCODING_UTF8);
     $c_val = @lastc[0].string_value
         if @lastc.defined  && @lastc.elems == 1   && 
            @lastc[0].string_value.defined;
     is $c_val, '2', 'found last c node in node b';
 
     $root.removeChild( @lastc[0] ) if @lastc.defined && @lastc[0].defined;
-    is $root.Str, $xmlstr, 'DOM remained unchained after bad removal';
+    is $root.Str(:format<0>), $xmlstr, 'DOM remained unchained after bad removal';
 }
 
 # --------------------------------------------------------------------------- #

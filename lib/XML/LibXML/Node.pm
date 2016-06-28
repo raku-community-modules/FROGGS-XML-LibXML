@@ -619,7 +619,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     method removeChild(XML::LibXML::Nodish:D: $old) {
         return unless $old.defined;
         return if $old.type == any(XML_ATTRIBUTE_NODE, XML_NAMESPACE_DECL);
-        return unless nativecast(xmlNodePtr, self) != $old.parent;
+        return unless nativecast(xmlNodePtr, self) =:= $old.parent;
 
         domUnlinkNode($old);
         if $old.type == XML_ELEMENT_NODE {

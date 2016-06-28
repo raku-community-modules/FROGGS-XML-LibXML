@@ -52,7 +52,7 @@ method documentElement
 {
     Proxy.new(
         FETCH => -> $ {
-            nativecast(XML::LibXML::Document, xmlDocGetRootElement(self))
+            nativecast(XML::LibXML::Element, xmlDocGetRootElement(self))
         },
         STORE => -> $, $new {
             my $root = xmlDocGetRootElement(self);
@@ -79,10 +79,6 @@ method xmlEncoding is aka<encoding> {
             $new
         }
     )
-}
-
-method setEncoding(xmlCharEncoding $enc) {
-    self.charset = $enc;
 }
 
 #| This property is a String and can raise an object that implements the DOMException interface on setting.
