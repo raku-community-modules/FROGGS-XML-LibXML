@@ -180,7 +180,7 @@ ok
     "hasAttributeNS can find attribute '$attname1'";
 
 dies-ok 
-    { $elem.setAttributeNS( Nil, $_, 'X' ); }
+    { $elem.setAttributeNS( Nil, $_, 'X' ); },
     "setAttributeNS throws an exception for '$_'"
 for @badnames;
 

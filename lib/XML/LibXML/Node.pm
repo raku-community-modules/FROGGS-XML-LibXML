@@ -499,7 +499,8 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         return $retVal;
     }
 
-    method setAttributeNodeNS(xmlAttr $an!) {
+    #method setAttributeNodeNS(xmlAttr $an!) {
+    method setAttributeNodeNS($an) {
         sub xmlReconciliateNs(xmlDoc, xmlNode) returns int32 is native('xml2') { * }
 
         if !$an.defined {
@@ -508,10 +509,11 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             return;
         }
 
-        return unless $an.type != XML_ATTRIBUTE_NODE;
+        return unless $an.type == XML_ATTRIBUTE_NODE;
 
         domImportNode(self.doc, $an, 1, 1) if $an.doc !=:= self.doc;
-        my xmlNs $ns = $an.ns;
+        #my xmlNs $ns = $an.ns;
+        my $ns = $an.ns;
         my $ret = xmlHasNsProp(
             self, 
             $ns.defined ?? $ns.uri !! Str,

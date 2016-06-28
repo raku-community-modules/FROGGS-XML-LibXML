@@ -143,7 +143,8 @@ package XML::LibXML::Dom {
         }
     }
 
-    sub domImportNode(xmlDoc $d, xmlNode $n, $move, $reconcileNS) is export {
+    #sub domImportNode(xmlDoc $d, xmlNode $n, $move, $reconcileNS) is export {
+    sub domImportNode($d, $n, $move, $reconcileNS) is export {
         sub xmlCopyDtd(Pointer) returns Pointer is native('xml2') { * }
         sub xmlDocCopyNode(xmlNode, xmlDoc, int32) returns xmlNode is native('xml2') { * }
 
@@ -421,27 +422,4 @@ package XML::LibXML::Dom {
         ) if $node.type != any(XML_ATTRIBUTE_NODE, XML_DTD_NODE);
     }
 
-    sub domAttrSerializeContent($buffer, $attr) is export {
-        sub xmlAttrSerializeTxtContent(xmlBuffer, xmlDoc, xmlAttr, Str) is native('xml2') { * };
-
-        my $child = $attr.children;
-        while $child.defined {
-            my $child_o = nativecast(xmlAttr, $child);
-
-            given $child_o.type {
-                when XML_TEXT_NODE {
-                    xmlAttrSerializeTxtContent(
-                        $buffer, $attr.doc, $attr, $child.value
-                    );
-                }
-
-                when XML_ENTITY_REF_NODE {
-                    my $str = "\&{$child_o.localname};";
-                    xmlBufferAdd($buffer, $str, $str.chars);
-                }
-            }
-
-            $child = $child_o.next;
-        }
-    }
 }
