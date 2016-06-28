@@ -433,16 +433,22 @@ EOF
             my $attr = $root.getAttributeNodeNS(Str, 'foo');
             ok 
                 $attr.defined, 
-                'successfully retrieved attribute with undefined namespace';
+                "[{$nsorno}] successfully retrieved attribute with undefined namespace";
             isa-ok $attr, XML::LibXML::Attr, 'attributre has correct type';
             ok 
                 $root.isSameNode($attr.ownerElement), 
-                'attribute root node is the document root';
-            is $attr.value, '"barENT"', 'attribute has correct value';
+                "[{$nsorno}] attribute root node is the document root";
+            is $attr.value, '"barENT"', "[{$nsorno}] attribute has correct value";
         }
 
         is 
+            $root.getAttribute('fixed'), 'foo', 
+            "[{$nsorno}] attribute fixed is 'foo'";
+
+        is 
             $root.getAttributeNS($ns, 'ns_fixed'), 'ns_foo', 
-            'ns_fixed is ns_foo';
+            "[{$nsorno}] attribute ns_fixed is 'ns_foo'";
     }
 }
+
+# Porting not complete!
