@@ -34,7 +34,11 @@ sub xmlDocDumpFormatMemory(xmlDoc, CArray, CArray, int32)                       
 sub xmlNodeDump(xmlBuffer, xmlDoc, xmlNode, int32, int32)                             returns int32  is native('xml2') is export { * }
 sub xmlC14NDocDumpMemory(xmlDoc, xmlNodeSet, int32, CArray[Str], int32, CArray[Str])  returns int32  is native('xml2') is export { * }
 
+sub xmlBufferAdd(xmlBuffer, Str, int32)                         is native('xml2') is export { * }
 sub xmlBufferCreate()                        returns xmlBuffer  is native('xml2') is export { * }
+sub xmlBufferContent(xmlBuffer)              returns Str        is native('xml2') is export { * }
+sub xmlBufferFree(xmlBuffer)                                    is native('xml2') is export { * }
+sub xmlBufferLength(xmlBuffer)				 returns int32      is native('xml2') is export { * }
 sub xmlKeepBlanksDefault(int32)              returns int32      is native('xml2') is export { * }
 sub xmlIsBlankNode(xmlNode)                  returns int32      is native('xml2') is export { * }
 sub xmlUnlinkNode(xmlNodePtr)                                   is native('xml2') is export { * }

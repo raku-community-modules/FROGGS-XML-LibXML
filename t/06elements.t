@@ -422,7 +422,7 @@ EOF
                 "[{$nsorno}] attribute has the correct value";
             is 
                 #$attr.serializeContent, '&quot;bar&ent;&quot;', 
-                $attr.getContent(), '&quot;bar&ent;&quot;',
+                $attr.serializeContent(), '&quot;bar&ent;&quot;',
                 "[{$nsorno}] attribute value can be serialized properly";
             is 
                 $attr.toString, ' foo="&quot;bar&ent;&quot;"', 
@@ -444,6 +444,5 @@ EOF
         is 
             $root.getAttributeNS($ns, 'ns_fixed'), 'ns_foo', 
             'ns_fixed is ns_foo';
-
     }
 }

@@ -5,6 +5,8 @@ use XML::LibXML::CStructs :types;
 use XML::LibXML::Enums;
 use XML::LibXML::Subs;
 
+multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
+
 unit class XML::LibXML::Attr is xmlAttr is repr('CStruct');
 
 use NativeCall;
@@ -20,10 +22,13 @@ method name() {
 # cw: This might be better off in XML::LibXML::Nodish if Attrs are actually 
 #     xmlNodes
 method value() {
+    sub xmlXPathCastNodeToString(xmlNode)   returns Str   is native('xml2') { * }
+    
     nqp::nativecallrefresh(self);
     Proxy.new(
         FETCH => -> $ {
-            nativecast(xmlNode, self.children).value;
+            #nativecast(xmlNode, self.children).value;
+            xmlXPathCastNodeToString( nativecast(xmlNode, self) );
         },
         STORE => -> $, Str $new {
             nqp::bindattr(nqp::decont(self.children), xmlNode, '$!value', $new);
@@ -44,11 +49,15 @@ method firstChild() {
 }
 
 multi method gist(XML::LibXML::Attr:D:) {
-    self.name ~ '="' ~ self.value ~ '"'
+    " {self.name}=\"{self.serializeContent}\"";
+}
+
+multi method Str(XML::LibXML::Attr:D:) {
+    self.gist;
 }
 
 method toString(XML::LibXML::Attr:D:) {
-    self.gist();
+    self.gist;
 }
 
 # cw: See the need to break out similar operations for all XML nodes into a specific role 
@@ -73,10 +82,39 @@ method ownerElement {
 
 method getContent() {
     #return xmlNodeGetContent( nativecast(::('XML::LibXML::Node'), self) );
-    sub xmlXPathCastNodeToString(xmlNode)   returns Str   is native('xml2') { * }
-    xmlXPathCastNodeToString( nativecast(::('XML::LibXML::Node'), self) );
 }
 
 method getAttrPtr() {
     nativecast(xmlAttrPtr, self);
+}
+
+method serializeContent {
+    sub xmlAttrSerializeTxtContent(xmlBuffer, xmlDoc, xmlAttr, Str) is native('xml2') { * };
+
+    my $buffer = xmlBufferCreate();
+    my $child = self.children;
+    while $child.defined {
+        my $child_o = nativecast(xmlNode, $child);
+
+        given $child_o.type {
+            when XML_TEXT_NODE {
+                xmlAttrSerializeTxtContent(
+                    $buffer, self.doc, self, $child_o.value
+                );
+            }
+
+            when XML_ENTITY_REF_NODE {
+                my $str = "\&{$child_o.localname};";
+                xmlBufferAdd($buffer, $str, $str.chars);
+            }
+        }
+        $child = $child_o.next;
+    }
+
+    my $ret;
+    if xmlBufferLength($buffer) > 0 { 
+        $ret = xmlBufferContent($buffer);
+        xmlBufferFree($buffer);
+    }
+    $ret;
 }

@@ -350,7 +350,7 @@ package XML::LibXML::Dom {
             XML_ENTITY_REF_NODE,
         );
 
-        if $n.type == XML_ENTITY_DECL {
+        if $n.type != XML_ENTITY_DECL {
             $retVal = xmlXPathCastNodeToString($n);
         }
         else {
@@ -419,5 +419,29 @@ package XML::LibXML::Dom {
             _nc(xmlNodePtr, domNewDocFragment($node.doc)), 
             _nc(xmlNodePtr, $node)
         ) if $node.type != any(XML_ATTRIBUTE_NODE, XML_DTD_NODE);
+    }
+
+    sub domAttrSerializeContent($buffer, $attr) is export {
+        sub xmlAttrSerializeTxtContent(xmlBuffer, xmlDoc, xmlAttr, Str) is native('xml2') { * };
+
+        my $child = $attr.children;
+        while $child.defined {
+            my $child_o = nativecast(xmlAttr, $child);
+
+            given $child_o.type {
+                when XML_TEXT_NODE {
+                    xmlAttrSerializeTxtContent(
+                        $buffer, $attr.doc, $attr, $child.value
+                    );
+                }
+
+                when XML_ENTITY_REF_NODE {
+                    my $str = "\&{$child_o.localname};";
+                    xmlBufferAdd($buffer, $str, $str.chars);
+                }
+            }
+
+            $child = $child_o.next;
+        }
     }
 }
