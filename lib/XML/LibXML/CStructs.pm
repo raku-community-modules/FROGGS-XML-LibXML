@@ -3,6 +3,8 @@ use nqp;
 use NativeCall;
 
 constant XML_XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace";
+constant XML_XMLNS_NS      = 'http://www.w3.org/2000/xmlns/';
+constant XML_XML_NS        = 'http://www.w3.org/XML/1998/namespace';
 
 my class CStruct is repr('CStruct') is export(:types) { }
 

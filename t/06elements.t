@@ -391,8 +391,8 @@ nok $elem.hasAttributeNS($nsURI, $foo), 'attribute was properly removed';
 EOF
 
     my $ns = 'urn:xx';
-    my $xml_nons = '<root foo="&quot;bar&ent;&quot;" xmlns:a="$ns"/>';
-    my $xml_ns = '<root xmlns="$ns" xmlns:a="$ns" foo="&quot;bar&ent;&quot;"/>';
+    my $xml_nons = qq{<root foo="&quot;bar&ent;&quot;" xmlns:a="$ns"/>};
+    my $xml_ns = qq{<root xmlns="$ns" xmlns:a="$ns" foo="&quot;bar&ent;&quot;"/>};
 
     # TEST:$xml=2;
     for ($xml_nons, $xml_ns) -> $xml {
@@ -406,7 +406,7 @@ EOF
 
         # TEST*$xml
 
-        ok $doc.defined, 'successfully parsed document';
+        ok $doc.defined, "[{$nsorno}] successfully parsed document";
         my $root = $doc.getDocumentElement;
         {
             my $attr = $root.getAttributeNode('foo');
@@ -434,7 +434,9 @@ EOF
             ok 
                 $attr.defined, 
                 "[{$nsorno}] successfully retrieved attribute with undefined namespace";
-            isa-ok $attr, XML::LibXML::Attr, 'attributre has correct type';
+            isa-ok 
+                $attr, XML::LibXML::Attr, 
+                "[{$nsorno}] attribute has correct type";
             ok 
                 $root.isSameNode($attr.ownerElement), 
                 "[{$nsorno}] attribute root node is the document root";
@@ -447,7 +449,11 @@ EOF
 
         is 
             $root.getAttributeNS($ns, 'ns_fixed'), 'ns_foo', 
-            "[{$nsorno}] attribute ns_fixed is 'ns_foo'";
+            "[{$nsorno}] attribute ns_fixed by uri '{$ns}' is 'ns_foo'";
+
+        is 
+            $root.getAttribute('a:ns_fixed'), 'ns_foo', 
+            "[{$nsorno}] attribute a:ns_fixed is 'ns_foo'";
     }
 }
 

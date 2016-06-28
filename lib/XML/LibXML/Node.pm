@@ -368,7 +368,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
                 my $ns = xmlSearchNs(self.doc, self, $prefix);
                 if $ns {
                     $ret = xmlGetNsProp(
-                        self.getNode(), $localname, $ns.href
+                        self.getNode(), $localname, $ns.uri
                     );
                 }
             }
@@ -380,23 +380,43 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         return $ret;
     }
 
+    method !getNamespaaceDeclURI($_name) {
+        my $ret;
+        my $ns = self.ns;
+        while $ns.defined {
+            if ($ns.name.defined || $ns.uri.defined) && $ns.name eq $_name {
+                $ret = $ns.uri;
+                last;
+            } else {
+                $ns = $ns.next;
+            }
+        }
+        $ret;
+    }
+
     method getAttributeNS($_uri, $_name, $_useEncoding = 0) {
         sub xmlGetProp(xmlNode, Str) returns Str is native('xml2') { * };
 
         my $name = $_name.defined ?? $_name.trim !! Nil;
-        return unless $name.defined && $name.chars;
+        die "Invalid attribute name" unless $name.defined && $name.chars;
 
+        my $ret;
         my $uri = $_uri.defined ?? $_uri.trim !! Nil;
-        my $node = self.getNode();
-        my $ret = $uri.defined && $uri.chars ??
-            xmlGetNsProp($node, $name, $uri) 
-            !!
-            xmlGetProp($node, $name);
+        if $uri.defined && $uri eq XML_XMLNS_NS {
+            $ret = self!getNamespaceDeclURI($name eq 'xmlns' ?? Nil !! $name);
+        }
+        else {
+            my $node = self.getNode();
+            $ret = $uri.defined && $uri.chars ??
+                xmlGetNsProp($node, $name, $uri) 
+                !!
+                xmlGetProp($node, $name);
+        }
 
         # cw: Encoding NYI.
         warn "useEncoding NYI" if $_useEncoding;
 
-        return $ret;
+        $ret;
     }
 
 
