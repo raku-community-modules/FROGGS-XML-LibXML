@@ -19,7 +19,7 @@ unit class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::
 sub xmlNewDoc(Str)                          returns XML::LibXML::Document  is native('xml2') { * }
 sub xmlDocGetRootElement(xmlDoc)            returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlDocSetRootElement(xmlDoc, xmlNode)   returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlNewNode(xmlDoc, Str)                 returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewNode(xmlNs, Str)                  returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlNewText(Str)                         returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlNewDocComment(xmlDoc, Str)           returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlNewCDataBlock(xmlDoc, Str, int32)    returns XML::LibXML::Node      is native('xml2') { * }
@@ -264,7 +264,7 @@ method new-elem(Str $elem) is aka<createElement> {
         fail X::XML::InvalidName.new( :name($elem), :pos($bad.from), :routine(&?ROUTINE) )
     }
 
-    my $node = xmlNewNode( self, $elem );
+    my $node = xmlNewNode( xmlNs, $elem );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self.doc));
     nativecast(XML::LibXML::Element, $node);
 }
@@ -337,8 +337,10 @@ multi method new-attr-ns(Pair $kv, $uri) {
         $prefix = Str;
     }
 
-    my $ns = xmlSearchNsByHref(self, $root, $uri)
-        || xmlNewNs($root, $uri, $prefix); # create a new NS if the NS does not already exists
+    my $ns = xmlSearchNsByHref(self, $root, $uri);
+    unless $ns {
+        $ns = xmlNewNs($root, $uri, $prefix); # create a new NS if the NS does not already exists
+    }
 
     my $buffer = xmlEncodeEntitiesReentrant(self, $kv.value);
     my $attr   = xmlNewDocProp(self, $name, $buffer);
@@ -347,7 +349,7 @@ multi method new-attr-ns(Pair $kv, $uri) {
     nativecast(::('XML::LibXML::Attr'), $attr);
 }
 multi method new-attr-ns(%kv where *.elems == 1, $uri) {
-    self.new-attr-ns(%kv.list[0], $uri)
+    self.new-attr-ns(%kv.list[0], $uri);
 }
 
 method createAttributeNS($nsUri, $name, $val) {

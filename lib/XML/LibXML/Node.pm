@@ -258,8 +258,8 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         }
     }
 
-    method setAttributeNS(Str $namespace, Str $name, Str  $val) {
-        if ! testNodeName($name) {
+    method setAttributeNS(Str $namespace, Str $name, Str $val) {
+        if !testNodeName($name) {
             die "Bad name '$name'";
             # cw: Yes, I know this looks weird, but is done incase we 
             #     .return from a CATCH{}
@@ -333,16 +333,16 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         return $retVal;
     }
 
-    method hasAttributeNS($_ns!, Str $_name!) {
-        my ($attr_ns, $name;);
-        $attr_ns = $_ns.trim if $_ns.defined;
+    method hasAttributeNS($_ns, Str $_name) {
+        my ($ns, $name);
+        $ns = $_ns.trim if $_ns.defined;
         $name = $_name.trim if $_name.defined;
 
-        $attr_ns = Str if !$_ns.defined || !$attr_ns.chars;
+        $ns = Str unless $ns.defined && $ns.chars;
 
-        my xmlAttr $attr = _nc(
+        my $attr = _nc(
             xmlAttr,
-            xmlHasNsProp(self.getNode(), $name, $attr_ns)
+            xmlHasNsProp(self.getNode(), $name, $ns)
         );
 
         return $attr.defined && $attr.type == XML_ATTRIBUTE_NODE;
@@ -565,7 +565,9 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         sub xmlFreeProp(xmlAttrPtr) is native('xml2') { * }
 
         my $nsUri = $_nsUri.defined ?? $_nsUri.trim !! Str;
-        my $name = $_name.defined ?? $_name.trim !! Str;
+        my $name = $_name.defined ?? $_name.trim !! Nil;
+
+        return unless $name.defined && $name.chars;
 
         my xmlAttr $xattr = xmlHasNsProp(
             self.getNode(), $name, $nsUri
@@ -578,7 +580,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             # PmmFixOwner((ProxyNodePtr)xattr->_private, NULL);
         } 
         else {
-            xmlFreeProp(_nc(xmlAttrPtr, $xattr));
+            xmlFreeProp($xattr.getAttrPtr);
         }
     }
 

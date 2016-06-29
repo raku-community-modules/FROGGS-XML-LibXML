@@ -153,14 +153,13 @@ nok
 # node based functions
 my $e2 = $doc.createElement($foo);
 $doc.setDocumentElement($e2);
+
 my $nsAttr = $doc.createAttributeNS( 
     "{$nsURI}.x", "{$prefix}:{$foo}", $bar
 );
-ok $nsAttr, 'created attribute with XML namespace';
+isa-ok $nsAttr, XML::LibXML::Attr, 'created attribute with XML namespace';
 
-# TEST - 47
 $elem.setAttributeNodeNS($nsAttr);
-diag $elem;
 ok 
     $elem.hasAttributeNS( "{$nsURI}.x", $foo ), 
     'found attribute with XML namespace in element';
@@ -169,12 +168,17 @@ $elem.removeAttributeNS( "{$nsURI}.x", $foo );
 nok $elem.hasAttributeNS("{$nsURI}.x", $foo), 
     'can remove attribute with XML namespace from element';
 
+diag $elem;
+
 # TEST - 49
 $elem.setAttributeNS( $nsURI, "{$prefix}:{$attname1}", $attvalue2 );
 $elem.removeAttributeNS( '', $attname1 );
 nok  
     $elem.hasAttribute($attname1), 
     "hasAttribute() should not find attribute '$attname1'";
+
+diag $elem;
+
 ok 
     $elem.hasAttributeNS( $nsURI, $attname1 ), 
     "hasAttributeNS can find attribute '$attname1'";
@@ -231,7 +235,7 @@ nok $elem.hasAttributeNS($nsURI, $foo), 'attribute was properly removed';
     my $e2 = $doc.createElement($foo);
     $doc.setDocumentElement($e2);
     my $nsAttr = $doc.createAttributeNS( 
-        $nsURI, $prefix ~ ':"' ~ $foo, $bar
+        $nsURI, "{$prefix}:{$foo}", $bar
     );
     ok $nsAttr, 'created attribute with namespace successfully';
 

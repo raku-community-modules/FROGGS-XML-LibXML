@@ -98,10 +98,10 @@ package XML::LibXML::Dom {
             else {
         # cw: -XXX- Endless loop here...          
 	            if domRemoveNsDef($tree, $tree.ns) {
-	    #           domAddNsDef($tree, $tree.ns);
-	    #       } else {
-	    #           $tree.ns = xmlCopyNamespace($tree.ns);
-	    #           domAddNsDef($tree, $tree.ns);
+	               domAddNsDef($tree, $tree.ns);
+	           } else {
+	               $tree.ns = xmlCopyNamespace($tree.ns);
+	               domAddNsDef($tree, $tree.ns);
 	            }
             }
         }
