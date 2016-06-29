@@ -14,13 +14,14 @@ package XML::LibXML::Dom {
     # cw: Save some typing.
     my &_nc = &nativecast;
 
-    sub _domAddNsChain(xmlNsPtr $c, xmlNsPtr $ns) {
+    #sub _domAddNsChain(xmlNsPtr $c, xmlNsPtr $ns) {
+    sub _domAddNsChain($c, $ns) {
         return $ns unless !$c.defined;
 
         my $i = $c;
-        while $i !=:= xmlNsPtr && $i !=:= $ns {
+        while $i.defined && $i !=:= $ns {
             $i = _nc(xmlNs, $i).next;
-            if $i =:= xmlNsPtr {
+            unless $i.defined {
                 _nc(xmlNs, $ns).next = $c;
                 return $ns;
             }
@@ -29,7 +30,8 @@ package XML::LibXML::Dom {
         return $c;
     }
 
-    sub _domReconcileNsAttr(xmlAttrPtr $a, xmlNsPtr $unused) {
+    #sub _domReconcileNsAttr(xmlAttrPtr $a, xmlNsPtr $unused) {
+    sub _domReconcileNsAttr($a, $unused) {
         return unless $a.defined;
 
         my $attr = _nc(xmlAttr, $a);
@@ -122,17 +124,18 @@ package XML::LibXML::Dom {
         }
     }
 
-    sub domReconcileNs(xmlNode $tree) is export {
+    #sub domReconcileNs(xmlNode $tree) is export {
+    sub domReconcileNs($tree) is export {
         sub xmlFreeNsList(xmlNsPtr) is native('xml2') { * };
 
         my xmlNsPtr $unused;
-        _domReconcileNs($tree, $unused);
-        xmlFreeNsList($unused) if $unused.defined;
+        #_domReconcileNs($tree, $unused);
+        #xmlFreeNsList($unused) if $unused.defined;
     }
 
     # cw: This implementation is shit. For one thing we really need to move
     #     away from "pointer..think"
-    sub domAddNsDef(xmlNode $t, xmlNs $ns) {
+    sub domAddNsDef($t, $ns) {
         my xmlNs $i = $t.nsDef;
 
         $i = $i.next while $i.defined && $i !=:= $ns;
@@ -180,7 +183,7 @@ package XML::LibXML::Dom {
             $return_node.defined      &&
             $return_node.type != XML_ENTITY_REF_NODE
         {
-            domReconcileNs($return_node);
+            #domReconcileNs($return_node);
         }
     }
 
@@ -215,7 +218,6 @@ package XML::LibXML::Dom {
     # cw: Type check sends rakudo into an endless loop!
     #
     #sub domRemoveNsDef(xmlNodePtr $tree, xmlNsPtr $ns) {
-    #    
     sub domRemoveNsDef($_tree, $_ns) {
         my $tree = $_tree ~~ xmlNodePtr ??
             _nc(xmlNode, $_tree) !! $_tree;
@@ -275,10 +277,6 @@ package XML::LibXML::Dom {
         setPtr($node,   '$!prev', xmlNodePtr);
         setPtr($node,   '$!next', xmlNodePtr);
         setPtr($node, '$!parent', xmlNodePtr);
-    }
-
-    sub domFixOwner($node_to_fix, $new_parent) {
-
     }
 
     sub testNodeName(Str $n) is export {

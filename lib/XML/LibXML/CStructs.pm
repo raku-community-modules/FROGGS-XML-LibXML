@@ -62,6 +62,14 @@ my class xmlAttr is export(:types) {
     has xmlNs               $.ns; # pointer to the associated namespace
     has xmlAttributeType $.atype; # the attribute type if validating
     has Pointer           $.psvi; # for type/PSVI informations
+
+    method getAttrPtr() {
+        nativecast(xmlAttrPtr, self);
+    }
+
+    method getNodePtr() {
+        nativecast(xmlNodePtr, self);
+    }
 }
 
 my class xmlBuffer is export(:types) {

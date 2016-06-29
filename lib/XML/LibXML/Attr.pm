@@ -88,6 +88,10 @@ method getAttrPtr() {
     nativecast(xmlAttrPtr, self);
 }
 
+method getNodePtr() {
+    nativecast(xmlNodePtr, self);
+}
+
 method serializeContent {
     sub xmlAttrSerializeTxtContent(xmlBuffer, xmlDoc, xmlAttr, Str) is native('xml2') { * };
 

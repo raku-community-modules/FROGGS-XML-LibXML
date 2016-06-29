@@ -511,7 +511,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
         return unless $an.type == XML_ATTRIBUTE_NODE;
 
-        domImportNode(self.doc, $an, 1, 1) if $an.doc !=:= self.doc;
+        #domImportNode(self.doc, $an, 1, 1) if $an.doc !=:= self.doc;
         #my xmlNs $ns = $an.ns;
         my $ns = $an.ns;
         my $ret = xmlHasNsProp(
