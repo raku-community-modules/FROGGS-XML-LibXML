@@ -80,8 +80,8 @@ package XML::LibXML::Dom {
         sub xmlCopyNamespace(xmlNs) returns xmlNs is native('xml2') { * }
 
         if  $tree.ns.defined   
-         	&& ($tree.type == XML_ELEMENT_NODE || 
-         		$tree.type == XML_ATTRIBUTE_NODE) {
+            && ($tree.type == XML_ELEMENT_NODE || 
+                $tree.type == XML_ATTRIBUTE_NODE) {
             my $ns = xmlSearchNs($tree.doc, $tree.parent, $tree.ns.uri);
             if [&&](
                 $ns.defined,
@@ -95,12 +95,12 @@ package XML::LibXML::Dom {
             } 
             else {
                 # cw: -YYY- There WAS an endless loop here...          
-	            if domRemoveNsDef($tree, $tree.ns) {
+                if domRemoveNsDef($tree, $tree.ns) {
                     domAddNsDef($tree, $tree.ns);
-	           } else {
+               } else {
                     setObjAttr($tree, '$!ns', xmlCopyNamespace($tree.ns));
                     domAddNsDef($tree, $tree.ns);
-	            }
+                }
             }
         }
 

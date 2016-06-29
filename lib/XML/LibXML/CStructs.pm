@@ -99,16 +99,16 @@ my class xmlDoc is export(:types) {
     has Str           $.encoding; # external initial encoding, if any
     has OpaquePointer      $.ids; # Hash table for ID attributes if any
     has OpaquePointer     $.refs; # Hash table for IDREFs attributes if any
-    has Str           $.uri is rw; # The URI for that document
-    has int32          $.charset is rw; # encoding of the in-memory content actua
-    #~ struct _xmlDict *	dict	: dict used to allocate names or NULL
-    has Pointer $.dict;
-    #~ void *	psvi	: for type/PSVI informations
-    has Pointer $.psvi;
-    #~ int	parseFlags	: set of xmlParserOption used to parse th
-    has int32 $.parseFlags;
-    #~ int	properties	: set of xmlDocProperties for this docume
-    has int32 $.properties;
+    has Str          $.uri is rw; # The URI for that document
+    has int32    $.charset is rw; # encoding of the in-memory content actua
+    #~ struct _xmlDict *dict: dict used to allocate names or NULL
+    has Pointer           $.dict;
+    #~ void *psvi: for type/PSVI informations
+    has Pointer           $.psvi;
+    #~ intparseFlags: set of xmlParserOption used to parse th
+    has int32       $.parseFlags;
+    #~ intproperties: set of xmlDocProperties for this docume
+    has int32       $.properties;
 }
 
 my class xmlError is export(:types) {
@@ -136,12 +136,12 @@ my class xmlElement is export(:types) {
     has xmlNodePtr         $.parent is rw; # child->parent link
     has xmlAttrPtr           $.next is rw; # next sibling link
     has xmlAttrPtr           $.prev is rw; # previous sibling link
-    has xmlDoc             $.doc; # autoreference to itself End of common p
-    has int8             $.etype; # The type
-    has OpaquePointer  $.content; # The allowed element content
-    has xmlAttrPtr  $.attributes; # List of declared attributes
-    has Str             $.prefix;
-    has OpaquePointer   $.contModel; # The validating regexp.
+    has xmlDoc              $.doc; # autoreference to itself End of common p
+    has int8              $.etype; # The type
+    has OpaquePointer   $.content; # The allowed element content
+    has xmlAttrPtr   $.attributes; # List of declared attributes
+    has Str              $.prefix;
+    has OpaquePointer $.contModel; # The validating regexp.
 
     #method setName(xmlElement:D: $name) {
     #    $!name = $name;
@@ -163,9 +163,9 @@ my class xmlNode is export(:types) {
     has xmlAttr         $.properties; # properties list
     has xmlNs           $.nsDef; # namespace definitions on this node
     has OpaquePointer   $.psvi; # for type/PSVI informations
-    #~ unsigned short	line	: line number
+    #~ unsigned shortline: line number
     has uint16          $.line;
-    #~ unsigned short	extra	: extra data for XPath/XSLT
+    #~ unsigned shortextra: extra data for XPath/XSLT
     has uint16          $.extra;
 }
 
