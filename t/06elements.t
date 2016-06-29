@@ -172,6 +172,9 @@ diag $elem;
 
 # TEST - 49
 $elem.setAttributeNS( $nsURI, "{$prefix}:{$attname1}", $attvalue2 );
+
+diag $elem;
+
 $elem.removeAttributeNS( '', $attname1 );
 nok  
     $elem.hasAttribute($attname1), 

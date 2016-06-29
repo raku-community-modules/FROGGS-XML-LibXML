@@ -183,6 +183,7 @@ package XML::LibXML::Dom {
             $return_node.defined      &&
             $return_node.type != XML_ENTITY_REF_NODE
         {
+            # cw: -XXX- Endless loop here. Fix it.
             #domReconcileNs($return_node);
         }
     }
