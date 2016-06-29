@@ -31,7 +31,7 @@ method value() {
             xmlXPathCastNodeToString( nativecast(xmlNode, self) );
         },
         STORE => -> $, Str $new {
-            nqp::bindattr(nqp::decont(self.children), xmlNode, '$!value', $new);
+            setObjAttr(self.children, '$!value', $new);
             $new
         }
     )
@@ -82,14 +82,6 @@ method ownerElement {
 
 method getContent() {
     #return xmlNodeGetContent( nativecast(::('XML::LibXML::Node'), self) );
-}
-
-method getAttrPtr() {
-    nativecast(xmlAttrPtr, self);
-}
-
-method getNodePtr() {
-    nativecast(xmlNodePtr, self);
 }
 
 method serializeContent {

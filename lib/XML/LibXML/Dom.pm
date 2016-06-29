@@ -1,7 +1,5 @@
 use v6.c;
 
-use nqp;
-
 use XML::LibXML::CStructs :types;
 
 package XML::LibXML::Dom {
@@ -96,12 +94,12 @@ package XML::LibXML::Dom {
                 $tree.ns = $ns;
             } 
             else {
-        # cw: -XXX- Endless loop here...          
+                # cw: -YYY- There WAS an endless loop here...          
 	            if domRemoveNsDef($tree, $tree.ns) {
-	               domAddNsDef($tree, $tree.ns);
+                    domAddNsDef($tree, $tree.ns);
 	           } else {
-	               $tree.ns = xmlCopyNamespace($tree.ns);
-	               domAddNsDef($tree, $tree.ns);
+                    setObjAttr($tree, '$!ns', xmlCopyNamespace($tree.ns));
+                    domAddNsDef($tree, $tree.ns);
 	            }
             }
         }
@@ -129,8 +127,8 @@ package XML::LibXML::Dom {
         sub xmlFreeNsList(xmlNsPtr) is native('xml2') { * };
 
         my xmlNsPtr $unused;
-        #_domReconcileNs($tree, $unused);
-        #xmlFreeNsList($unused) if $unused.defined;
+        _domReconcileNs($tree, $unused);
+        xmlFreeNsList($unused) if $unused.defined;
     }
 
     # cw: This implementation is shit. For one thing we really need to move
@@ -141,8 +139,8 @@ package XML::LibXML::Dom {
         $i = $i.next while $i.defined && $i !=:= $ns;
 
         unless $i.defined {
-            $ns.next = $t.nsDef;
-            $t.setNsDef($ns);
+            setObjAttr($ns, '$!next', $t.nsDef);
+            setObjAttr($t, '$!nsDef', $ns);
         }
     }
 
@@ -257,27 +255,23 @@ package XML::LibXML::Dom {
             return;
         }
 
-        sub setPtr($obj, $attr, $val) {
-            nqp::bindattr(nqp::decont($obj), xmlNode, $attr, nqp::decont($val));    
-        }
-
-        setPtr(_nc(xmlNode, $node.prev), '$!next', $node.next)
+        setObjAttr(_nc(xmlNode, $node.prev), '$!next', $node.next)
             if $node.prev.defined;
 
-        setPtr(_nc(xmlNode, $node.next), '$!prev', $node.prev) 
+        setObjAttr(_nc(xmlNode, $node.next), '$!prev', $node.prev) 
             if $node.next.defined;
 
         if ($node.parent.defined) {
-            setPtr(_nc(xmlNode, $node.parent), '$!last', $node.prev)
+            setObjAttr(_nc(xmlNode, $node.parent), '$!last', $node.prev)
                 if $node =:= _nc(xmlNode, $node.parent).last;
 
-            setPtr(_nc(xmlNode, $node.parent), '$!children', $node.next)
+            setObjAttr(_nc(xmlNode, $node.parent), '$!children', $node.next)
                 if $node =:= _nc(xmlNode, $node.parent).children;
         }
 
-        setPtr($node,   '$!prev', xmlNodePtr);
-        setPtr($node,   '$!next', xmlNodePtr);
-        setPtr($node, '$!parent', xmlNodePtr);
+        setObjAttr($node,   '$!prev', xmlNodePtr);
+        setObjAttr($node,   '$!next', xmlNodePtr);
+        setObjAttr($node, '$!parent', xmlNodePtr);
     }
 
     sub testNodeName(Str $n) is export {
@@ -403,14 +397,11 @@ package XML::LibXML::Dom {
     }
 
     sub domNewDocFragment($_parent?) is export {
-        use nqp;
         sub xmlNewDocFragment(xmlDoc) returns xmlNode is native('xml2') { * };
 
         my $parent = $_parent.defined ?? $_parent !! xmlDoc;
         my $node = xmlNewDocFragment($parent);
-        nqp::bindattr(
-            nqp::decont($node), xmlNode, '$!doc', nqp::decont($parent)
-        ) if $parent.defined;
+        setObjAttr($node, '$!doc', $parent) if $parent.defined;
         $node;
     }
 

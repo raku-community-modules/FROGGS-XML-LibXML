@@ -1,9 +1,17 @@
 use v6;
 
+use nqp;
+
 use NativeCall;
 use XML::LibXML::CStructs :types;
 
 multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
+
+sub setObjAttr($obj, $attr, $val) is export {
+	nqp::bindattr(
+		nqp::decont($obj), $obj.WHAT, $attr, nqp::decont($val)
+	);
+}
 
 # String and encoding functions
 sub xmlParseCharEncoding(Str)     returns int8   is native('xml2') is export { * }

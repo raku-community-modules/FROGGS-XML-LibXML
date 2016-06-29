@@ -167,10 +167,6 @@ my class xmlNode is export(:types) {
     has uint16          $.line;
     #~ unsigned short	extra	: extra data for XPath/XSLT
     has uint16          $.extra;
-
-    method setNsDef(xmlNs $n) {
-        $!nsDef = $n;
-    }
 }
 
 my class xmlNodeSet is export(:types) {
