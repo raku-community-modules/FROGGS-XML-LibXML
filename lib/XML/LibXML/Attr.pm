@@ -74,3 +74,7 @@ method getContent() {
     sub xmlXPathCastNodeToString(xmlNode)   returns Str   is native('xml2') { * }
     xmlXPathCastNodeToString( nativecast(::('XML::LibXML::Node'), self) );
 }
+
+method getAttrPtr() {
+    nativecast(xmlAttrPtr, self);
+}

@@ -375,16 +375,10 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         if $ret {
             return unless $ret !=:= $an;
             
-            xmlReplaceNode(
-                nativecast(xmlNode, $ret), 
-                nativecast(xmlNode, $an)
-            );
+            xmlReplaceNode($ret.getNodePtr, $an.getNodePtr);
         } 
         else {
-            xmlAddChild(
-                nativecast(xmlNodePtr, self), 
-                nativecast(xmlNodePtr, $an)
-            );
+            xmlAddChild(self.getNodePtr, $an.getNodePtr)
         }
 
         # cw: ????
@@ -393,11 +387,10 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         #}
 
         return unless $ret;
-        my $retVal = nativecast(XML::LibXML::Node, $ret);
 
         # cw: ?????
         #PmmFixOwner( SvPROXYNODE(RETVAL), NULL );
-        return $retVal;
+        nativecast(XML::LibXML::Node, $ret);
     }
 
     method setAttributeNodeNS(xmlAttr $an!) {
@@ -478,7 +471,8 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             # PmmFixOwner((ProxyNodePtr)xattr->_private, NULL);
         } 
         else {
-            xmlFreeProp(nativecast(xmlAttrPtr, $xattr));
+            # 
+            xmlFreeProp($xattr.getAttrPtr);
         }
     }
 

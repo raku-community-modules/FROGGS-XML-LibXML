@@ -377,10 +377,7 @@ method new-cdata-block(Str $cdata) {
 method createTextNode(Str $content) {
     my $newText = self.new-text($content);
     my $docfrag = self.new-doc-fragment();
-    xmlAddChild(
-        nativecast(xmlNodePtr, $docfrag), 
-        nativecast(xmlNodePtr, $newText)
-    );
+    xmlAddChild($docfrag.getNodePtr, $newText.getNodePtr);
 
     $newText;
 }
