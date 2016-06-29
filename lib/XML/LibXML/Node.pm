@@ -573,7 +573,6 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         my xmlAttr $xattr = xmlHasNsProp(
             self.getNode(), $name, $nsUri
         );
-        say "X: {$xattr.defined} {$xattr ~~ xmlAttr}";
         xmlUnlinkNode($xattr.getNodePtr) 
             if $xattr.defined && $xattr.type == XML_ATTRIBUTE_NODE;
 

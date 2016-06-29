@@ -168,20 +168,12 @@ $elem.removeAttributeNS( "{$nsURI}.x", $foo );
 nok $elem.hasAttributeNS("{$nsURI}.x", $foo), 
     'can remove attribute with XML namespace from element';
 
-diag $elem;
-
 # TEST - 49
 $elem.setAttributeNS( $nsURI, "{$prefix}:{$attname1}", $attvalue2 );
-
-diag $elem;
-
 $elem.removeAttributeNS( '', $attname1 );
 nok  
     $elem.hasAttribute($attname1), 
     "hasAttribute() should not find attribute '$attname1'";
-
-diag $elem;
-
 ok 
     $elem.hasAttributeNS( $nsURI, $attname1 ), 
     "hasAttributeNS can find attribute '$attname1'";
