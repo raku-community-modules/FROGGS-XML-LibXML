@@ -170,6 +170,13 @@ package XML::LibXML::Dom {
         if $n.defined && $n.doc !=:= $d {
             # cw: There is XS memory management code at this point that 
             #     I'm hoping we can ignore:
+            # cw: The call below references the $!private attribute which
+            #     the P5 XS code used to keep track of its XS proxy node
+            #     status. Due to NativeCall, much of what the proxy code
+            #     did is now handled internally by Rakudo. 
+            #     Specifically, this means reference counting.
+            # cw: TODO - Add code to handle proper object resource release
+            #     at GC time.
             #if (PmmIsPSVITainted(node->doc))
             #    PmmInvalidatePSVI(doc);
             xmlSetTreeDoc($return_node, $d);
@@ -181,7 +188,7 @@ package XML::LibXML::Dom {
             $return_node.defined      &&
             $return_node.type != XML_ENTITY_REF_NODE
         {
-            # cw: -XXX- Endless loop here. Fix it.
+            # cw: -YYY- There WAS an endless loop issue here.
             domReconcileNs($return_node);
         }
     }
