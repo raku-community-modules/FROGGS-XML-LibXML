@@ -428,10 +428,11 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         #xmlFree($ret);
 
         # cw: Returns CStruct allocated from libxml2!
-        return _nc(XML::LibXML::Attr, $ret);
+        return $ret.defined ?? _nc(XML::LibXML::Attr, $ret) !! Nil;
     }
 
-    method getAttributeNodeNS(Str $ns, Str $name!) {
+    # Bypass type checking on $ns since it can be Nil
+    method getAttributeNodeNS($ns, Str $name) {
         my ($attr_ns, $attr_name);
         $attr_ns = $ns.trim if $ns.defined;
         $attr_name = $name.trim if $name.defined;
@@ -450,8 +451,10 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         #    PmmOWNERPO(PmmPROXYNODE(self))
         #);
 
-        return $ret.type == XML_ATTRIBUTE_NODE ??
-            $ret !! Nil;
+        return $ret.defined ?? 
+            $ret.type == XML_ATTRIBUTE_NODE ??
+                $ret !! Nil
+            !! Nil;
     }
 
     method setAttributeNode(xmlAttr $an) {

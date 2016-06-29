@@ -403,8 +403,7 @@ EOF
         my $doc = parse-string($dtd ~ $xml);
         my $nsorno = $xml eq $xml_nons ?? 'No NS' !! 'NS';
 
-        # TEST*$xml
-
+        
         ok $doc.defined, "[{$nsorno}] successfully parsed document";
         my $root = $doc.getDocumentElement;
         {
@@ -453,6 +452,34 @@ EOF
         is 
             $root.getAttribute('a:ns_fixed'), 'ns_foo', 
             "[{$nsorno}] attribute a:ns_fixed is 'ns_foo'";
+
+        nok $root.hasAttribute('fixed'), 
+            "[{$nsorno}] hasAttribute() returns false for CDATA attribute";
+        nok $root.hasAttributeNS($ns, 'ns_fixed'), 
+            "[{$nsorno}] hasAttributeNS() returns false for uri '$ns' CDATA attribute";
+        nok $root.hasAttribute('a:ns_fixed'), 
+            "[{$nsorno}]  hasAttribute() returns false for CDATA attribute w/ namespace";
+
+        nok $root.getAttributeNode('a:ns_fixed').defined,
+            "[{$nsorno}] attribute node for 'a:ns_fixed' was not found";
+        nok $root.getAttributeNode('fixed').defined,
+            "[{$nsorno}] attribute node for 'fixed' was not found";
+        nok $root.getAttributeNode('name').defined,
+            "[{$nsorno}] attribute node for 'name' was not found";
+        nok $root.getAttributeNode('baz').defined,
+            "[{$nsorno}] attribute node for 'baz' was not found";
+        nok $root.getAttributeNodeNS($ns,'foo').defined,
+            "[{$nsorno}] attribute node for foo was not found with uri '$ns'";
+        nok $root.getAttributeNodeNS($ns,'fixed').defined,
+            "[{$nsorno}] attribute node for fixed' was not found with uri '$ns'";
+        nok $root.getAttributeNodeNS($ns,'ns_fixed').defined,
+            "[{$nsorno}] attribute node for 'ns_fixed' was not found with uri '$ns'";
+        nok $root.getAttributeNodeNS(Nil,'fixed').defined,
+            "[{$nsorno}] attribute node for 'fixed' was nnot found using undefined namespace";
+        nok $root.getAttributeNodeNS(Nil,'name').defined,
+            "[{$nsorno}] attribute node for 'name' was not found using undefined namespace";
+        nok $root.getAttributeNodeNS(Nil,'baz').defined,
+            "[{$nsorno}] attribute node for 'baz' was not found using undefined namespace";
     }
 }
 
