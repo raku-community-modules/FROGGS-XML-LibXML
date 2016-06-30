@@ -9,6 +9,8 @@ multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
 
 unit class XML::LibXML::Attr is xmlAttr is repr('CStruct');
 
+sub xmlXPathCastNodeToString(xmlNode)   returns Str   is native('xml2') { * }
+
 use NativeCall;
 
 # cw: Constantly calling refresh may kill performance... so is there a way to check
@@ -22,13 +24,11 @@ method name() {
 # cw: This might be better off in XML::LibXML::Nodish if Attrs are actually 
 #     xmlNodes
 method value() {
-    sub xmlXPathCastNodeToString(xmlNode)   returns Str   is native('xml2') { * }
-    
     nqp::nativecallrefresh(self);
     Proxy.new(
         FETCH => -> $ {
             #nativecast(xmlNode, self.children).value;
-            xmlXPathCastNodeToString( nativecast(xmlNode, self) );
+            xmlXPathCastNodeToString(self.getNode);
         },
         STORE => -> $, Str $new {
             setObjAttr(self.children, '$!value', $new);
@@ -48,16 +48,16 @@ method firstChild() {
     nativecast(::('XML::LibXML::Node'), self.children)
 }
 
-multi method gist(XML::LibXML::Attr:D:) {
-    " {self.name}=\"{self.serializeContent}\"";
+multi method gist(XML::LibXML::Attr:D: :$entities) {
+    qq< {self.name}="{self.serializeContent(:$entities)}">;
 }
 
-multi method Str(XML::LibXML::Attr:D:) {
-    self.gist;
+multi method Str(XML::LibXML::Attr:D: :$entities) {
+    self.gist(:$entities);
 }
 
-method toString(XML::LibXML::Attr:D:) {
-    self.gist;
+method toString(XML::LibXML::Attr:D: :$entities) {
+    self.gist(:$entities);
 }
 
 # cw: See the need to break out similar operations for all XML nodes into a specific role 
@@ -84,13 +84,18 @@ method getContent() {
     #return xmlNodeGetContent( nativecast(::('XML::LibXML::Node'), self) );
 }
 
-method serializeContent {
+method serializeContent(:$entities) {
     sub xmlAttrSerializeTxtContent(xmlBuffer, xmlDoc, xmlAttr, Str) is native('xml2') { * };
+    sub xmlGetDocEntity(xmlDoc, Str) returns OpaquePointer          is native('xml2') { * };
+    sub xmlGetDtdEntity(xmlDoc, Str) returns OpaquePointer          is native('xml2') { * };
 
+    # cw: Is the speed increase of using libxml2 for basic string ops
+    #     worth the hassle?
+    #my $parser = $entities.defined ?? XML::LibXML::Parser.new;
     my $buffer = xmlBufferCreate();
     my $child = self.children;
     while $child.defined {
-        my $child_o = nativecast(xmlNode, $child);
+        my $child_o = nativecast(::('XML::LibXML::Node'), $child);
 
         given $child_o.type {
             when XML_TEXT_NODE {
@@ -100,7 +105,17 @@ method serializeContent {
             }
 
             when XML_ENTITY_REF_NODE {
-                my $str = "\&{$child_o.localname};";
+                my $str; 
+
+                if $entities.defined && $entities {
+                    if  xmlGetDocEntity(self.doc, $child_o.localname) ||
+                        xmlGetDtdEntity(self.doc, $child_o.localname)
+                    {
+                        $str = xmlXPathCastNodeToString($child_o.getNode);
+                    }
+                } else {
+                    $str = "\&{$child_o.localname};";
+                }
                 xmlBufferAdd($buffer, $str, $str.chars);
             }
         }

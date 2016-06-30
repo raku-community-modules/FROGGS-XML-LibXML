@@ -401,86 +401,149 @@ EOF
         #$parser.replace-entities = 0;
         #$parser.expand_entities(0);
         my $doc = parse-string($dtd ~ $xml);
-        my $nsorno = $xml eq $xml_nons ?? 'No NS' !! 'NS';
-
+        my $n = $xml eq $xml_nons ?? 'No NS' !! 'NS';
         
-        ok $doc.defined, "[{$nsorno}] successfully parsed document";
+        ok $doc.defined, "[{$n}] successfully parsed document";
         my $root = $doc.getDocumentElement;
         {
             my $attr = $root.getAttributeNode('foo');
-            ok $attr, "[{$nsorno}] successfully retrieved attribute node";
+            ok $attr, "[{$n}] successfully retrieved attribute node";
             isa-ok 
                 $attr, XML::LibXML::Attr, 
-                "[{$nsorno}] attribute node is typed correctly";
+                "[{$n}] attribute node is typed correctly";
             ok 
                 $root.isSameNode($attr.ownerElement), 
-                "[{$nsorno}] root and attribute nodes are the same";
+                "[{$n}] root and attribute nodes are the same";
             is 
                 $attr.value, '"barENT"', 
-                "[{$nsorno}] attribute has the correct value";
+                "[{$n}] attribute has the correct value";
             is 
                 #$attr.serializeContent, '&quot;bar&ent;&quot;', 
-                $attr.serializeContent(), '&quot;bar&ent;&quot;',
-                "[{$nsorno}] attribute value can be serialized properly";
+                $attr.serializeContent, '&quot;bar&ent;&quot;',
+                "[{$n}] attribute value can be serialized properly";
             is 
                 $attr.toString, ' foo="&quot;bar&ent;&quot;"', 
-                "[{$nsorno}] attribute can be cast to string correctly";
+                "[{$n}] attribute can be cast to string correctly";
         }
 
         {
             my $attr = $root.getAttributeNodeNS(Str, 'foo');
             ok 
                 $attr.defined, 
-                "[{$nsorno}] successfully retrieved attribute with undefined namespace";
+                "[{$n}] successfully retrieved attribute with undefined namespace";
             isa-ok 
                 $attr, XML::LibXML::Attr, 
-                "[{$nsorno}] attribute has correct type";
+                "[{$n}] attribute has correct type";
             ok 
                 $root.isSameNode($attr.ownerElement), 
-                "[{$nsorno}] attribute root node is the document root";
-            is $attr.value, '"barENT"', "[{$nsorno}] attribute has correct value";
+                "[{$n}] attribute root node is the document root";
+            is $attr.value, '"barENT"', "[{$n}] attribute has correct value";
         }
 
         is 
             $root.getAttribute('fixed'), 'foo', 
-            "[{$nsorno}] attribute fixed is 'foo'";
+            "[{$n}] attribute fixed is 'foo'";
 
         is 
             $root.getAttributeNS($ns, 'ns_fixed'), 'ns_foo', 
-            "[{$nsorno}] attribute ns_fixed by uri '{$ns}' is 'ns_foo'";
+            "[{$n}] attribute ns_fixed by uri '{$ns}' is 'ns_foo'";
 
         is 
             $root.getAttribute('a:ns_fixed'), 'ns_foo', 
-            "[{$nsorno}] attribute a:ns_fixed is 'ns_foo'";
+            "[{$n}] attribute a:ns_fixed is 'ns_foo'";
 
         nok $root.hasAttribute('fixed'), 
-            "[{$nsorno}] hasAttribute() returns false for CDATA attribute";
+            "[{$n}] hasAttribute() returns false for CDATA attribute";
         nok $root.hasAttributeNS($ns, 'ns_fixed'), 
-            "[{$nsorno}] hasAttributeNS() returns false for uri '$ns' CDATA attribute";
+            "[{$n}] hasAttributeNS() returns false for uri '$ns' CDATA attribute";
         nok $root.hasAttribute('a:ns_fixed'), 
-            "[{$nsorno}]  hasAttribute() returns false for CDATA attribute w/ namespace";
+            "[{$n}] hasAttribute() returns false for CDATA attribute w/ namespace";
 
         nok $root.getAttributeNode('a:ns_fixed').defined,
-            "[{$nsorno}] attribute node for 'a:ns_fixed' was not found";
+            "[{$n}] attribute node for 'a:ns_fixed' was not found";
         nok $root.getAttributeNode('fixed').defined,
-            "[{$nsorno}] attribute node for 'fixed' was not found";
+            "[{$n}] attribute node for 'fixed' was not found";
         nok $root.getAttributeNode('name').defined,
-            "[{$nsorno}] attribute node for 'name' was not found";
+            "[{$n}] attribute node for 'name' was not found";
         nok $root.getAttributeNode('baz').defined,
-            "[{$nsorno}] attribute node for 'baz' was not found";
+            "[{$n}] attribute node for 'baz' was not found";
         nok $root.getAttributeNodeNS($ns,'foo').defined,
-            "[{$nsorno}] attribute node for foo was not found with uri '$ns'";
+            "[{$n}] attribute node for foo was not found with uri '$ns'";
         nok $root.getAttributeNodeNS($ns,'fixed').defined,
-            "[{$nsorno}] attribute node for fixed' was not found with uri '$ns'";
+            "[{$n}] attribute node for fixed' was not found with uri '$ns'";
         nok $root.getAttributeNodeNS($ns,'ns_fixed').defined,
-            "[{$nsorno}] attribute node for 'ns_fixed' was not found with uri '$ns'";
+            "[{$n}] attribute node for 'ns_fixed' was not found with uri '$ns'";
         nok $root.getAttributeNodeNS(Nil,'fixed').defined,
-            "[{$nsorno}] attribute node for 'fixed' was nnot found using undefined namespace";
+            "[{$n}] attribute node for 'fixed' was nnot found using undefined namespace";
         nok $root.getAttributeNodeNS(Nil,'name').defined,
-            "[{$nsorno}] attribute node for 'name' was not found using undefined namespace";
+            "[{$n}] attribute node for 'name' was not found using undefined namespace";
         nok $root.getAttributeNodeNS(Nil,'baz').defined,
-            "[{$nsorno}] attribute node for 'baz' was not found using undefined namespace";
+            "[{$n}] attribute node for 'baz' was not found using undefined namespace";
     }
+
+    for ($xml_nons, $xml_ns) -> $xml {
+        # cw: NYI?
+        #$parser.complete_attributes(1);
+        #$parser.expand_entities(1);
+        my $n = $xml eq $xml_nons ?? 'No NS' !! 'NS';
+        my $doc = parse-string($dtd ~ $xml);
+
+        ok $doc.defined && $doc ~~ XML::LibXML::Document,
+           "[$n] could parse document";
+
+        my $root = $doc.getDocumentElement;
+        {
+            my $attr = $root.getAttributeNode('foo');
+            ok $attr.defined, "[$n] attribute foo exists";
+            isa-ok 
+                $attr, XML::LibXML::Attr,
+                "[$n] attribute is of type XML::LibXML::Attr";
+            ok  $root.isSameNode($attr.ownerElement),
+                "[$n] attr owner element is root";
+            is  $attr.value, q{"barENT"},
+                "[$n] attr value is OK";
+            # cw: These are going to fail.
+            is  $attr.serializeContent(:entities), '&quot;barENT&quot;',
+                "[$n] serializeContent(:entities) returns correct value";
+            is  $attr.toString(:entities), ' foo="&quot;barENT&quot;"',
+                "[$n] toString(:entities) returns correct value";
+        }
+
+        # fixed values are defined
+        is 
+            $root.getAttribute('fixed'), 'foo', 
+            "[$n] attribute 'fixed' is 'foo'";
+        is 
+            $root.getAttributeNS($ns,'ns_fixed'), 'ns_foo', 
+            "[$n] attribute 'ns_fixed' in uri '$ns' is 'ns_foo'";
+        is 
+            $root.getAttribute('a:ns_fixed'), 'ns_foo', 
+            "[$n] attribute 'a:ns_fixed' is 'ns_foo'";
+
+        # and attribute nodes are created
+        {
+            # cw: and all of these fail probably because of the lack of
+            #     $parser->complete_attributes(1);
+            my $attr = $root.getAttributeNode('fixed');
+            isa-ok 
+                $attr, XML::LibXML::Attr, 
+                "[$n] attribute node for 'fixed' was found and is correct type";
+
+            if $attr ~~ XML::LibXML::Attr {
+                is 
+                    $attr.value, 'foo', 
+                    "[$n] attribute node has the correct value";
+                is 
+                    $attr.toString, ' fixed="foo"', 
+                    "[$n] attribute can be cast to string, correctly";
+            } else {
+                flunk "[$n] attribute node has correct value (wrong type)";
+                flunk "[$n] attribute can be cast to string, correctly (wrong type)";
+            }
+        }
+
+        # Porting not complete!    
+    }
+
 }
 
-# Porting not complete!

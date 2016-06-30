@@ -70,6 +70,10 @@ my class xmlAttr is export(:types) {
     method getNodePtr() {
         nativecast(xmlNodePtr, self);
     }
+
+    method getNode() {
+        nativecast(xmlNode, self);
+    }
 }
 
 my class xmlBuffer is export(:types) {
