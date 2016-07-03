@@ -1,5 +1,7 @@
 use v6;
+
 use nqp;
+use NativeCall;
 
 use XML::LibXML::CStructs :types;
 use XML::LibXML::Enums;

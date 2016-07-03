@@ -5,7 +5,7 @@ use nqp;
 use NativeCall;
 use XML::LibXML::CStructs :types;
 
-multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
+multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
 
 unit class XML::LibXML::Parser is xmlParserCtxt is repr('CStruct');
 
@@ -25,11 +25,31 @@ sub xmlReadMemory(Str, int32, Str, Str, int32)           returns xmlDoc is nativ
 sub htmlParseFile(Str, Str)                              returns xmlDoc is native('xml2') { * }
 sub htmlCtxtReadDoc(xmlParserCtxt, Str, Str, Str, int32) returns xmlDoc is native('xml2') { * }
 sub htmlCtxtReadFile(xmlParserCtxt, Str, Str, int32)     returns xmlDoc is native('xml2') { * }
+sub htmlCtxtUseOptions(xmlParserCtxt, int32)             returns int32  is native('xml2') { * }
+sub xmlCtxtUseOptions(xmlParserCtxt, int32)              returns int32  is native('xml2') { * }
 sub xmlNewParserCtxt                                     returns XML::LibXML::Parser   is native('xml2') { * }
 sub htmlNewParserCtxt                                    returns XML::LibXML::Parser   is native('xml2') { * }
 
+sub setOptions($ctxt, $flags, $html) {
+    my $myflags = $flags;
+    unless $myflags +& XML_PARSE_DTDLOAD {
+        # cw: unset bit op?
+        $myflags = $myflags +& (
+            0xffffffff +^ 
+            (XML_PARSE_DTDVALID + XML_PARSE_DTDATTR + XML_PARSE_NOENT)
+        );
+        xmlKeepBlanksDefault($myflags +& XML_PARSE_NOBLANKS ?? 1 !! 0);
+        
+        # cw: EXTERNAL ENTITY LOADER FUNC -- NYI
+    }
 
-method new(:$html = False) {
+    $html ??
+        htmlCtxtUseOptions($ctxt, +$flags)
+        !!
+        xmlCtxtUseOptions($ctxt, +$flags);
+}
+
+method new(:$html = False, :$flags) {
     xmlKeepBlanksDefault($html ?? 0 !! 1);
     my $self = $html
             ?? htmlNewParserCtxt()
@@ -37,10 +57,22 @@ method new(:$html = False) {
 
     # This stops xml2 printing errors to stderr
     xmlSetStructuredErrorFunc($self, -> OpaquePointer, OpaquePointer { });
-    $self
+    if $flags.defined {
+        setOptions($self, $flags, $html);       
+    }
+    $self;
 }
 
-method parse(Str:D $str, Str :$uri, :$flags = self.html == 1 ?? HTML_PARSE_RECOVER + HTML_PARSE_NOBLANKS !! 0) {
+method setOptions(Int $options) {
+    die "Invalid options specified {$options}" 
+        if $options > (+XML_PARSE_BIG_LINES * 2 - 1);
+    &setOptions(self, $options, self.html);
+}
+
+method parse(Str:D $str, Str :$uri, :$_flags) {
+    my $flags = $_flags.defined ?? $_flags 
+        !! self.html == 1 ?? HTML_PARSE_RECOVER + HTML_PARSE_NOBLANKS !! 0;
+
     my $doc = self.html == 1
             ?? htmlCtxtReadDoc(self, $str, $uri, Str, +$flags)
             !! xmlCtxtReadDoc(self, $str, $uri, Str, +$flags);
@@ -48,12 +80,22 @@ method parse(Str:D $str, Str :$uri, :$flags = self.html == 1 ?? HTML_PARSE_RECOV
     $doc
 }
 
-method parse-string($str) {
-    return unless $str.defined;
-    self.parse($str, :uri(Str));
+# cw: This method is to fulfil testing requirements from 06elements. 
+method parse-string($str, :$url, :$flags) {
+    sub xmlReadDoc(Str, Str, Str, int32) returns xmlDoc is native('xml2') { * }
+
+    return unless $str.defined && $str.trim.chars;
+
+    my $myurl   = $url.defined   ??  $url   !! Str;
+    my $myflags = $flags.defined ?? +$flags !! 0;
+
+    # cw: -YYY- Not worring about encoding at this time.
+    my $ret = xmlReadDoc($str, $url, Str, $myflags);
+    fail XML::LibXML::Error.get-last(self, :orig($str)) unless $ret;
+    $ret;
 }
 
-multi method parse-file(Str $s) {
+multi method parse-file(Str $s, :$flags) {
     unless $s.chars && $s.IO.e {
         warn "Attempted to parse using" ~ (!$s.defined || !$s.chars) ??
             "null filename" !! "bad filename '{$s}'";
@@ -65,15 +107,13 @@ multi method parse-file(Str $s) {
     #     come a-haunting in the future.
     self.html ?? 
         #htmlCtxtReadFile(self, $s, "UTF8", self.options)
-        htmlCtxtReadFile(self, $s, Str, 0)
+        htmlCtxtReadFile(self, $s, Str, +$flags)
         !!
         #xmlCtxtReadFile(self, $s, "UTF8", self.options)
-        xmlCtxtReadFile(self, $s, Str, 0)
+        xmlCtxtReadFile(self, $s, Str, +$flags)
 }
 
 method parse-xml-chunk($_xml) {
-    die "parse-xml-chunk is not a class method" unless self.defined;
-
     my $xml = $_xml.defined ?? $_xml.trim !! Nil;
     return unless $xml.defined && $xml.chars;
 

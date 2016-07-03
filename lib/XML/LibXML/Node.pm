@@ -421,14 +421,14 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
 
     method getAttributeNode($a) {
-        my $ret := domGetAttrNode(
+        my $ret = domGetAttrNode(
             self.getNode(), $a
         );
         #my $retVal = $ret.clone;
         #xmlFree($ret);
 
         # cw: Returns CStruct allocated from libxml2!
-        return $ret.defined ?? _nc(XML::LibXML::Attr, $ret) !! Nil;
+        return $ret.defined ?? nativecast(XML::LibXML::Attr, $ret) !! Nil;
     }
 
     # Bypass type checking on $ns since it can be Nil
@@ -687,3 +687,4 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
     #~ }
 
 }
+

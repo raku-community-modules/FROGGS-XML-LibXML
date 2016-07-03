@@ -5,7 +5,7 @@ use nqp;
 use NativeCall;
 use XML::LibXML::CStructs :types;
 
-multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
+#multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
 
 sub setObjAttr($obj, $attr, $val) is export {
 	nqp::bindattr(

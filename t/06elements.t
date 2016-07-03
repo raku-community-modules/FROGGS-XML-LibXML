@@ -23,6 +23,7 @@ plan 187;
 
 
 use XML::LibXML;
+use XML::LibXML::Enums;
 
 my $foo       = "foo";
 my $bar       = "bar";
@@ -407,13 +408,13 @@ EOF
         my $root = $doc.getDocumentElement;
         {
             my $attr = $root.getAttributeNode('foo');
-            ok $attr, "[{$n}] successfully retrieved attribute node";
+            ok $attr, "[{$n}] successfully retrieved attribute node 'foo'";
             isa-ok 
                 $attr, XML::LibXML::Attr, 
-                "[{$n}] attribute node is typed correctly";
+                "[{$n}] attribute node 'foo' is typed correctly";
             ok 
                 $root.isSameNode($attr.ownerElement), 
-                "[{$n}] root and attribute nodes are the same";
+                "[{$n}] attribute nodes 'foo' is owned by the root";
             is 
                 $attr.value, '"barENT"', 
                 "[{$n}] attribute has the correct value";
@@ -486,7 +487,10 @@ EOF
         #$parser.complete_attributes(1);
         #$parser.expand_entities(1);
         my $n = $xml eq $xml_nons ?? 'No NS' !! 'NS';
-        my $doc = parse-string($dtd ~ $xml);
+        my $doc = parse-string(
+            $dtd ~ $xml, 
+            :flags(XML_PARSE_DTDATTR + XML_PARSE_NOENT + XML_PARSE_DTDLOAD)
+        );
 
         ok $doc.defined && $doc ~~ XML::LibXML::Document,
            "[$n] could parse document";
@@ -502,7 +506,6 @@ EOF
                 "[$n] attr owner element is root";
             is  $attr.value, q{"barENT"},
                 "[$n] attr value is OK";
-            # cw: These are going to fail.
             is  $attr.serializeContent(:entities), '&quot;barENT&quot;',
                 "[$n] serializeContent(:entities) returns correct value";
             is  $attr.toString(:entities), ' foo="&quot;barENT&quot;"',

@@ -17,8 +17,9 @@ my class  xmlBuffer                  is repr('CStruct')  { ... }
 my native xmlBufferAllocationScheme  is repr('P6int') is Int is nativesize(32) is export(:types) { }
 my native xmlChar                    is repr('P6int') is Int is nativesize(8) is unsigned is export(:types) { }
 my class  xmlDictPtr                 is repr('CPointer') { }
+my class  xmlDtd                     is repr('CStruct')  is export(:types) { ... }  
 my class  xmlDtdPtr                  is repr('CPointer') { }
-my class  xmlDoc                     is repr('CStruct')  { ... }
+my class  xmlDoc                     is repr('CStruct')  is export(:types) { ... }
 my class  xmlDocPtr                  is repr('CPointer') is Pointer is export(:types) { }
 my class  xmlError                   is repr('CStruct')  { ... }
 my class  xmlElement                 is repr('CStruct')  { ... }
@@ -48,6 +49,7 @@ my class  xmlXPathFuncLookupFunc     is repr('CPointer') { }
 my class  xmlXPathObject             is repr('CStruct')  { ... }
 my class  xmlXPathTypePtr            is repr('CPointer') { }
 my class  xmlXPathVariableLookupFunc is repr('CPointer') { }
+my class  xmlParserInputBufferPtr    is repr('CPointer')  is export(:types) { }
 
 my class xmlAttr is export(:types) {
     has Pointer       $._private; # application data
@@ -129,6 +131,29 @@ my class xmlError is export(:types) {
     has int32         $.int2; # column number of the error or 0 if N/A
     has OpaquePointer $.ctxt; # the parser context if available
     has OpaquePointer $.node; # the node in the tree
+}
+
+my class xmlDtd is export(:types) {
+    has OpaquePointer    $.private;  # application data
+    has int8             $.type;  # xmlElementType type number, must be second!
+    has Str              $.name;  # Element name
+    has xmlNodePtr       $.children is rw; # the value of the property
+    has xmlNodePtr       $.last is rw; # NULL
+    has xmlNodePtr       $.parent is rw; # child->parent link
+    has xmlAttrPtr       $.next is rw; # next sibling link
+    has xmlAttrPtr       $.prev is rw; # previous sibling link
+    has xmlDoc           $.doc; # autoreference to itself End of common p
+    has OpaquePointer    $.notations;  # Hash table for notations if any
+    has OpaquePointer    $.elements;   # Hash table for elements if any
+    has OpaquePointer    $.attributes; # Hash table for attributes if any
+    has OpaquePointer    $.entities;   # Hash table for entities if any
+    has Str              $.ExternalID; # External identifier for PUBLIC DTD
+    has Str              $.SystemID;   # URI for a SYSTEM or PUBLIC DTD
+    has OpaquePointer    $.pentities;  # Hash table for param entities if any
+
+    method getPtr() {
+        nativecast(xmlDtdPtr, self);
+    }
 }
 
 my class xmlElement is export(:types) {

@@ -193,32 +193,33 @@ package XML::LibXML::Dom {
         }
     }
 
-    sub domGetAttrNode(xmlNode $n, Str $a) is export {
+    #sub domGetAttrNode(xmlNode $n, Str $a) is export {
+    sub domGetAttrNode($n, $a) is export {
         my $name = $a.defined ?? $a.trim !! Nil;
         return unless $name;
 
-        my $ret;
-        unless $ret = _nc(
+        my $ret = nativecast(
             xmlAttr, xmlHasNsProp($n, $a, Str)
-        ) {
+        );
+        unless $ret.defined {
             my ($prefix, $localname) = $a.split(':');
-
-            if !$localname {
+            unless $localname.defined {
                 $localname = $prefix;
-                $prefix = Nil;
+                $prefix = Str;
             }
-            if $localname {
+
+            if $localname.defined {
                 my $ns = xmlSearchNs($n.doc, $n, $prefix);
-                if $ns {
-                    $ret = _nc(
+                if $ns.defined {
+                    $ret = nativecast(
                         xmlAttr, xmlHasNsProp($n, $localname, $ns.uri)
                     );
                 }
             }
         }
 
-        return if $ret && $ret.type != XML_ATTRIBUTE_NODE;
-        return $ret;
+        return ($ret.defined && $ret.type == XML_ATTRIBUTE_NODE) ?? 
+                $ret !! Nil;
     }
 
     # cw: Type check sends rakudo into an endless loop!
@@ -323,7 +324,7 @@ package XML::LibXML::Dom {
                 $n.children = xmlNewText($val);
                 $n.last = $n.children;
 
-                my $child = &_nc(xmlNode, $n.children);
+                my $child = _nc(xmlNode, $n.children);
                 $child.parent = _nc(xmlNodePtr, $n);
                 $child.doc = $n.doc;
             }
