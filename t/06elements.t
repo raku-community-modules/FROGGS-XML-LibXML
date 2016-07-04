@@ -19,7 +19,7 @@ use Test;
 
 # Should be 187.
 #use Test::More tests => 191;
-plan 187;
+plan 185;
 
 
 use XML::LibXML;
@@ -468,17 +468,17 @@ EOF
             "[{$n}] attribute node for 'name' was not found";
         nok $root.getAttributeNode('baz').defined,
             "[{$n}] attribute node for 'baz' was not found";
-        nok $root.getAttributeNodeNS($ns,'foo').defined,
+        nok $root.getAttributeNodeNS($ns, 'foo').defined,
             "[{$n}] attribute node for foo was not found with uri '$ns'";
-        nok $root.getAttributeNodeNS($ns,'fixed').defined,
+        nok $root.getAttributeNodeNS($ns, 'fixed').defined,
             "[{$n}] attribute node for fixed' was not found with uri '$ns'";
-        nok $root.getAttributeNodeNS($ns,'ns_fixed').defined,
+        nok $root.getAttributeNodeNS($ns, 'ns_fixed').defined,
             "[{$n}] attribute node for 'ns_fixed' was not found with uri '$ns'";
-        nok $root.getAttributeNodeNS(Nil,'fixed').defined,
+        nok $root.getAttributeNodeNS(Nil, 'fixed').defined,
             "[{$n}] attribute node for 'fixed' was nnot found using undefined namespace";
-        nok $root.getAttributeNodeNS(Nil,'name').defined,
+        nok $root.getAttributeNodeNS(Nil, 'name').defined,
             "[{$n}] attribute node for 'name' was not found using undefined namespace";
-        nok $root.getAttributeNodeNS(Nil,'baz').defined,
+        nok $root.getAttributeNodeNS(Nil, 'baz').defined,
             "[{$n}] attribute node for 'baz' was not found using undefined namespace";
     }
 
@@ -539,13 +539,44 @@ EOF
                 is 
                     $attr.toString, ' fixed="foo"', 
                     "[$n] attribute can be cast to string, correctly";
-            } else {
+            } 
+            else {
                 flunk "[$n] attribute node has correct value (wrong type)";
                 flunk "[$n] attribute can be cast to string, correctly (wrong type)";
             }
         }
 
-        # Porting not complete!    
+        {
+            my $attr = $root.getAttributeNode('a:ns_fixed');
+            isa-ok  $attr, XML::LibXML::Attr, 
+                    "[$n] attribute node for a:ns_fixed is defined and is typed correctly";
+            is      $attr.value, 'ns_foo', 
+                    "[$n] attribute has the correct value";
+        }
+        {
+            my $attr = $root.getAttributeNodeNS($ns, 'ns_fixed');
+            isa-ok  $attr, XML::LibXML::Attr, 
+                    "[$n] attribute node for ns_fixed found and is typed correctly";
+            is      $attr.value, 'ns_foo', 
+                    "[$n] attribute has the correct value";
+            is      $attr.toString, ' a:ns_fixed="ns_foo"', 
+                    "[$n] attribute can be cast to string properly";
+        }
+
+        nok  $root.getAttributeNode('ns_fixed').defined, 
+            "[$n] node for ns_fixed attribute is not defined";
+        nok  $root.getAttributeNode('name').defined, 
+            "[$n] node for name attribute is not defined";
+        nok  $root.getAttributeNode('baz').defined, 
+            "[$n] node for baz attribute is not defined";
+        nok  $root.getAttributeNodeNS($ns, 'foo').defined, 
+            "[$n] node for foo attribute in namespace ns is not defined";
+        nok  $root.getAttributeNodeNS($ns, 'fixed').defined, 
+            "[$n] node for fixed attribute in namespace ns is not defined";
+        nok  $root.getAttributeNodeNS(Nil, 'name'), 
+            "[$n] node for name attribute using a Nil namespace is not defined";
+        nok  $root.getAttributeNodeNS(Nil, 'baz'), 
+            "[$n] node for baz attribute using a Nil namespace is not defined";
     }
 
 }
