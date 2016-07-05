@@ -6,21 +6,9 @@
 use v6.c;
 use Test;
 
-#use base qw(ParentClass);
-#
-#sub new {
-#    my $class = shift;
-#    $class = ref $class if ref $class;
-#    my $self = bless {}, $class;
-#    $self;
-#}
-
-#1;
-
 # Should be 187.
 #use Test::More tests => 191;
 plan 187;
-
 
 use XML::LibXML;
 use XML::LibXML::Enums;
@@ -35,7 +23,6 @@ my $attname2  = "B";
 my $attvalue2 = "b";
 my $attname3  = "C";
 
-# TEST:$badnames=4;
 my @badnames= ("1A", "<><", "&", "-:");
 
 # 1. bound node
@@ -169,7 +156,6 @@ $elem.removeAttributeNS( "{$nsURI}.x", $foo );
 nok $elem.hasAttributeNS("{$nsURI}.x", $foo), 
     'can remove attribute with XML namespace from element';
 
-# TEST - 49
 $elem.setAttributeNS( $nsURI, "{$prefix}:{$attname1}", $attvalue2 );
 $elem.removeAttributeNS( '', $attname1 );
 nok  
@@ -290,7 +276,6 @@ nok $elem.hasAttributeNS($nsURI, $foo), 'attribute was properly removed';
     my @cn = $e.childNodes;
     # this is the correct behaviour for DOM. the nodes are still
     # referred
-    # TEST
     # cw: This test doesn't look relevant anymore as the text nodes 
     #     already appear to be normalized.
     #is @cn.elems, 4, 'created element has correct number of children';
@@ -301,9 +286,7 @@ nok $elem.hasAttributeNS($nsURI, $foo), 'attribute was properly removed';
         @cn.elems, 2, 
         'element has correct number of children after elem normalization';
 
-    # TEST
     #nok $t2.parentNode.defined, '2nd text node has no parent';
-    # TEST
     #nok $t3.parentNode.defined, '3rd text node has no parent';
 }
 
@@ -323,7 +306,6 @@ nok $elem.hasAttributeNS($nsURI, $foo), 'attribute was properly removed';
 
     # this is the correct behaviour for DOM. the nodes are still
     # referred
-    # TEST
     #is 
     #    $e.childNodes.elems, 4, 
     #    'element has corrent number of children before normalization';
@@ -333,9 +315,7 @@ nok $elem.hasAttributeNS($nsURI, $foo), 'attribute was properly removed';
          $e.childNodes.elems, 2, 
          'element has correct number of children after doc normalization';
 
-    # TEST
     #nok $t2.parentNode.defined, ' TODO : Add test name');
-    # TEST
     #nok $t3.parentNode.defined, ' TODO : Add test name');
 }
 
@@ -361,7 +341,6 @@ nok $elem.hasAttributeNS($nsURI, $foo), 'attribute was properly removed';
     $elem.appendTextChild( "foo" => "foo\&bar" );
 
     my @cn = $elem.childNodes;
-    # TEST
     #ok( scalar(@cn), ' TODO : Add test name' );
     is 
         @cn.elems, 3, 
@@ -370,7 +349,6 @@ nok $elem.hasAttributeNS($nsURI, $foo), 'attribute was properly removed';
     # cw: Missing text node as descendant.
     ok  @cn[2].hasChildNodes, 'third child has descendants';
 
-    # TEST - 79  - (new) See if two methods of counting children agree.
     # cw: -XXX- Is this a fair test? Why does it fail?
     #     Are they even counting the same thing? Now, I don't think so.
     #is  
@@ -418,7 +396,6 @@ EOF
                 $attr.value, '"barENT"', 
                 "[{$n}] attribute has the correct value";
             is 
-                #$attr.serializeContent, '&quot;bar&ent;&quot;', 
                 $attr.serializeContent, '&quot;bar&ent;&quot;',
                 "[{$n}] attribute value can be serialized properly";
             is 
@@ -524,8 +501,6 @@ EOF
 
         # and attribute nodes are created
         {
-            # cw: and all of these fail probably because of the lack of
-            #     $parser->complete_attributes(1);
             my $attr = $root.getAttributeNode('fixed');
             isa-ok 
                 $attr, XML::LibXML::Attr, 
@@ -598,4 +573,3 @@ EOF
     }
 
 }
-
