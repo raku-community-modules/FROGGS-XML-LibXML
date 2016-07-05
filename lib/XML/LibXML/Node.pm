@@ -251,7 +251,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             # cw: Note, this method locks us into libxml2 versions of 2.6.21 and 
             #     later. libxml2 does -not- provide us a mechanism to test and 
             #     implement backwards compatibility.
-            xmlSetProp(self.getNode(), $a, $v);
+            xmlSetProp(self.getNode, $a, $v);
         } 
         else {
             die "Bad name '$a'";
@@ -421,9 +421,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
 
     method getAttributeNode($a) {
-        my $ret = domGetAttrNode(
-            self.getNode(), $a
-        );
+        my $ret = domGetAttrNode(self.getNode, $a);
         #my $retVal = $ret.clone;
         #xmlFree($ret);
 

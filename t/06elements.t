@@ -19,7 +19,7 @@ use Test;
 
 # Should be 187.
 #use Test::More tests => 191;
-plan 185;
+plan 187;
 
 
 use XML::LibXML;
@@ -48,7 +48,7 @@ ok $elem ~~ XML::LibXML::Nodish, 'element object looks like a node';
 is $elem.name, $foo, 'element has correct tag name';
         
 dies-ok 
-    { $elem.stNodeName( $_ ); }, 
+    { $elem.setNodeName( $_ ); }, 
     "setNodeName throws an exception for $_"
 for @badnames;
 
@@ -57,7 +57,7 @@ ok $elem.hasAttribute($attname1), 'can set an element attribute';
 is $elem.getAttribute($attname1), $attvalue1, 'element attribute has correct value';
 
 my $attr = $elem.getAttributeNode($attname1);
-ok $attr, 'can retrieve attribute node';
+ok $attr.defined, 'can retrieve attribute node';
 is $attr.name, $attname1, 'attribute name is properly set';
 is $attr.value, $attvalue1, 'attribute value is properly set';
 
@@ -394,7 +394,6 @@ EOF
     my $xml_nons = qq{<root foo="&quot;bar&ent;&quot;" xmlns:a="$ns"/>};
     my $xml_ns = qq{<root xmlns="$ns" xmlns:a="$ns" foo="&quot;bar&ent;&quot;"/>};
 
-    # TEST:$xml=2;
     for ($xml_nons, $xml_ns) -> $xml {
         #my $parser = XML::LibXML.new;
         # cw: NYI?
@@ -546,25 +545,44 @@ EOF
             }
         }
 
+        my $a1;
         {
-            my $attr = $root.getAttributeNode('a:ns_fixed');
+            my $attr = ($a1 = $root.getAttributeNode('a:ns_fixed'));
             isa-ok  $attr, XML::LibXML::Attr, 
-                    "[$n] attribute node for a:ns_fixed is defined and is typed correctly";
+                    "[$n] getAttributeNode returned properly typed attribute node for 'a:ns_fixed'";
             is      $attr.value, 'ns_foo', 
                     "[$n] attribute has the correct value";
         }
         {
             my $attr = $root.getAttributeNodeNS($ns, 'ns_fixed');
             isa-ok  $attr, XML::LibXML::Attr, 
-                    "[$n] attribute node for ns_fixed found and is typed correctly";
+                    "[$n] getAttributeNodeNS() returned properly typed attribute node for 'ns_fixed'";
             is      $attr.value, 'ns_foo', 
                     "[$n] attribute has the correct value";
             is      $attr.toString, ' a:ns_fixed="ns_foo"', 
                     "[$n] attribute can be cast to string properly";
         }
 
-        nok  $root.getAttributeNode('ns_fixed').defined, 
-            "[$n] node for ns_fixed attribute is not defined";
+        if $xml eq $xml_ns {
+        # cw: Original test implies that the ns_fixed attribute should not exist,
+        #     however in the "NS" pass, the test uses a document that defines the 
+        #     xmlns of the default namespace to be the same URI as the one used 
+        #     for namespace "a". This makes them logically equivalent according 
+        #     to current versions of libxml2.
+            my $a2;
+            $a2 = $root.getAttributeNode('ns_fixed');
+            ok  $a1.defined, 
+                "[$n] node for ns_fixed attribute is defined";
+            is  $a1.value, $a2.value,
+                "[$n] attributes 'ns_fixed' and 'a:ns_fixed' have the same value";
+            ok  $a1.isSameNode($a2), 
+                "[$n] attributes objects 'ns_fixed' and 'a:ns_fixed' are equivalent";
+
+        } else {
+            nok $root.getAttributeNode('ns_fixed'),
+                "[$n] node for 'ns_fixed' attribute is not defined";
+        }
+
         nok  $root.getAttributeNode('name').defined, 
             "[$n] node for name attribute is not defined";
         nok  $root.getAttributeNode('baz').defined, 

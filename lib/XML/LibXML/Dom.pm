@@ -196,7 +196,7 @@ package XML::LibXML::Dom {
     #sub domGetAttrNode(xmlNode $n, Str $a) is export {
     sub domGetAttrNode($n, $a) is export {
         my $name = $a.defined ?? $a.trim !! Nil;
-        return unless $name;
+        return unless $name.chars && $n.defined;
 
         my $ret = nativecast(
             xmlAttr, xmlHasNsProp($n, $a, Str)
@@ -218,8 +218,8 @@ package XML::LibXML::Dom {
             }
         }
 
-        return ($ret.defined && $ret.type == XML_ATTRIBUTE_NODE) ?? 
-                $ret !! Nil;
+        ($ret.defined && $ret.type == XML_ATTRIBUTE_NODE) ?? 
+            $ret !! Nil;
     }
 
     # cw: Type check sends rakudo into an endless loop!
