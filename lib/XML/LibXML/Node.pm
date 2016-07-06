@@ -11,7 +11,8 @@ use XML::LibXML::XPath;
 
 class XML::LibXML::Node is xmlNode is repr('CStruct') { ... }
 
-multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
+multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
+
 my &_nc = &nativecast;
 
 role XML::LibXML::Nodish does XML::LibXML::C14N {

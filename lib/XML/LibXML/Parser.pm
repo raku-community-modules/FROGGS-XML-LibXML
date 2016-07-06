@@ -95,7 +95,7 @@ method parse-string($str, :$url, :$flags) {
     $ret;
 }
 
-multi method parse-file(Str $s, :$flags) {
+multi method parse-file(Str $s, :$flags = 0) {
     unless $s.chars && $s.IO.e {
         warn "Attempted to parse using" ~ (!$s.defined || !$s.chars) ??
             "null filename" !! "bad filename '{$s}'";
@@ -105,12 +105,13 @@ multi method parse-file(Str $s, :$flags) {
     # cw: Should we assume unicode, here or just use default?
     # cw: What about defined options? -- For now we set blank, but that might 
     #     come a-haunting in the future.
-    self.html ?? 
+    my $myflags = $flags.defined ?? +$flags !! 0;
+    self.html ??
         #htmlCtxtReadFile(self, $s, "UTF8", self.options)
-        htmlCtxtReadFile(self, $s, Str, +$flags)
+        htmlCtxtReadFile(self, $s, Str, $myflags)
         !!
         #xmlCtxtReadFile(self, $s, "UTF8", self.options)
-        xmlCtxtReadFile(self, $s, Str, +$flags)
+        xmlCtxtReadFile(self, $s, Str, $myflags)
 }
 
 method parse-xml-chunk($_xml) {
