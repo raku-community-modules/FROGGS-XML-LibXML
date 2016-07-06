@@ -10,9 +10,12 @@ use NativeCall;
 use XML::LibXML::CStructs :types;
 use XML::LibXML::Enums;
 use XML::LibXML::Node;
+use XML::LibXML::Parser;
 use XML::LibXML::Subs;
 
 also does XML::LibXML::Nodish;
+
+multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
 
 method new($name) {
 	sub xmlNewNode(xmlNs, Str) is native('xml2') returns XML::LibXML::Element { * };
@@ -21,58 +24,58 @@ method new($name) {
 }
 
 method type() {
-    xmlElementType(
+	xmlElementType(
     	nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlElement, '$!type'))
 	);
 }
 
-method getChildrenByTagNameNS($_nsUri, $_name) {
+method getChildrenByTagNameNS($_nsUri, $_name) is aka<getElementsByTagNameNS> {
 	my ($ns_wildcard, $name_wildcard);
 
-	$ns_wildcard = True if $_nsUri eq '*';
+	$ns_wildcard = True if $_nsUri.defined && $_nsUri eq '*';
 	$name_wildcard = True if $_name eq '*';
 
-	my @cldList;
+	my @ret;
 	if self.type != XML_ATTRIBUTE_NODE {
-		my xmlNodePtr $cld = self.children;
+		my $c = self.children;
 
-		while ($cld.defined) {
-			my $cld_o = nativecast(xmlNode, $cld);
+		while ($c.defined) {
+			next if $c ~~ xmlAttr;
 
-			if 	($name_wildcard || $_name eq $cld_o.name) &&
+			my $c_o = nativecast(xmlNode, $c);
+			my $no_ns = !(
+				$c_o.ns.defined        &&
+				$c_o.ns.uri.defined    &&
+				$c.o.ns.uri.trim.chars &&
+				$_nsUri.defined		   &&
+				$_nsUri.trim.chars		 
+			);
+			if 	($name_wildcard || $_name.lc eq $c_o.localname.lc) &&
 				($ns_wildcard || 
-					($cld_o.ns.defined && $_nsUri eq $cld_o.ns.uri) ||
-					(!$cld.ns.defined && !$_nsUri.defined)
-				) 
+					($c_o.ns.defined && $c_o.ns.uri.defined && 
+						$_nsUri.defined && $_nsUri.lc eq $c_o.ns.uri.lc
+					) || 
+					$no_ns
+				)
 			{
-				@cldList.push: nativecast(XML::LibXML::Element, $cld);
+				@ret.push: nativecast(XML::LibXML::Element, $c);
 			}
-			$cld = $cld_o.next;
+			$c = $c_o.next;
 		}
 	}
 
-	@cldList;
+	@ret;
 }
 
-method getChildrenByTagName($_name) {
+method getChildrenByTagName($_name)
+	is aka<getElementsByTagName>
+	is aka<getElementsByLocalName> 
+{
 	self.getChildrenByTagNameNS(Nil, $_name);
 }
 
 method tagName() {
 	self.name;
-}
-
-method string_value {
-	# cw: Must use libxml2 to properly decode entities!
-
-	sub xmlXPathCastNodeToString(xmlNode)   returns Str   is native('xml2') { * }
-	sub xmlSubstituteEntitiesDefault(int32) returns int32 is native('xml2') { * }
-
-	my $old = xmlSubstituteEntitiesDefault(0);
-
-	# cw: I've been doing this a lot... however I do worry that not using
-	#     xmlFree will have consequences.
-	xmlXPathCastNodeToString(self.getNode);
 }
 
 method appendText($text) {
@@ -83,7 +86,7 @@ method appendText($text) {
 multi method appendTextChild(Pair $kv) {
 	sub xmlNewChild(xmlNode, xmlNs, Str, Str) returns xmlNode is native('xml2') { * };
 
-	my $name = $kv.key.subst(/\s/, '');
+	my $name = $kv.key.trim;
 	return unless $name.chars;
 
 	my $content = $kv.value;
@@ -99,4 +102,8 @@ multi method appendTextChild(Str $name) {
 	self.appendTextChild($name => Str);
 }
 
-
+method appendWellBalancedChunk($chunk) {
+	my $parser = XML::LibXML::Parser.new;
+	my $frag = $parser.parse-xml-chunk($chunk);
+	self.appendChild($frag);
+}
