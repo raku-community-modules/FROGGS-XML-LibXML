@@ -1,6 +1,7 @@
 use v6;
 use nqp;
 use NativeCall;
+
 use XML::LibXML::CStructs :types;
 use XML::LibXML::C14N;
 use XML::LibXML::Subs;
@@ -9,23 +10,22 @@ use XML::LibXML::Attr;
 use XML::LibXML::Dom;
 use XML::LibXML::Enums;
 use XML::LibXML::Error;
+use XML::LibXML::Element;
 
-multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
+multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
 
 unit class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::Nodish;
 
 sub xmlNewDoc(Str)                          returns XML::LibXML::Document  is native('xml2') { * }
 sub xmlDocGetRootElement(xmlDoc)            returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlDocSetRootElement(xmlDoc, xmlNode)   returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlNewNode(xmlDoc, Str)                 returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewNode(xmlNs, Str)                  returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlNewText(Str)                         returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlNewDocComment(xmlDoc, Str)           returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlNewCDataBlock(xmlDoc, Str, int32)    returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlReplaceNode(xmlNode, xmlNode)        returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlNewDocFragment(xmlDoc)               returns XML::LibXML::Node      is native('xml2') { * }
 sub xmlNewDocProp(xmlDoc, Str, Str)         returns XML::LibXML::Attr      is native('xml2') { * }
 sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)  returns XML::LibXML::Node      is native('xml2') { * }
-
 
 method process-xincludes {
     sub xmlXIncludeProcessFlags(xmlDoc, int32) returns int32 is native('xml2') { * }
@@ -52,7 +52,7 @@ method documentElement
 {
     Proxy.new(
         FETCH => -> $ {
-            xmlDocGetRootElement(self)
+            nativecast(XML::LibXML::Element, xmlDocGetRootElement(self))
         },
         STORE => -> $, $new {
             my $root = xmlDocGetRootElement(self);
@@ -255,10 +255,8 @@ method new(:$version = '1.0', :$encoding) {
     $doc
 }
 
-method new-doc-fragment() {
-    my $node = xmlNewDocFragment( self );
-    nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self));
-    $node
+method new-doc-fragment(XML::LibXML::Document:D:) {
+    nativecast(XML::LibXML::Node, domNewDocFragment(self));
 }
 
 method new-elem(Str $elem) is aka<createElement> {
@@ -266,9 +264,9 @@ method new-elem(Str $elem) is aka<createElement> {
         fail X::XML::InvalidName.new( :name($elem), :pos($bad.from), :routine(&?ROUTINE) )
     }
 
-    my $node = xmlNewNode( self, $elem );
+    my $node = xmlNewNode( xmlNs, $elem );
     nqp::bindattr(nqp::decont($node), xmlNode, '$!doc', nqp::decont(self.doc));
-    nativecast(::('XML::LibXML::Element'), $node);
+    nativecast(XML::LibXML::Element, $node);
 }
 
 multi method new-elem-ns(Pair $kv, $uri) {
@@ -339,8 +337,10 @@ multi method new-attr-ns(Pair $kv, $uri) {
         $prefix = Str;
     }
 
-    my $ns = xmlSearchNsByHref(self, $root, $uri)
-        || xmlNewNs($root, $uri, $prefix); # create a new NS if the NS does not already exists
+    my $ns = xmlSearchNsByHref(self, $root, $uri);
+    unless $ns {
+        $ns = xmlNewNs($root, $uri, $prefix); # create a new NS if the NS does not already exists
+    }
 
     my $buffer = xmlEncodeEntitiesReentrant(self, $kv.value);
     my $attr   = xmlNewDocProp(self, $name, $buffer);
@@ -349,7 +349,7 @@ multi method new-attr-ns(Pair $kv, $uri) {
     nativecast(::('XML::LibXML::Attr'), $attr);
 }
 multi method new-attr-ns(%kv where *.elems == 1, $uri) {
-    self.new-attr-ns(%kv.list[0], $uri)
+    self.new-attr-ns(%kv.list[0], $uri);
 }
 
 method createAttributeNS($nsUri, $name, $val) {

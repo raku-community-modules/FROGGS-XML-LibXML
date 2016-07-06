@@ -3,6 +3,8 @@ use nqp;
 use NativeCall;
 
 constant XML_XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace";
+constant XML_XMLNS_NS      = 'http://www.w3.org/2000/xmlns/';
+constant XML_XML_NS        = 'http://www.w3.org/XML/1998/namespace';
 
 my class CStruct is repr('CStruct') is export(:types) { }
 
@@ -15,8 +17,9 @@ my class  xmlBuffer                  is repr('CStruct')  { ... }
 my native xmlBufferAllocationScheme  is repr('P6int') is Int is nativesize(32) is export(:types) { }
 my native xmlChar                    is repr('P6int') is Int is nativesize(8) is unsigned is export(:types) { }
 my class  xmlDictPtr                 is repr('CPointer') { }
+my class  xmlDtd                     is repr('CStruct')  is export(:types) { ... }  
 my class  xmlDtdPtr                  is repr('CPointer') { }
-my class  xmlDoc                     is repr('CStruct')  { ... }
+my class  xmlDoc                     is repr('CStruct')  is export(:types) { ... }
 my class  xmlDocPtr                  is repr('CPointer') is Pointer is export(:types) { }
 my class  xmlError                   is repr('CStruct')  { ... }
 my class  xmlElement                 is repr('CStruct')  { ... }
@@ -46,6 +49,7 @@ my class  xmlXPathFuncLookupFunc     is repr('CPointer') { }
 my class  xmlXPathObject             is repr('CStruct')  { ... }
 my class  xmlXPathTypePtr            is repr('CPointer') { }
 my class  xmlXPathVariableLookupFunc is repr('CPointer') { }
+my class  xmlParserInputBufferPtr    is repr('CPointer')  is export(:types) { }
 
 my class xmlAttr is export(:types) {
     has Pointer       $._private; # application data
@@ -60,6 +64,18 @@ my class xmlAttr is export(:types) {
     has xmlNs               $.ns; # pointer to the associated namespace
     has xmlAttributeType $.atype; # the attribute type if validating
     has Pointer           $.psvi; # for type/PSVI informations
+
+    method getAttrPtr() {
+        nativecast(xmlAttrPtr, self);
+    }
+
+    method getNodePtr() {
+        nativecast(xmlNodePtr, self);
+    }
+
+    method getNode() {
+        nativecast(xmlNode, self);
+    }
 }
 
 my class xmlBuffer is export(:types) {
@@ -89,16 +105,16 @@ my class xmlDoc is export(:types) {
     has Str           $.encoding; # external initial encoding, if any
     has OpaquePointer      $.ids; # Hash table for ID attributes if any
     has OpaquePointer     $.refs; # Hash table for IDREFs attributes if any
-    has Str           $.uri is rw; # The URI for that document
-    has int32          $.charset is rw; # encoding of the in-memory content actua
-    #~ struct _xmlDict *	dict	: dict used to allocate names or NULL
-    has Pointer $.dict;
-    #~ void *	psvi	: for type/PSVI informations
-    has Pointer $.psvi;
-    #~ int	parseFlags	: set of xmlParserOption used to parse th
-    has int32 $.parseFlags;
-    #~ int	properties	: set of xmlDocProperties for this docume
-    has int32 $.properties;
+    has Str          $.uri is rw; # The URI for that document
+    has int32    $.charset is rw; # encoding of the in-memory content actua
+    #~ struct _xmlDict *dict: dict used to allocate names or NULL
+    has Pointer           $.dict;
+    #~ void *psvi: for type/PSVI informations
+    has Pointer           $.psvi;
+    #~ intparseFlags: set of xmlParserOption used to parse th
+    has int32       $.parseFlags;
+    #~ intproperties: set of xmlDocProperties for this docume
+    has int32       $.properties;
 }
 
 my class xmlError is export(:types) {
@@ -117,6 +133,29 @@ my class xmlError is export(:types) {
     has OpaquePointer $.node; # the node in the tree
 }
 
+my class xmlDtd is export(:types) {
+    has OpaquePointer    $.private;  # application data
+    has int8             $.type;  # xmlElementType type number, must be second!
+    has Str              $.name;  # Element name
+    has xmlNodePtr       $.children is rw; # the value of the property
+    has xmlNodePtr       $.last is rw; # NULL
+    has xmlNodePtr       $.parent is rw; # child->parent link
+    has xmlAttrPtr       $.next is rw; # next sibling link
+    has xmlAttrPtr       $.prev is rw; # previous sibling link
+    has xmlDoc           $.doc; # autoreference to itself End of common p
+    has OpaquePointer    $.notations;  # Hash table for notations if any
+    has OpaquePointer    $.elements;   # Hash table for elements if any
+    has OpaquePointer    $.attributes; # Hash table for attributes if any
+    has OpaquePointer    $.entities;   # Hash table for entities if any
+    has Str              $.ExternalID; # External identifier for PUBLIC DTD
+    has Str              $.SystemID;   # URI for a SYSTEM or PUBLIC DTD
+    has OpaquePointer    $.pentities;  # Hash table for param entities if any
+
+    method getPtr() {
+        nativecast(xmlDtdPtr, self);
+    }
+}
+
 my class xmlElement is export(:types) {
     has OpaquePointer $.private;  # application data
     has int8             $.type;  # xmlElementType type number, must be second!
@@ -126,12 +165,12 @@ my class xmlElement is export(:types) {
     has xmlNodePtr         $.parent is rw; # child->parent link
     has xmlAttrPtr           $.next is rw; # next sibling link
     has xmlAttrPtr           $.prev is rw; # previous sibling link
-    has xmlDoc             $.doc; # autoreference to itself End of common p
-    has int8             $.etype; # The type
-    has OpaquePointer  $.content; # The allowed element content
-    has xmlAttrPtr  $.attributes; # List of declared attributes
-    has Str             $.prefix;
-    has OpaquePointer   $.contModel; # The validating regexp.
+    has xmlDoc              $.doc; # autoreference to itself End of common p
+    has int8              $.etype; # The type
+    has OpaquePointer   $.content; # The allowed element content
+    has xmlAttrPtr   $.attributes; # List of declared attributes
+    has Str              $.prefix;
+    has OpaquePointer $.contModel; # The validating regexp.
 
     #method setName(xmlElement:D: $name) {
     #    $!name = $name;
@@ -139,28 +178,24 @@ my class xmlElement is export(:types) {
 }
 
 my class xmlNode is export(:types) {
-    has OpaquePointer $._private; # application data
-    has int8              $.type; # (xmlElementType) type number, must be second !
-    has Str          $.localname; # name/filename/URI of the document
-    has xmlNodePtr       $.children is rw; # the value of the property
-    has xmlNodePtr           $.last is rw; # NULL
-    has xmlNodePtr         $.parent is rw; # child->parent link
-    has xmlAttrPtr           $.next is rw; # next sibling link
-    has xmlAttrPtr           $.prev is rw; # previous sibling link
-    has xmlDoc             $.doc; # autoreference to itself End of common p
-    has xmlNs               $.ns; # pointer to the associated namespace
-    has Str              $.value; # the content
-    has xmlAttr     $.properties; # properties list
-    has xmlNs            $.nsDef; # namespace definitions on this node
-    has OpaquePointer $.psvi; # for type/PSVI informations
-    #~ unsigned short	line	: line number
-    has uint16 $.line;
-    #~ unsigned short	extra	: extra data for XPath/XSLT
-    has uint16 $.extra;
-
-    method setNsDef(xmlNs $n) {
-        $!nsDef = $n;
-    }
+    has OpaquePointer   $._private; # application data
+    has int8            $.type; # (xmlElementType) type number, must be second !
+    has Str             $.localname; # name/filename/URI of the document
+    has xmlNodePtr      $.children is rw; # the value of the property
+    has xmlNodePtr      $.last is rw; # NULL
+    has xmlNodePtr      $.parent is rw; # child->parent link
+    has xmlAttrPtr      $.next is rw; # next sibling link
+    has xmlAttrPtr      $.prev is rw; # previous sibling link
+    has xmlDoc          $.doc; # autoreference to itself End of common p
+    has xmlNs           $.ns; # pointer to the associated namespace
+    has Str             $.value; # the content
+    has xmlAttr         $.properties; # properties list
+    has xmlNs           $.nsDef; # namespace definitions on this node
+    has OpaquePointer   $.psvi; # for type/PSVI informations
+    #~ unsigned shortline: line number
+    has uint16          $.line;
+    #~ unsigned shortextra: extra data for XPath/XSLT
+    has uint16          $.extra;
 }
 
 my class xmlNodeSet is export(:types) {
