@@ -18,7 +18,7 @@ my native xmlBufferAllocationScheme  is repr('P6int') is Int is nativesize(32) i
 my native xmlChar                    is repr('P6int') is Int is nativesize(8) is unsigned is export(:types) { }
 my class  xmlDictPtr                 is repr('CPointer') { }
 my class  xmlDtd                     is repr('CStruct')  is export(:types) { ... }  
-my class  xmlDtdPtr                  is repr('CPointer') { }
+my class  xmlDtdPtr                  is repr('CPointer') is export(:types) { }
 my class  xmlDoc                     is repr('CStruct')  is export(:types) { ... }
 my class  xmlDocPtr                  is repr('CPointer') is Pointer is export(:types) { }
 my class  xmlError                   is repr('CStruct')  { ... }

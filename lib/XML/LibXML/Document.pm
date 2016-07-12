@@ -8,6 +8,7 @@ use XML::LibXML::Subs;
 use XML::LibXML::Node;
 use XML::LibXML::Attr;
 use XML::LibXML::Dom;
+use XML::LibXML::Dtd;
 use XML::LibXML::Enums;
 use XML::LibXML::Error;
 use XML::LibXML::Element;
@@ -27,11 +28,12 @@ sub xmlReplaceNode(xmlNode, xmlNode)        returns XML::LibXML::Node      is na
 sub xmlNewDocProp(xmlDoc, Str, Str)         returns XML::LibXML::Attr      is native('xml2') { * }
 sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)  returns XML::LibXML::Node      is native('xml2') { * }
 
+my &_nc = &nativecast;
+
 method process-xincludes {
     sub xmlXIncludeProcessFlags(xmlDoc, int32) returns int32 is native('xml2') { * }
     xmlXIncludeProcessFlags(self, 0)
 }
-
 
 # Objects that implement the Document interface have all properties and functions of the Node interface as well as the properties and functions defined below.
 
@@ -404,4 +406,21 @@ method setDocumentElement($e) {
         #PmmFixOwner( SvPROXYNODE(proxy), PmmPROXYNODE(self));
         #    if $elem.private !=:= Pointer;
     }
+}
+
+method externalSubset {
+    _nc(XML::LibXML::DTD, $.extSubset);
+}
+
+method createExternalSubset($pname, $extid, $sysid) {
+    sub xmlNewDtd(xmlNode, Str, Str, Str) returns xmlDtd is native('xml2') { * };
+
+    my $mypname;
+    $mypname = $pname.trim if $pname.defined;
+    return unless $mypname.defined && $mypname.chars;
+
+    #nativecast(
+    #    XML::LibXML::DTD,
+        xmlNewDtd(self.getNode, $pname, $extid, $sysid)
+    #);
 }

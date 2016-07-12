@@ -72,6 +72,10 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         }
     }
 
+    method nodeName is aka<getName> {
+        return self._name;
+    }
+
     method attrs() {
         my $elem = _nc(XML::LibXML::Attr, self.properties);
         my @ret;

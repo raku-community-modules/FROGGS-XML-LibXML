@@ -291,7 +291,7 @@ package XML::LibXML::Dom {
             }
 
             token namestartchar {
-                ':' | '_' | <[a..zA..Z]> | <[\x00C0 .. \x00D6]> |
+                ':' | '_' | <[a..zA..Z]> | <[\x00C0 .. \x00D6]>  |
                 <[\x00D8..\x00F6]> | <[\x00F8..\x02FF]> | <[\x0370..\x037D]> |
                 <[\x037F..\x1FFF]> | <[\x200C..\x200D]> | <[\x2070..\x218F]> |
                 <[\x2C00..\x2FEF]> | <[\x3001..\xD7FF]> | <[\xF900..\xFDCF]> |
