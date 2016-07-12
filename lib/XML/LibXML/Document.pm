@@ -419,8 +419,9 @@ method createExternalSubset($pname, $extid, $sysid) {
     $mypname = $pname.trim if $pname.defined;
     return unless $mypname.defined && $mypname.chars;
 
-    #nativecast(
-    #    XML::LibXML::DTD,
+    nativecast(
+        XML::LibXML::DTD,
         xmlNewDtd(self.getNode, $pname, $extid, $sysid)
-    #);
+    
+    );
 }

@@ -23,7 +23,7 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
 
     ok 
         $dtd.isSameNode( $doc.externalSubset ), 
-        "DTD node is same as DOC''s external subset";
+        "DTD node is same as DOC's external subset";
     is  $dtd.publicId, $htmlPublic, 
         "DTD's public ID matches \$htmlPublic";
     is  $dtd.systemId, $htmlSystem, 
