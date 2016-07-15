@@ -80,7 +80,7 @@ method tagName() {
 
 method appendText($text) {
 	sub xmlNodeAddContent(xmlNode, Str) is native('xml2') { * }
-	xmlNodeAddContent(self.getNode(), $text);
+	xmlNodeAddContent(self.getNode, $text);
 }
 
 multi method appendTextChild(Pair $kv) {

@@ -22,16 +22,16 @@ class XML::LibXML::DTD is xmlDtd is repr('CStruct') {
     }
 
     # cw: Due to differences, we override from Nodish.
-    method getName is aka<nodeName>
-    {
+    method getName is aka<nodeName> {
     	self.name;
     }
 
-	method publicId {
-		return self.ExternalID;
+	method publicId is aka<getPublicId> {
+		self.ExternalID;
 	}
 
-	method systemId {
-		return self.SystemID;
+	method systemId is aka<getSystemId> {
+		self.SystemID;
 	}
+
 }

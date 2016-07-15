@@ -7,7 +7,8 @@ use XML::LibXML::CStructs :types;
 
 #multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
 
-sub setObjAttr($obj, $attr, $val) is export {
+sub setObjAttr($obj, $attr, $val, :$what) is export {
+	
     nqp::bindattr(
         nqp::decont($obj), $obj.WHAT, $attr, nqp::decont($val)
     );

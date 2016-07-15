@@ -44,7 +44,7 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
     $doc.setExternalSubset( $dtd );
     nok $doc.internalSubset.defined, 
         'DOC internal subset is not defined after setting external subset';
-    ok  $dtd.isSameNode( $doc->externalSubset ), 
+    ok  $dtd.isSameNode( $doc.externalSubset ), 
         'DOC external subset is same as DTD';
 
     is  $dtd.getPublicId, $htmlPublic, 
@@ -55,7 +55,7 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
     $doc.setInternalSubset( $dtd );
     nok $doc.externalSubset.defined, 
         "DOC's external subset is not defined after setting internal subset";
-    ok  $dtd.isSameNode( $doc->internalSubset ), 
+    ok  $dtd.isSameNode( $doc.internalSubset ), 
         "DTD is same as DOC's internal subset";
 
     my $dtd2 = $doc.createDTD( 
@@ -84,7 +84,7 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
         "DOC external subset was assigned correctly";
     $dtd3 = $doc.removeExternalSubset;
     ok $dtd3.isSameNode($dtd2), 
-       "Removed external subset is the same as \$dtd2"
+       "Removed external subset is the same as \$dtd2";
     nok $doc.externalSubset, 
         "DOC no longer has an external subset";
 }

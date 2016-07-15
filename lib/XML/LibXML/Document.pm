@@ -30,6 +30,10 @@ sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)  returns XML::LibXML::Node      is na
 
 my &_nc = &nativecast;
 
+method getDoc {
+    _nc(xmlDoc, self);
+}
+
 method process-xincludes {
     sub xmlXIncludeProcessFlags(xmlDoc, int32) returns int32 is native('xml2') { * }
     xmlXIncludeProcessFlags(self, 0)
@@ -412,6 +416,10 @@ method externalSubset {
     _nc(XML::LibXML::DTD, $.extSubset);
 }
 
+method internalSubset {
+    _nc(XML::LibXML::DTD, $.intSubset);
+}
+
 method createExternalSubset($pname, $extid, $sysid) {
     sub xmlNewDtd(xmlNode, Str, Str, Str) returns xmlDtd is native('xml2') { * };
 
@@ -419,9 +427,52 @@ method createExternalSubset($pname, $extid, $sysid) {
     $mypname = $pname.trim if $pname.defined;
     return unless $mypname.defined && $mypname.chars;
 
-    nativecast(
+    _nc(
         XML::LibXML::DTD,
         xmlNewDtd(self.getNode, $pname, $extid, $sysid)
     
     );
+}
+
+method createInternalSubset($pname, $extid, $sysid) {
+    sub xmlCreateIntSubset(xmlDoc, Str, Str, Str) returns xmlDtd is native('xml2') { * };
+
+    my $mypname;
+    $mypname = $pname.trim if $pname.defined;
+    return unless $mypname.defined && $mypname.chars;
+
+    _nc(
+        XML::LibXML::DTD,
+        xmlCreateIntSubset(self, $pname, $extid, $sysid)
+    );
+}
+
+method setExternalSubset($extDtd) {
+    sub xmlFreeDtd(xmlDtdPtr) is native('xml2') { * }
+
+    die "Lost DTD node" 
+        unless 
+            $extDtd.defined && 
+            ($extDtd ~~ xmlDtdPtr || $extDtd ~~ xmlDtd);
+
+    my $myExtDtd;
+    $myExtDtd = $extDtd !~~ XML::LibXML::DTD ??
+        _nc(XML::LibXML::DTD, $extDtd) !! $extDtd;
+    if  !$myExtDtd.doc.defined {
+        xmlSetTreeDoc($myExtDtd, self);
+    } 
+    else {
+        domImportNode(self, $myExtDtd.getNode, 1, 1);
+    }
+
+    if ($myExtDtd.isSameNode(self.intSubset)) {
+        xmlUnlinkNode($myExtDtd.getNode);
+        setObjAttr(self.getDoc, '$!intSubset', xmlDtdPtr);
+    }
+
+    my $olddtd = _nc(xmlDtd, $.extSubset);
+    if ($olddtd && !$olddtd._private.defined) {
+        xmlFreeDtd($olddtd)
+    };
+    setObjAttr(self.getDoc, '$!extSubset', _nc(xmlDtdPtr, $myExtDtd));
 }

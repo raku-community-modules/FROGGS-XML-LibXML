@@ -180,17 +180,11 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     }
 
     method isSameNode($n) {
+        return False unless $n.defined;
+        
         my $n1 = _nc(Pointer, self);
         my $n2 = _nc(Pointer, $n);
         return +$n1 == +$n2;
-    }
-
-    method getNode() {
-        return _nc(xmlNode, self);
-    }
-
-    method getNodePtr() {
-        return _nc(xmlNodePtr, self);
     }
 
     method getContent() {

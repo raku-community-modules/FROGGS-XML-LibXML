@@ -6,6 +6,8 @@ constant XML_XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace";
 constant XML_XMLNS_NS      = 'http://www.w3.org/2000/xmlns/';
 constant XML_XML_NS        = 'http://www.w3.org/XML/1998/namespace';
 
+my &_nc = &nativecast;
+
 my class CStruct is repr('CStruct') is export(:types) { }
 
 my class  xmlAttr                    is repr('CStruct')  { ... }
@@ -51,7 +53,19 @@ my class  xmlXPathTypePtr            is repr('CPointer') { }
 my class  xmlXPathVariableLookupFunc is repr('CPointer') { }
 my class  xmlParserInputBufferPtr    is repr('CPointer')  is export(:types) { }
 
+my role xmlNodeCasting {
+    method getNodePtr() {
+        _nc(xmlNodePtr, self);
+    }
+
+    method getNode() {
+        _nc(xmlNode, self);
+    }
+}
+
 my class xmlAttr is export(:types) {
+    also does xmlNodeCasting;
+
     has Pointer       $._private; # application data
     has int8              $.type; # (xmlElementType) XML_ATTRIBUTE_NODE, must be second !
     has Str          $.localname; # the name of the property
@@ -68,14 +82,6 @@ my class xmlAttr is export(:types) {
     method getAttrPtr() {
         nativecast(xmlAttrPtr, self);
     }
-
-    method getNodePtr() {
-        nativecast(xmlNodePtr, self);
-    }
-
-    method getNode() {
-        nativecast(xmlNode, self);
-    }
 }
 
 my class xmlBuffer is export(:types) {
@@ -87,6 +93,8 @@ my class xmlBuffer is export(:types) {
 }
 
 my class xmlDoc is export(:types) {
+    also does xmlNodeCasting;
+
     has OpaquePointer $._private; # application data
     has int8              $.type; # (xmlElementType) XML_DOCUMENT_NODE, must be second !
     has Str          $.localname; # name/filename/URI of the document
@@ -134,6 +142,8 @@ my class xmlError is export(:types) {
 }
 
 my class xmlDtd is export(:types) {
+    also does xmlNodeCasting;
+
     has OpaquePointer    $.private;  # application data
     has int8             $.type;  # xmlElementType type number, must be second!
     has Str              $.name;  # Element name
@@ -157,6 +167,8 @@ my class xmlDtd is export(:types) {
 }
 
 my class xmlElement is export(:types) {
+    also does xmlNodeCasting;
+
     has OpaquePointer $.private;  # application data
     has int8             $.type;  # xmlElementType type number, must be second!
     has Str              $.name;  # Element name
@@ -178,6 +190,8 @@ my class xmlElement is export(:types) {
 }
 
 my class xmlNode is export(:types) {
+    also does xmlNodeCasting;
+
     has OpaquePointer   $._private; # application data
     has int8            $.type; # (xmlElementType) type number, must be second !
     has Str             $.localname; # name/filename/URI of the document

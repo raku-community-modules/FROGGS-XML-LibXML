@@ -259,7 +259,9 @@ package XML::LibXML::Dom {
             !$n.defined || !($node.prev.defined || $node.parent.defined);
         
         if $node.type == XML_DTD_NODE {
-            xmlUnlinkNode($node);
+            xmlUnlinkNode(
+                $node !~~ xmlNodePtr ?? $node.getNodePtr !! $node 
+            );
             return;
         }
 
