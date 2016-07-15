@@ -11,6 +11,7 @@ multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
 
 class XML::LibXML::DTD is xmlDtd is repr('CStruct') {
 	also does XML::LibXML::Nodish;
+	also does xmlNodeCasting;
 
 	# cw: Due to differences, we override from Nodish.
 	method type() {

@@ -53,12 +53,12 @@ my class  xmlXPathTypePtr            is repr('CPointer') { }
 my class  xmlXPathVariableLookupFunc is repr('CPointer') { }
 my class  xmlParserInputBufferPtr    is repr('CPointer')  is export(:types) { }
 
-my role xmlNodeCasting {
-    method getNodePtr() {
+my role xmlNodeCasting is export(:types) {
+    method getNodePtr {
         _nc(xmlNodePtr, self);
     }
 
-    method getNode() {
+    method getNode {
         _nc(xmlNode, self);
     }
 }

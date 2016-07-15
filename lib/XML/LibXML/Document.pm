@@ -448,8 +448,6 @@ method createInternalSubset($pname, $extid, $sysid) {
 }
 
 method setExternalSubset($extDtd) {
-    sub xmlFreeDtd(xmlDtdPtr) is native('xml2') { * }
-
     die "Lost DTD node" 
         unless 
             $extDtd.defined && 
@@ -475,4 +473,42 @@ method setExternalSubset($extDtd) {
         xmlFreeDtd($olddtd)
     };
     setObjAttr(self.getDoc, '$!extSubset', _nc(xmlDtdPtr, $myExtDtd));
+}
+
+method setInternalSubset($extDtd) {
+    sub xmlGetIntSubset(xmlDoc) is native('xml2') returns xmlDtdPtr { * }
+
+    die "lost DTD node"
+        unless  $extDtd.defined && 
+                $extDtd ~~ xmlDtdPtr || $extDtd ~~ xmlDtd;
+
+    my $myExtDtd = $extDtd !~~ XML::LibXML::DTD ??
+        _nc(XML::LibXML::DTD, $extDtd) !! $extDtd;
+
+    unless self.isSameNode($myExtDtd.doc) {
+        warn "can't import DTDs";
+        domImportNode(self, $extDtd.getNodePtr, 1, 1);
+    }
+
+    setObjAttr(self.getDoc, '$!extSubset', xmlDtdPtr)
+        if $myExtDtd.isSameNode(self.extSubset);
+
+    my $olddtd = xmlGetIntSubset(self);
+    if $olddtd.defined {
+        xmlReplaceNode($olddtd.getNodePtr, $myExtDtd.getNodePtr);
+        if $olddtd._private.defined {
+            xmlFreeDtd($olddtd);
+        }
+    }
+    else {
+        if !self.children.defined {
+            xmlAddChild(self.getNodePtr, $myExtDtd.getNodePtr)
+        }
+        else {
+            xmlAddPrevSibling(
+                self.children.getNodePtr, $myExtDtd.getNodePtr
+            );
+        }
+    }
+    setObjAttr(self.getDoc, '$!intSubset', $myExtDtd.getNodePtr);
 }
