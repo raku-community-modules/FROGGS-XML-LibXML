@@ -45,9 +45,9 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
 
     $doc.setExternalSubset( $dtd );
     nok $doc.internalSubset.defined, 
-        'DOC internal subset is not defined after setting external subset';
+        "doc's internal subset is not defined after setting external subset";
     ok  $dtd.isSameNode( $doc.externalSubset ), 
-        'DOC external subset is same as DTD';
+        "doc's external subset is same as DTD";
 
     is  $dtd.getPublicId, $htmlPublic, 
         "DTD's public ID matches \$htmlPublic";

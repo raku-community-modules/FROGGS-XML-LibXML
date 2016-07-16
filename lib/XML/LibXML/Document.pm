@@ -511,8 +511,8 @@ method setInternalSubset($intDtd) {
             );
         }
     }
-    #setObjAttr(self, '$xmlDoc::intSubset', $intDtd_o.getDtdPtr);
-    $xmlDoc::intSubset = $intDtd_o.getDtdPtr;
+    #setObjAttr(self.getDoc, '$!intSubset', $intDtd_o.getDtdPtr);
+    $.intSubset = $intDtd_o.getDtdPtr;
 }
 
 method removeInternalSubset {
@@ -520,11 +520,7 @@ method removeInternalSubset {
     return unless $dtd.defined;
 
     xmlUnlinkNode($dtd.getNodePtr);
-    #setObjAttr(self.getDoc, '$!intSubset', xmlDtdPtr);
-    # cw: This works...
-    #$xmlDoc::intSubset = xmlDtdPtr;
-    # cw: This doesn't.
-    $!intSubset = xmlDtdPtr;
+    setObjAttr(self.getDoc, '$!intSubset', xmlDtdPtr);
     $dtd;
 }
 
