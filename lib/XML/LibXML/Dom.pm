@@ -149,17 +149,17 @@ package XML::LibXML::Dom {
         sub xmlCopyDtd(Pointer) returns Pointer is native('xml2') { * }
         sub xmlDocCopyNode(xmlNode, xmlDoc, int32) returns xmlNode is native('xml2') { * }
 
-        my xmlNode $return_node = $n;
+        my xmlNode $return_node = $n ~~ xmlNodePtr ?? 
+            _nc(xmlNode, $n) !! $n;
 
         if $move {
-            $return_node = $n;
-            domUnlinkNode(_nc(xmlNodePtr, $n));
+            domUnlinkNode($n);            
         } 
         else {
             if ($n.type == XML_DTD_NODE) {
                 # cw: Pointer should be xmlDtd, but that hasn't been defined, yet.
                 $return_node = _nc(
-                    xmlNode, xmlCopyDtd(_nc(Pointer, $n));
+                    xmlNode, xmlCopyDtd($n.getNodePtr);
                 );
             } 
             else {
@@ -167,7 +167,7 @@ package XML::LibXML::Dom {
             }
         }
 
-        if $n.defined && $n.doc !=:= $d {
+        if $n.defined && $d.defined && $d.isSameNode(_nc(xmlNode, $n).doc) {
             # cw: There is XS memory management code at this point that 
             #     I'm hoping we can ignore:
             # cw: The call below references the $!private attribute which

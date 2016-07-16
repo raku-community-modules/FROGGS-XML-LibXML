@@ -17,16 +17,18 @@ multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
 
 unit class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::Nodish;
 
-sub xmlNewDoc(Str)                          returns XML::LibXML::Document  is native('xml2') { * }
-sub xmlDocGetRootElement(xmlDoc)            returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlDocSetRootElement(xmlDoc, xmlNode)   returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlNewNode(xmlNs, Str)                  returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlNewText(Str)                         returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlNewDocComment(xmlDoc, Str)           returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlNewCDataBlock(xmlDoc, Str, int32)    returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlReplaceNode(xmlNode, xmlNode)        returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlNewDocProp(xmlDoc, Str, Str)         returns XML::LibXML::Attr      is native('xml2') { * }
-sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)  returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewDoc(Str)                            returns XML::LibXML::Document  is native('xml2') { * }
+sub xmlDocGetRootElement(xmlDoc)              returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlDocSetRootElement(xmlDoc, xmlNode)     returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewNode(xmlNs, Str)                    returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewText(Str)                           returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewDocComment(xmlDoc, Str)             returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewCDataBlock(xmlDoc, Str, int32)      returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlReplaceNode(xmlNode, xmlNode)          returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewDocProp(xmlDoc, Str, Str)           returns XML::LibXML::Attr      is native('xml2') { * }
+sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)    returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewDtd(xmlNode, Str, Str, Str)         returns XML::LibXML::DTD       is native('xml2') { * }
+sub xmlGetIntSubset(xmlDoc)                   returns XML::LibXML::DTD       is native('xml2') { * }
 
 my &_nc = &nativecast;
 
@@ -421,8 +423,6 @@ method internalSubset {
 }
 
 method createExternalSubset($pname, $extid, $sysid) {
-    sub xmlNewDtd(xmlNode, Str, Str, Str) returns xmlDtd is native('xml2') { * };
-
     my $mypname;
     $mypname = $pname.trim if $pname.defined;
     return unless $mypname.defined && $mypname.chars;
@@ -472,43 +472,74 @@ method setExternalSubset($extDtd) {
     if ($olddtd && !$olddtd._private.defined) {
         xmlFreeDtd($olddtd)
     };
-    setObjAttr(self.getDoc, '$!extSubset', _nc(xmlDtdPtr, $myExtDtd));
+    setObjAttr(self.getDoc, '$!extSubset', $myExtDtd.getDtdPtr);
 }
 
-method setInternalSubset($extDtd) {
-    sub xmlGetIntSubset(xmlDoc) is native('xml2') returns xmlDtdPtr { * }
-
+method setInternalSubset($intDtd) {
     die "lost DTD node"
-        unless  $extDtd.defined && 
-                $extDtd ~~ xmlDtdPtr || $extDtd ~~ xmlDtd;
+        unless  $intDtd.defined && 
+                $intDtd ~~ xmlDtdPtr || $intDtd ~~ xmlDtd;
 
-    my $myExtDtd = $extDtd !~~ XML::LibXML::DTD ??
-        _nc(XML::LibXML::DTD, $extDtd) !! $extDtd;
+    my $intDtd_o = $intDtd !~~ xmlDtd ??
+        _nc(xmlDtd, $intDtd) !! $intDtd;
 
-    unless self.isSameNode($myExtDtd.doc) {
-        warn "can't import DTDs";
-        domImportNode(self, $extDtd.getNodePtr, 1, 1);
+    unless self.isSameNode($intDtd_o.doc) {
+        # cw: What is the point of this? [ was originally
+        #     a croak() ]
+        #warn "can't import DTDs\n";
+        domImportNode(self, $intDtd_o.getNodePtr, 1, 1);
     }
 
     setObjAttr(self.getDoc, '$!extSubset', xmlDtdPtr)
-        if $myExtDtd.isSameNode(self.extSubset);
+        if $intDtd_o.isSameNode(self.extSubset);
 
     my $olddtd = xmlGetIntSubset(self);
     if $olddtd.defined {
-        xmlReplaceNode($olddtd.getNodePtr, $myExtDtd.getNodePtr);
-        if $olddtd._private.defined {
+        my $olddtd_o = _nc(xmlNode, $olddtd);
+        xmlReplaceNode($olddtd_o, $intDtd_o.getNode);
+        if $olddtd_o._private.defined {
             xmlFreeDtd($olddtd);
         }
     }
     else {
         if !self.children.defined {
-            xmlAddChild(self.getNodePtr, $myExtDtd.getNodePtr)
+            xmlAddChild(self.getNodePtr, $intDtd_o.getNodePtr)
         }
         else {
             xmlAddPrevSibling(
-                self.children.getNodePtr, $myExtDtd.getNodePtr
+                self.children.getNodePtr, $intDtd_o.getNodePtr
             );
         }
     }
-    setObjAttr(self.getDoc, '$!intSubset', $myExtDtd.getNodePtr);
+    #setObjAttr(self, '$xmlDoc::intSubset', $intDtd_o.getDtdPtr);
+    $xmlDoc::intSubset = $intDtd_o.getDtdPtr;
+}
+
+method removeInternalSubset {
+    my $dtd = xmlGetIntSubset(self);
+    return unless $dtd.defined;
+
+    xmlUnlinkNode($dtd.getNodePtr);
+    #setObjAttr(self.getDoc, '$!intSubset', xmlDtdPtr);
+    # cw: This works...
+    #$xmlDoc::intSubset = xmlDtdPtr;
+    # cw: This doesn't.
+    $!intSubset = xmlDtdPtr;
+    $dtd;
+}
+
+method removeExternalSubset {
+    my $dtd = self.extSubset;
+    return unless $dtd.defined;
+
+    $dtd = _nc(XML::LibXML::DTD, $dtd);
+    setObjAttr(self.getDoc, '$!extSubset', xmlDtdPtr);
+    $dtd;
+}
+
+method createDTD($name, $extId, $sysId) {
+    my $dtd = xmlNewDtd(xmlNode, $name, $extId, $sysId);
+    #setObjAttr($dtd.getDtd, '$!doc', self);
+    $dtd.setDoc(self);
+    $dtd;
 }

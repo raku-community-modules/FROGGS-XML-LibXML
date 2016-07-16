@@ -6,8 +6,10 @@ use Test;
 #use Test::More tests => 54;
 plan 57;
 
+use XML::LibXML;
 use XML::LibXML::Document;
 use XML::LibXML::Dtd;
+use XML::LibXML::Enums;
 
 my $htmlPublic = "-//W3C//DTD XHTML 1.0 Transitional//EN";
 my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
@@ -54,7 +56,7 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
 
     $doc.setInternalSubset( $dtd );
     nok $doc.externalSubset.defined, 
-        "DOC's external subset is not defined after setting internal subset";
+        "doc's external subset is not defined after setting internal subset";
     ok  $dtd.isSameNode( $doc.internalSubset ), 
         "DTD is same as DOC's internal subset";
 
@@ -65,26 +67,65 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
     );
 
     $doc.setInternalSubset( $dtd2 );
-    ok  $doc.internalSubset,
-        "DOC internal subset was assigned correctly";
+    ok  $doc.internalSubset.defined,
+        "doc internal subset was assigned correctly";
     nok $dtd.parentNode.defined, 
-        "Original DTD node was orphaned when DOC's internal subset was re-assigned";
+        "original DTD node was orphaned when DOC's internal subset was re-assigned";
     ok  $dtd2.isSameNode( $doc.internalSubset ), 
-        "New DTD node is same as DOC's internal subset";
-
+        "new DTD node is same as DOC's internal subset";
 
     my $dtd3 = $doc.removeInternalSubset;
     ok  $dtd3.isSameNode($dtd2), 
-        "Removed internal subset is the same as \$dtd2";
+        "removed internal subset is the same as \$dtd2";
     nok $doc.internalSubset.defined, 
-        'DOC no longer has an internal subset';
+        'doc no longer has an internal subset';
 
     $doc.setExternalSubset( $dtd2 );
     ok  $doc.externalSubset,
-        "DOC external subset was assigned correctly";
+        "doc external subset was assigned correctly";
     $dtd3 = $doc.removeExternalSubset;
     ok $dtd3.isSameNode($dtd2), 
-       "Removed external subset is the same as \$dtd2";
-    nok $doc.externalSubset, 
-        "DOC no longer has an external subset";
+       "removed external subset is the same as \$dtd2";
+    nok $doc.externalSubset.defined, 
+        "doc no longer has an external subset";
+}
+{
+    my $parser = XML::LibXML.new;
+    my $doc = $parser.parse-file( "example/dtd.xml" );
+    ok $doc.defined, 'dtd file parsed successfully';
+
+    my $dtd = $doc.internalSubset;
+    is $dtd.getName, 'doc', 'dtd has the correct name';
+    nok $dtd.publicId.defined, 'dtd has a blank public ID';
+    nok $dtd.systemId.defined, 'dtd has a blank system ID';
+
+    my  $entity = $doc.createEntityReference( "foo" );
+    ok $entity.defined, 'entity reference created successfully';
+    is  $entity.nodeType, XML_ENTITY_REF_NODE, 
+        'entity reference has the properl type';
+
+    ok $entity.hasChildNodes, 'entity reference has descendants';
+    is $entity.firstChild.nodeType, XML_ENTITY_DECL,
+       "entity's first child is an entity declaration";
+    is $entity.firstChild.nodeValue, ' test ', 
+       "entitys first child has the correct value";
+
+    my $edcl = $entity.firstChild;
+    is $edcl.previousSibling.nodeType, XML_ELEMENT_DECL, 
+       "first child's previous sibling is an element declaration";
+
+    {
+        my $doc2  = XML::LibXML::Document.new;
+        my $e = $doc2.createElement("foo");
+        $doc2.setDocumentElement( $e );
+
+        my $dtd2 = $doc.internalSubset.cloneNode(1);
+        ok $dtd2.defined, 'node cloned successfully';
+
+#        $doc2->setInternalSubset( $dtd2 );
+#        warn $doc2->toString;
+
+#        $e->appendChild( $entity );
+#        warn $doc2->toString;
+    }
 }

@@ -9,9 +9,23 @@ use XML::LibXML::Node;
 
 multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
 
+my &_nc = &nativecast;
+
 class XML::LibXML::DTD is xmlDtd is repr('CStruct') {
 	also does XML::LibXML::Nodish;
 	also does xmlNodeCasting;
+
+	method getDtdPtr {
+		_nc(xmlDtdPtr, self);
+	}
+
+	method getDtd {
+		_nc(xmlDtd, self);
+	}
+
+	method setDoc(xmlDoc $newDoc) {
+		$xmlDtd::doc = $newDoc;
+	}
 
 	# cw: Due to differences, we override from Nodish.
 	method type() {

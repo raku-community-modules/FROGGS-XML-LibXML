@@ -106,12 +106,13 @@ multi method parse-file(Str $s, :$flags = 0) {
     # cw: What about defined options? -- For now we set blank, but that might 
     #     come a-haunting in the future.
     my $myflags = $flags.defined ?? +$flags !! 0;
-    self.html ??
+    my $ret = self.html ??
         #htmlCtxtReadFile(self, $s, "UTF8", self.options)
         htmlCtxtReadFile(self, $s, Str, $myflags)
         !!
         #xmlCtxtReadFile(self, $s, "UTF8", self.options)
-        xmlCtxtReadFile(self, $s, Str, $myflags)
+        xmlCtxtReadFile(self, $s, Str, $myflags);
+    $ret.defined ?? $ret !! Nil;
 }
 
 method parse-xml-chunk($_xml) {
