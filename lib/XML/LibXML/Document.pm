@@ -541,3 +541,14 @@ method createDTD($name, $extId, $sysId) {
     setObjAttr($dtd, '$!doc', self, :what(xmlDtd));
     $dtd;
 }
+
+method createEntityReference($pname) {
+    sub xmlNewReference(xmlDoc, Str) returns xmlNode is native('xml2') { * };
+
+    my xmlNode $newNode = xmlNewReference(self, $pname);
+    return unless $newNode.defined;
+
+    my $docfrag = self.new-doc-fragment;
+    xmlAddChild($docfrag.getNodePtr, $newNode.getNodePtr);
+    nativecast(XML::LibXML::Node, $newNode);
+}

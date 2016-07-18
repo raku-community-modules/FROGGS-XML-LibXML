@@ -4,10 +4,13 @@ use NativeCall;
 use XML::LibXML::Document;
 use XML::LibXML::Parser;
 
-unit class XML::LibXML is XML::LibXML::Parser;
+# cw: This is causing confusion with the wrappers and may need to be 
+#     rewritten to remove ambiguation.
+#unit class XML::LibXML is XML::LibXML::Parser;
+unit class XML::LibXML;
 
 method new(:$flags) {
-	nextwith(:$flags);
+#	nextwith(:$flags);
 }
 
 method parser-version() {
@@ -38,7 +41,7 @@ sub parse-string(Str $s, :$url, :$flags) is export {
 
 sub parse-file(Str $filename, :$flags) is export {
 	nativecast(
-		XML::LibXML::Document,
-		XML::LibXML::Parser.new.parse-file($filename, :$flags) 
+		XML::LibXML::Document, 
+		XML::LibXML::Parser.new.parse-file($filename)
 	);
 }

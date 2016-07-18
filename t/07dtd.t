@@ -90,8 +90,8 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
         "doc no longer has an external subset";
 }
 {
-    my $parser = XML::LibXML.new;
-    my $doc = $parser.parse-file( "example/dtd.xml" );
+    #my $parser = XML::LibXML.new;
+    my $doc = parse-file( "example/dtd.xml" );
     ok $doc.defined, 'dtd file parsed successfully';
 
     my $dtd = $doc.internalSubset;
@@ -101,13 +101,13 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
 
     my  $entity = $doc.createEntityReference( "foo" );
     ok $entity.defined, 'entity reference created successfully';
-    is  $entity.nodeType, XML_ENTITY_REF_NODE, 
+    is  $entity.type, XML_ENTITY_REF_NODE, 
         'entity reference has the properl type';
 
     ok $entity.hasChildNodes, 'entity reference has descendants';
-    is $entity.firstChild.nodeType, XML_ENTITY_DECL,
+    is $entity.firstChild.type, XML_ENTITY_DECL,
        "entity's first child is an entity declaration";
-    is $entity.firstChild.nodeValue, ' test ', 
+    is $entity.firstChild.value, ' test ', 
        "entitys first child has the correct value";
 
     my $edcl = $entity.firstChild;
