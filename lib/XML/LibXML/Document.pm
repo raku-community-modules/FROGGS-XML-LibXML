@@ -467,14 +467,14 @@ method setExternalSubset($extDtd) {
 
     if ($myExtDtd.isSameNode(self.intSubset)) {
         xmlUnlinkNode($myExtDtd.getNode);
-        setObjAttr(self.getDoc, '$!intSubset', xmlDtdPtr);
+        setObjAttr(self, '$!intSubset', xmlDtdPtr, :what(xmlDoc));
     }
 
     my $olddtd = _nc(xmlDtd, $.extSubset);
     if ($olddtd && !$olddtd._private.defined) {
         xmlFreeDtd($olddtd)
     };
-    setObjAttr(self.getDoc, '$!extSubset', $myExtDtd.getDtdPtr);
+    setObjAttr(self, '$!extSubset', $myExtDtd.getDtdPtr, :what(xmlDoc));
 }
 
 method setInternalSubset($intDtd) {
@@ -483,7 +483,9 @@ method setInternalSubset($intDtd) {
                 $intDtd ~~ xmlDtdPtr || $intDtd ~~ xmlDtd;
 
     my $intDtd_o = $intDtd !~~ xmlDtd ??
-        _nc(xmlDtd, $intDtd) !! $intDtd;
+        _nc(XML::LIbXML::DTD, $intDtd) !! $intDtd;
+
+    return if $intDtd_o.isSameNode(self.intSubset);
 
     unless self.isSameNode($intDtd_o.doc) {
         # cw: What is the point of this? [ was originally
@@ -492,15 +494,14 @@ method setInternalSubset($intDtd) {
         domImportNode(self, $intDtd_o.getNodePtr, 1, 1);
     }
 
-    setObjAttr(self.getDoc, '$!extSubset', xmlDtdPtr)
+    setObjAttr(self, '$!extSubset', xmlDtdPtr, :what(xmlDoc))
         if $intDtd_o.isSameNode(self.extSubset);
 
     my $olddtd = xmlGetIntSubset(self);
     if $olddtd.defined {
-        my $olddtd_o = _nc(xmlNode, $olddtd);
-        xmlReplaceNode($olddtd_o, $intDtd_o.getNode);
-        if $olddtd_o._private.defined {
-            xmlFreeDtd($olddtd);
+        xmlReplaceNode($olddtd.getNode, $intDtd_o.getNode);
+        unless $olddtd.private.defined {
+            xmlFreeDtd($olddtd.getNodePtr);
         }
     }
     else {
@@ -513,15 +514,7 @@ method setInternalSubset($intDtd) {
             );
         }
     }
-    my $a = _nc(XML::LibXML::DTD, $.intSubset);
-    setObjAttr(self.getDoc, '$!intSubset', $intDtd_o.getDtdPtr);
-    my $b = _nc(XML::LibXML::DTD, $.intSubset);
-    # cw: The last one should be true but ISN'T!
-    say "1: " ~ $a.isSameNode($b) if $a.defined;
-    say "2: " ~ $a.isSameNode($intDtd_o) if $a.defined;
-    say "3: " ~ $b.isSameNode($intDtd_o) if $b.defined;
-    say "4: " ~ $intDtd_o.getDtdPtr.defined;
-
+    setObjAttr(self, '$!intSubset', $intDtd_o.getDtdPtr, :what(xmlDoc));
 }
 
 method removeInternalSubset {
@@ -529,7 +522,7 @@ method removeInternalSubset {
     return unless $dtd.defined;
 
     xmlUnlinkNode($dtd.getNodePtr);
-    setObjAttr(self.getDoc, '$!intSubset', xmlDtdPtr);
+    setObjAttr(self, '$!intSubset', xmlDtdPtr, :what(xmlDoc));
     $dtd;
 }
 
@@ -538,13 +531,13 @@ method removeExternalSubset {
     return unless $dtd.defined;
 
     $dtd = _nc(XML::LibXML::DTD, $dtd);
-    setObjAttr(self.getDoc, '$!extSubset', xmlDtdPtr);
+    setObjAttr(self, '$!extSubset', xmlDtdPtr, :what(xmlDoc));
     $dtd;
 }
 
 method createDTD($name, $extId, $sysId) {
     my $dtd = xmlNewDtd(xmlNode, $name, $extId, $sysId);
     # cw: Setting DTD attribute really should be part of DTD class.
-    setObjAttr($dtd.getDtd, '$!doc', self);
+    setObjAttr($dtd, '$!doc', self, :what(xmlDtd));
     $dtd;
 }
