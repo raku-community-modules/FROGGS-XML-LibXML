@@ -23,10 +23,6 @@ class XML::LibXML::DTD is xmlDtd is repr('CStruct') {
 		_nc(xmlDtd, self);
 	}
 
-	method setDoc(xmlDoc $newDoc) {
-		$xmlDtd::doc = $newDoc;
-	}
-
 	# cw: Due to differences, we override from Nodish.
 	method type() {
         xmlElementType(

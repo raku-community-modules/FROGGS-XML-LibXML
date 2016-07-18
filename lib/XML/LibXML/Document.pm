@@ -414,12 +414,14 @@ method setDocumentElement($e) {
     }
 }
 
-method externalSubset {
-    _nc(XML::LibXML::DTD, $.extSubset);
+method externalSubset(:$pointer) {
+    $pointer ?? 
+        $.extSubset  !! _nc(XML::LibXML::DTD, $.extSubset);
 }
 
-method internalSubset {
-    _nc(XML::LibXML::DTD, $.intSubset);
+method internalSubset(:$pointer) {
+    $pointer ??
+        $.intSubset !! _nc(XML::LibXML::DTD, $.intSubset);
 }
 
 method createExternalSubset($pname, $extid, $sysid) {
@@ -511,8 +513,15 @@ method setInternalSubset($intDtd) {
             );
         }
     }
-    #setObjAttr(self.getDoc, '$!intSubset', $intDtd_o.getDtdPtr);
-    $.intSubset = $intDtd_o.getDtdPtr;
+    my $a = _nc(XML::LibXML::DTD, $.intSubset);
+    setObjAttr(self.getDoc, '$!intSubset', $intDtd_o.getDtdPtr);
+    my $b = _nc(XML::LibXML::DTD, $.intSubset);
+    # cw: The last one should be true but ISN'T!
+    say "1: " ~ $a.isSameNode($b) if $a.defined;
+    say "2: " ~ $a.isSameNode($intDtd_o) if $a.defined;
+    say "3: " ~ $b.isSameNode($intDtd_o) if $b.defined;
+    say "4: " ~ $intDtd_o.getDtdPtr.defined;
+
 }
 
 method removeInternalSubset {
@@ -535,7 +544,7 @@ method removeExternalSubset {
 
 method createDTD($name, $extId, $sysId) {
     my $dtd = xmlNewDtd(xmlNode, $name, $extId, $sysId);
-    #setObjAttr($dtd.getDtd, '$!doc', self);
-    $dtd.setDoc(self);
+    # cw: Setting DTD attribute really should be part of DTD class.
+    setObjAttr($dtd.getDtd, '$!doc', self);
     $dtd;
 }

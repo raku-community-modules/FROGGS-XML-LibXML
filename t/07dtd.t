@@ -71,7 +71,7 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
         "doc internal subset was assigned correctly";
     nok $dtd.parentNode.defined, 
         "original DTD node was orphaned when DOC's internal subset was re-assigned";
-    ok  $dtd2.isSameNode( $doc.internalSubset ), 
+    ok  $dtd2.isSameNode( $doc.internalSubset(:pointer) ), 
         "new DTD node is same as DOC's internal subset";
 
     my $dtd3 = $doc.removeInternalSubset;

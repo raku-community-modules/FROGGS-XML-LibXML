@@ -21,7 +21,7 @@ my native xmlChar                    is repr('P6int') is Int is nativesize(8) is
 my class  xmlDictPtr                 is repr('CPointer') { }
 my class  xmlDtd                     is repr('CStruct')  is export(:types) { ... }  
 my class  xmlDtdPtr                  is repr('CPointer') is export(:types) { }
-my class  xmlDoc                     is repr('CStruct')  is export(:types) is rw { ... }
+my class  xmlDoc                     is repr('CStruct')  is export(:types) { ... }
 my class  xmlDocPtr                  is repr('CPointer') is Pointer is export(:types) { }
 my class  xmlError                   is repr('CStruct')  { ... }
 my class  xmlElement                 is repr('CStruct')  { ... }
@@ -106,7 +106,7 @@ my class xmlDoc is export(:types) {
     has xmlDoc             $.doc; # autoreference to itself End of common p
     has int32      $.compression; # level of zlib compression
     has int32       $.standalone; # standalone document (no external refs)
-    has xmlDtdPtr    $.intSubset is rw; # the document internal subset
+    has xmlDtdPtr    $.intSubset; # the document internal subset
     has xmlDtdPtr    $.extSubset; # the document external subset
     has xmlNsPtr         $.oldNs; # Global namespace, the old way
     has Str            $.version; # the XML version string
