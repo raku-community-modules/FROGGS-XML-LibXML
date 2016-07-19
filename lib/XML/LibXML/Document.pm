@@ -552,3 +552,12 @@ method createEntityReference($pname) {
     xmlAddChild($docfrag.getNodePtr, $newNode.getNodePtr);
     nativecast(XML::LibXML::Node, $newNode);
 }
+
+# cw: I can't tell the difference from the XS code.
+method validate is aka<is_valid> {
+    sub xmlValidateDocument(xmlValidCtxt is rw, xmlDoc) returns int32 is native('xml2') { * }
+
+    my xmlValidCtxt $ctxt = xmlValidCtxt.new;
+    $ctxt.reset;
+    xmlValidateDocument($ctxt, self);
+}

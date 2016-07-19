@@ -264,6 +264,13 @@ my class xmlValidCtxt is export(:types) {
     has Pointer               $.vstateTab; # array of validation states
     has xmlAutomataPtr               $.am; # the automata
     has xmlAutomataStatePtr       $.state; # used to build the automata
+
+    method reset {
+        $!nodeNr = 0;
+        $!vstateNr = 0;
+        #$!nodeTab = Pointer;
+        #$!vstateTab = Pointer;
+    }
 }
 
 my class xmlSAXHandler is export(:types) {

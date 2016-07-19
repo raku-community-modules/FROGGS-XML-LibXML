@@ -82,7 +82,7 @@ method parse(Str:D $str, Str :$uri, :$_flags) {
 
 # cw: This method is to fulfil testing requirements from 06elements. 
 method parse-string($str, :$url, :$flags) {
-    sub xmlReadDoc(Str, Str, Str, int32) returns xmlDoc is native('xml2') { * }
+    sub xmlReadDoc(Str, Str, Str, int32) returns xmlDocPtr is native('xml2') { * }
 
     return unless $str.defined && $str.trim.chars;
 
@@ -90,8 +90,8 @@ method parse-string($str, :$url, :$flags) {
     my $myflags = $flags.defined ?? +$flags !! 0;
 
     # cw: -YYY- Not worring about encoding at this time.
-    my $ret = xmlReadDoc($str, $url, Str, $myflags);
-    fail XML::LibXML::Error.get-last(self, :orig($str)) unless $ret;
+    my $ret = xmlReadDoc($str, $myurl, Str, $myflags);
+    fail XML::LibXML::Error.get-last(self, :orig($str)) unless $ret.defined;
     $ret;
 }
 

@@ -19,29 +19,25 @@ method parser-version() {
 }
 
 sub parse-xml(Str $xml, :$flags) is export {
-    nativecast(
-    	XML::LibXML::Document, 
-    	XML::LibXML::Parser.new.parse($xml, :$flags)
-	);
+	my $ret = XML::LibXML::Parser.new.parse($xml, :$flags);
+	return unless $ret.defined;
+    nativecast(XML::LibXML::Document, $ret);
 }
 
 sub parse-html(Str $html, :$flags) is export {
-	nativecast(
-		XML::LibXML::Document,
-    	XML::LibXML::Parser.new(:html).parse($html, :$flags)
-	);
+	my $ret = XML::LibXML::Parser.new(:html).parse($html, :$flags);
+	return unless $ret.defined;
+	nativecast(XML::LibXML::Document, $ret);
 }
 
 sub parse-string(Str $s, :$url, :$flags) is export {
-	nativecast(
-		XML::LibXML::Document,
-		XML::LibXML::Parser.new.parse-string($s, :$url, :$flags)
-	);
+	my $ret = XML::LibXML::Parser.new.parse-string($s, :$url, :$flags);
+	return unless $ret.defined;
+	nativecast(XML::LibXML::Document, $ret);
 }
 
 sub parse-file(Str $filename, :$flags) is export {
-	nativecast(
-		XML::LibXML::Document, 
-		XML::LibXML::Parser.new.parse-file($filename)
-	);
+	my $ret = XML::LibXML::Parser.new.parse-file($filename);
+	return unless $ret.defined;
+	nativecast(XML::LibXML::Document, $ret);
 }

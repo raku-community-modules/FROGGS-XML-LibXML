@@ -108,7 +108,7 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
     is $entity.firstChild.type, XML_ENTITY_DECL,
        "entity's first child is an entity declaration";
     is $entity.firstChild.value, ' test ', 
-       "entitys first child has the correct value";
+       "entity's first child has the correct value";
 
     my $edcl = $entity.firstChild;
     is $edcl.previousSibling.nodeType, XML_ELEMENT_DECL, 
@@ -128,4 +128,32 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
 #        $e->appendChild( $entity );
 #        warn $doc2->toString;
     }
+}
+{
+    #my $parser = XML::LibXML.new;
+    #$parser->validation(1);
+    #$parser->keep_blanks(1);
+    my $doc_str = "<?xml version='1.0'?>
+<!DOCTYPE test [
+ <!ELEMENT test (#PCDATA)>
+]>
+<test>
+</test>
+";
+    #my $doc = parse-string($doc_str, :flags(XML_PARSE_DTDVALID));
+    my $doc = parse-string(
+        $doc_str, 
+        :flags(XML_PARSE_DTDVALID + XML_PARSE_DTDLOAD)
+    );
+
+    if ($doc ~~ XML::LibXML::Document) {
+        ok  $doc.validate, 
+            'parsed document is valid according to validate()';
+    } else {
+        flunk 'error when parsing document'
+    }
+
+    # Skipping because is_valid is pretty much an alias for validate()
+    #ok $doc->is_valid(), ' TODO : Add test name');
+
 }

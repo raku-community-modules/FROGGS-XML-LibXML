@@ -57,7 +57,7 @@ class XML::LibXML::DTD is xmlDtd is repr('CStruct') {
 		);
 		setObjAttr($x, '$!private', $.children, :what(xmlDtd));
 		#setObjAttr($x, '$!type', $.type, :what(xmlDtd));
-		_nc(xmlDtd, $x).setType($.type);
+		self.getDtd.setType($.type);
 		setObjAttr($x, '$!name', $.name, :what(xmlDtd));
 		setObjAttr($x, '$!doc', $.doc, :what(xmlDtd));
 		setObjAttr($x, '$!children', $.children, :what(xmlDtd));
