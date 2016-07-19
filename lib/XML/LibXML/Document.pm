@@ -399,6 +399,7 @@ method setDocumentElement($e) {
         return;
     }
 
+    # cw: -YYY- check for 06elements failure here.
     domImportNode(self, $elem, 1, 1);
     my $oelem = xmlDocGetRootElement(self);
     if (!$oelem.defined || !$oelem._private.defined) {

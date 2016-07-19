@@ -97,7 +97,7 @@ package XML::LibXML::Dom {
                 # cw: -YYY- There WAS an endless loop here...          
                 if domRemoveNsDef($tree, $tree.ns) {
                     domAddNsDef($tree, $tree.ns);
-               } else {
+                } else {
                     setObjAttr($tree, '$!ns', xmlCopyNamespace($tree.ns));
                     domAddNsDef($tree, $tree.ns);
                 }
@@ -241,11 +241,13 @@ package XML::LibXML::Dom {
 
         while $i.defined {
             if $i.next =:= $ns {
-                $i.next = _nc(xmlNodePtr, $ns.next);
-                $ns.next = xmlNsPtr;
+                #$i.next = _nc(xmlNodePtr, $ns.next);
+                $i.next = $ns.next;
+                $ns.next = xmlNs;
                 return 1;
             }
-            $i = _nc(xmlNode, $i.next);
+            #$i = _nc(xmlNode, $i.next);
+            $i = $i.next;
         }
 
         return 0;
