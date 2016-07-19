@@ -164,6 +164,10 @@ my class xmlDtd is export(:types) {
     method getPtr() {
         nativecast(xmlDtdPtr, self);
     }
+
+    method setType($type) {
+        $!type = $type;
+    }
 }
 
 my class xmlElement is export(:types) {

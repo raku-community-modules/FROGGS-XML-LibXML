@@ -40,7 +40,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         #~ xmlNodeGetBase(self.doc, self)
     #~ }
 
-    method type() {
+    method type() is aka<nodeType> {
         xmlElementType(nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlNode, '$!type')));
     }
 
@@ -659,6 +659,26 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         $old;
     }
 
+    # cw: To my eyes, $deep looks like it does nothing in the p5 
+    #     version
+    method cloneCommon($c) {
+        unless self.type == XML_DTD_NODE {
+            if self.doc.defined {
+                xmlSetTreeDoc($c.getNodePtr, self.doc.getNodePtr);
+            }
+            my $newDoc = domNewDocFragment();
+            xmlAddChild($c.getNodePtr, $newDoc.getNodePtr);
+        }
+    }
+
+    method firstChild {
+        _nc(XML::LibXML::Node, self.children);
+    }
+
+    method previousSibling {
+        _nc(XML::LibXML::Node, self.prev);
+    }
+
 }
 
 class XML::LibXML::Node does XML::LibXML::Nodish {
@@ -683,5 +703,35 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
             #~ !! self.Str(:!format)
     #~ }
 
+
+    method cloneNode {
+        # P6 clone NYI, so we have to do it the hard way.
+        # other nodes will almost certianly have to implement their
+        # own versions that *must* call callwith at the end.
+        my $c;
+        # cw: Oh, I had no idea how ugly this was going to turn out.
+        $c = XML::LibXML::New(
+            :_private($._private),
+            :type($.type),
+            :localname($.localname),
+            :children($.children),
+            :last($.last),
+            :parent($.parent),
+            :next($.next),
+            :prev($.prev),
+            :doc($.doc),
+            :ns($.ns),
+            :value($.value),
+            :properties($.properties),
+            :nsDef($.nsDef),
+            :psvi($.psvi),
+            :line($.line),
+            :extra($.extra)
+        );
+        return unless $c.defined;
+
+        self.cloneCommon($c);
+        $c;
+    }
 }
 
