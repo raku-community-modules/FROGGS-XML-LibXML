@@ -155,5 +155,18 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
 
     # Skipping because is_valid is pretty much an alias for validate()
     #ok $doc->is_valid(), ' TODO : Add test name');
+}
+{
+    #my $parser = XML::LibXML->new();
+    #$parser->validation(0);
+    #$parser->load_ext_dtd(0); # This should make libxml not try to get the DTD
 
+    my $xml = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://localhost/does_not_exist.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml"><head><title>foo</title></head><body><p>bar</p></body></html>';
+    my $doc;
+    lives-ok {
+        $doc = parse-string( $xml, :flags(XML_PARSE_DTDLOAD) );
+    }, 'can parse sample XML properly...';
+
+    isa-ok $doc, XML::LibXML::Document, '..and return a proper Document object';
 }
