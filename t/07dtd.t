@@ -168,5 +168,47 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
         $doc = parse-string( $xml, :flags(XML_PARSE_DTDLOAD) );
     }, 'can parse sample XML properly...';
 
-    isa-ok $doc, XML::LibXML::Document, '..and return a proper Document object';
+    isa-ok  $doc, XML::LibXML::Document, 
+            '..and return a proper Document object';
+}
+
+{
+    my $bad = 'example/bad.dtd';
+    fail "Example file example/bad.dtd does not exist. Cannot continue with tests."
+        unless $bad.IO.f;
+
+    my $dtd_p;
+    dies-ok { 
+        $dtd_p = XML::LibXML::DTD.new(
+            "-//Foo//Test DTD 1.0//EN", 'example/bad.dtd'
+        ) 
+    }, 'throws exception on bad invocation';
+
+    my $dtd = $bad.IO.open(:bin).slurp-rest;
+    fail "Example file could not be read into memory. Cannot continue with tests."
+        unless $dtd.defined;    
+
+    dies-ok { 
+        $dtd_p = XML::LibXML::DTD.parse_string($dtd) 
+    }, 'throws exception parsing bad file input';
+    
+
+    my $xml = "<!DOCTYPE test SYSTEM \"example/bad.dtd\">\n<test/>";
+
+    {
+        #my $parser = XML::LibXML->new;
+        #$parser->load_ext_dtd(0);
+        #$parser->validation(0);
+        my $doc = parse-string($xml);
+        isa-ok  $doc, XML::LibXML::Document, 
+                'example string parsed successfully';
+    }
+    {
+        #my $parser = XML::LibXML->new;
+        #$parser->load_ext_dtd(1);
+        #$parser->validation(0);
+        #undef $@;
+        lives-ok { parse-string( $xml, :flags(XML_PARSE_DTDLOAD) ) }, 
+                 'example string parsed with XML_PARSE_DTDLOAD';
+    }
 }

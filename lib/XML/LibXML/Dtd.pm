@@ -16,6 +16,20 @@ class XML::LibXML::DTD is xmlDtd is repr('CStruct') {
 	also does XML::LibXML::Nodish;
 	also does xmlNodeCasting;
 
+	multi method new($ext, $sys) {
+		sub xmlParseDTD(Str, Str) returns xmlDtd is native('xml2') { * }
+
+		my $dtd = xmlParseDTD($ext, $sys);
+		die "Can't parse DTD" unless $dtd.defined;
+
+		xmlSetTreeDoc($dtd, xmlDoc);
+		$dtd;
+	}
+
+	multi method new($dummy = 0) {
+		xmlDtd.new;
+	}
+
 	method getDtdPtr {
 		_nc(xmlDtdPtr, self);
 	}
@@ -35,9 +49,9 @@ class XML::LibXML::DTD is xmlDtd is repr('CStruct') {
 
     # cw: The parameter signature is in the test, although it doesn't look 
     #     to do anything.
-    method cloneNode($deep = 0) {
+    method cloneNode(XML::LibXML::DTD:D: $deep = 0) {
     	# cw: Even creating a new object makes things immutable!
-    	my $x = XML::LibXML::DTD.new(
+    	#my $x = XML::LibXML::DTD.new(
     		#:private($.private),
             #:type($.type),
             #:name($.name),
@@ -54,7 +68,8 @@ class XML::LibXML::DTD is xmlDtd is repr('CStruct') {
         	#:ExternalID($.ExternalID),
         	#:SystemID($.SystemID)
         	#:pentities($.pentities)
-		);
+		#);
+		my $x = XML::LibXML::DTD.new;
 		setObjAttr($x, '$!private', $.children, :what(xmlDtd));
 		#setObjAttr($x, '$!type', $.type, :what(xmlDtd));
 		self.getDtd.setType($.type);
@@ -88,6 +103,29 @@ class XML::LibXML::DTD is xmlDtd is repr('CStruct') {
 
 	method systemId is aka<getSystemId> {
 		self.SystemID;
+	}
+
+	method parse-string($str, $enc?) is aka<parse_string> {
+		sub xmlIOParseDTD(Pointer, xmlParserInputBufferPtr, int32)        returns xmlDtd                  is native('xml2') { * }
+		sub xmlAllocParserInputBuffer(int32)                              returns xmlParserInputBufferPtr is native('xml2') { * }
+		sub xmlParserInputBufferPush(xmlParserInputBufferPtr, int32, Str) returns int32                   is native('xml2') { * }
+
+		my $myenc = $enc.defined ?? $enc !! Nil;
+		my $xml_enc = Str;
+		if $myenc.defined {
+			$xml_enc = xmlParseCharEncoding($enc);
+
+			die "Could not parse using encoding '{$enc}'";
+		}
+
+		my $buffer = xmlAllocParserInputBuffer($xml_enc);
+		die "Could not allocate buffer" unless $buffer.defined;
+
+		xmlParserInputBufferPush($buffer, $str.chars, $str);
+		my $ret = xmlIOParseDTD(Pointer, $buffer, $xml_enc);
+		die "no DTD parsed!" unless $ret;
+
+		$ret;
 	}
 
 }
