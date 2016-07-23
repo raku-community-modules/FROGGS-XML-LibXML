@@ -92,13 +92,11 @@ method parse-string($str, :$url, :$flags) {
 
     # cw: -YYY- Not worring about encoding at this time.
     my $ret = xmlReadDoc($str, $myurl, Str, $myflags);
-    # cw: -XXX- $ret.defined prints out as "False", so why doesn't the
-    #     fail op below execute???
-    #say "A: {$ret.^name} / {$ret.defined}";
-    # cw: -XXX- If you comment this line, the test in 07dtd will fail.
-    say "P: {+(nativecast(Pointer, $ret))}";
-    fail XML::LibXML::Error.get-last(self, :orig($str)) 
-        unless $ret.defined;
+
+    # cw: Using fail() doesn't seem to be reliable, right now.
+    #fail XML::LibXML::Error.get-last(self, :orig($str)) 
+    #    unless $ret.defined;
+    die "Could not parse document!\n" unless $ret.defined;
     $ret;
 }
 

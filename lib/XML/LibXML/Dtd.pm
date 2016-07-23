@@ -123,7 +123,6 @@ class XML::LibXML::DTD is xmlDtd is repr('CStruct') {
 
 		xmlParserInputBufferPush($buffer, $str.chars, $str);
 		my $ret = xmlIOParseDTD(Pointer, $buffer, $xml_enc);
-		say "R: {$ret}";
 		die "no DTD parsed!" unless $ret.defined && $ret ~~ xmlDtd;
 
 		_nc(XML::LibXML::DTD, $ret);

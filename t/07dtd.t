@@ -211,6 +211,7 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
         my $doc;
         dies-ok { 
             $doc = parse-string( $xml, :flags(XML_PARSE_DTDLOAD) ); 
+            $doc;
         }, 
         'parsing example string with XML_PARSE_DTDLOAD throws exception';
     }
