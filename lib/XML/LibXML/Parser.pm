@@ -84,14 +84,21 @@ method parse(Str:D $str, Str :$uri, :$_flags) {
 method parse-string($str, :$url, :$flags) {
     sub xmlReadDoc(Str, Str, Str, int32) returns xmlDocPtr is native('xml2') { * }
 
-    return unless $str.defined && $str.trim.chars;
+    die "Empty string in call to parse-string" 
+        unless $str.defined && $str.trim.chars;
 
     my $myurl   = $url.defined   ??  $url   !! Str;
     my $myflags = $flags.defined ?? +$flags !! 0;
 
     # cw: -YYY- Not worring about encoding at this time.
     my $ret = xmlReadDoc($str, $myurl, Str, $myflags);
-    fail XML::LibXML::Error.get-last(self, :orig($str)) unless $ret.defined;
+    # cw: -XXX- $ret.defined prints out as "False", so why doesn't the
+    #     fail op below execute???
+    #say "A: {$ret.^name} / {$ret.defined}";
+    # cw: -XXX- If you comment this line, the test in 07dtd will fail.
+    say "P: {+(nativecast(Pointer, $ret))}";
+    fail XML::LibXML::Error.get-last(self, :orig($str)) 
+        unless $ret.defined;
     $ret;
 }
 

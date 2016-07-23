@@ -208,7 +208,31 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
         #$parser->load_ext_dtd(1);
         #$parser->validation(0);
         #undef $@;
-        lives-ok { parse-string( $xml, :flags(XML_PARSE_DTDLOAD) ) }, 
-                 'example string parsed with XML_PARSE_DTDLOAD';
+        my $doc;
+        dies-ok { 
+            $doc = parse-string( $xml, :flags(XML_PARSE_DTDLOAD) ); 
+        }, 
+        'parsing example string with XML_PARSE_DTDLOAD throws exception';
     }
+}
+
+{
+    # RT #71076: https://rt.cpan.org/Public/Bug/Display.html?id=71076
+
+    #my $parser = XML::LibXML->new();
+    my $doc = parse-string('
+<!DOCTYPE test [
+ <!ELEMENT test (#PCDATA)>
+ <!ATTLIST test
+  attr CDATA #IMPLIED
+ >
+]>
+<test>
+</test>
+');
+
+    my $dtd = $doc.internalSubset;
+    nok $dtd.hasAttributes, 'parsed DTD has no defined attributes';
+    # cw: Isn't this basically the same test?
+    #is_deeply( [ $dtd->attributes ], [], 'attributes' );
 }

@@ -679,6 +679,14 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         _nc(XML::LibXML::Node, self.prev);
     }
 
+    method hasAttributes {
+        return False 
+            if self.type == XML_ATTRIBUTE_NODE || 
+               self.type == XML_DTD_NODE;
+
+        self.properties.defined
+    }
+
 }
 
 class XML::LibXML::Node does XML::LibXML::Nodish {
