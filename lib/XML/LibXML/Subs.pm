@@ -68,5 +68,6 @@ sub xmlNodeGetContent(xmlNode)                returns Str        is native('xml2
 sub xmlFreeNodeList(xmlNodePtr)									is native('xml2') is export { * }
 
 # Memory
-sub xmlFree(OpaquePointer) is native('xml2') is export { * }
-sub xmlFreeDtd(xmlDtdPtr)  is native('xml2') is export { * }
+sub xmlFree(OpaquePointer)  is native('xml2') is export { * }
+sub xmlFreeDtd(xmlDtdPtr)   is native('xml2') is export { * }
+sub xmlFreeNode(xmlNodePtr) is native('xml2') is export { * }

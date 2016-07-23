@@ -687,6 +687,29 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         self.properties.defined
     }
 
+    method removeChildNodes {
+        my $frag = domNewDocFragment();
+        my $elem = self.children.getNode;
+
+        while ($elem) {
+            xmlUnlinkNode($elem.getNodePtr);
+            if $elem.type == any(XML_ATTRIBUTE_NODE, XML_DTD_NODE) {
+                xmlFreeNode($elem.getNodePtr);
+            } 
+            else {
+                if $frag.children.defined {
+                    domAddNodeToList($elem, $frag.last.getNode, xmlNode);
+                }
+                else {
+                    setObjAttr($frag, '$!children', $elem, :what(xmlNode));
+                    setObjAttr($frag, '$!last', $elem, :what(xmlNode));
+                    setObjAttr($elem, '$!paren', $frag);
+                }
+            }
+            $elem = $elem.next.getNode;
+        }
+    }
+
 }
 
 class XML::LibXML::Node does XML::LibXML::Nodish {

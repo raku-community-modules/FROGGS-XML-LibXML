@@ -234,6 +234,81 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
 
     my $dtd = $doc.internalSubset;
     nok $dtd.hasAttributes, 'parsed DTD has no defined attributes';
-    # cw: Isn't this basically the same test?
+    
+    # cw: -YYY-
+    # cw: The next test is a verification of .hasAttributes(). 
+    #     Of course, attributes() will be a pain in the ass to
+    #     port. I will circle back to it, later.
     #is_deeply( [ $dtd->attributes ], [], 'attributes' );
 }
+
+sub test_remove_dtd {
+    my ($test_name, &remove_sub) = @_;
+
+    #my $parser = XML::LibXML->new;
+    my $doc    = parse-file('example/dtd.xml');
+    my $dtd    = $doc.internalSubset;
+
+    &remove_sub($doc, $dtd);
+    nok $doc.internalSubset.defined, "removed DTD via {$test_name}";
+}
+
+test_remove_dtd( "unbindNode", sub ($doc, $dtd) {
+    $dtd.unbindNode;
+} );
+
+test_remove_dtd( "removeChild",sub ($doc, $dtd) {
+    $doc.removeChild($dtd);
+} );
+
+test_remove_dtd( "removeChildNodes", sub ($doc, $dtd) {
+    $doc.removeChildNodes;
+} );
+
+sub test_insert_dtd {
+    my ($test_name, &insert_sub) = @_;
+
+    #my $parser  = XML::LibXML->new;
+    my $src_doc = parse-file('example/dtd.xml');
+    my $dtd     = $src_doc.internalSubset;
+    my $doc     = parse-file('example/dtd.xml');
+
+    &insert_sub($doc, $dtd);
+
+    ok $doc.internalSubset.isSameNode($dtd), 
+       "insert DTD via $test_name";
+}
+
+test_insert_dtd( "insertBefore internalSubset", sub ($doc, $dtd) {
+    $doc.insertBefore($dtd, $doc.internalSubset);
+} );
+test_insert_dtd( "insertBefore documentElement", sub ($doc, $dtd) {
+    $doc.insertBefore($dtd, $doc.documentElement);
+} );
+test_insert_dtd( "insertAfter internalSubset", sub ($doc, $dtd) {
+    $doc.insertAfter($dtd, $doc.internalSubset);
+} );
+test_insert_dtd( "insertAfter documentElement", sub ($doc, $dtd) {
+    $doc.insertAfter($dtd, $doc.documentElement);
+} );
+test_insert_dtd( "replaceChild internalSubset", sub ($doc, $dtd) {
+    $doc.replaceChild($dtd, $doc.internalSubset);
+} );
+test_insert_dtd( "replaceChild documentElement", sub ($doc, $dtd) {
+    $doc.replaceChild($dtd, $doc.documentElement);
+} );
+test_insert_dtd( "replaceNode internalSubset", sub ($doc, $dtd) {
+    $doc.internalSubset.replaceNode($dtd);
+} );
+test_insert_dtd( "replaceNode documentElement", sub ($doc, $dtd) {
+    $doc.documentElement.replaceNode($dtd);
+} );
+test_insert_dtd( "appendChild", sub ($doc, $dtd) {
+    $doc.appendChild($dtd);
+} );
+test_insert_dtd( "addSibling internalSubset", sub ($doc, $dtd) {
+    $doc.internalSubset.addSibling($dtd);
+} );
+test_insert_dtd( "addSibling documentElement", sub ($doc, $dtd) {
+    $doc.documentElement.addSibling($dtd);
+} );

@@ -418,10 +418,64 @@ package XML::LibXML::Dom {
     }
 
     sub domReparentRemovedNode($node) is export {
-        xmlAddChild(
-            _nc(xmlNodePtr, domNewDocFragment($node.doc)), 
-            _nc(xmlNodePtr, $node)
-        ) if $node.type != any(XML_ATTRIBUTE_NODE, XML_DTD_NODE);
+        my $frag = domNewDocFragment($node.doc);
+        if $node.type != any(XML_ATTRIBUTE_NODE, XML_DTD_NODE) {
+            xmlAddChild($frag.getNodePtr, $node.getNodePtr);
+        }
+        #_domFixOwner($node, $frag);
+    }
+
+    sub domAddNodeToList(xmlNode $cur, xmlNode $leader, xmlNode $followup) 
+        is export
+    {
+        my ($c1, $c2, $p);
+
+        if $cur.defined {
+            $c1 = $c2 = $cur;
+        
+            if $leader.defined {
+                $p = $leader.parent.getNode;
+            }
+            elsif $followup.defined {
+                $p = $followup.parent.getNode;
+            }
+            else {
+                return 0;
+            }
+
+            if $cur.type == XML_DOCUMENT_FRAG_NODE {
+                $c1 = $cur.children.getNode;
+                while ($c1.defined) {
+                    setObjAttr($c1, '$!parent', $p);
+                    $c1 = $c1.next.getNode;
+                }
+                $c1 = $cur.children.getNode;
+                $c2 = $cur.last.getNode;
+            }
+            else {
+                setObjAttr($cur, '$!parent', $p);
+            }
+
+            if $c1.defined && $c2.defined && !$c1.isSameNode($leader) {
+                if $leader.defined {
+                    setObjAttr($leader, '$!next', $c1);
+                    setObjAttr($c1, '$!prev', $leader);
+                } 
+                elsif $p.defined {
+                    setObjAttr($p, '$!children', $c1);
+                }
+
+                if $followup.defined {
+                    setObjAttr($followup, '$!prev', $c2);
+                    setObjAttr($c2, '$!next', $followup);
+                }
+                elsif $p.defined {
+                    setObjAttr($p, '$!last', $c2);
+                }
+            }
+            return 1;
+        }
+        return 0;
     }
 
 }

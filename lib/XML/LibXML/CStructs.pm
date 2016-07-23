@@ -12,7 +12,7 @@ my class CStruct is repr('CStruct') is export(:types) { }
 
 my class  xmlAttr                    is repr('CStruct')  { ... }
 my native xmlAttributeType           is repr('P6int') is Int is nativesize(32) is export(:types) { }
-my class  xmlAttrPtr                 is repr('CPointer') is export(:types) { }
+my class  xmlAttrPtr                 is repr('CPointer') is export(:types) { ... }
 my class  xmlAutomataPtr             is repr('CPointer') { }
 my class  xmlAutomataStatePtr        is repr('CPointer') { }
 my class  xmlBuffer                  is repr('CStruct')  { ... }
@@ -28,7 +28,7 @@ my class  xmlElement                 is repr('CStruct')  { ... }
 my class  xmlElementPtr              is repr('CPointer') is Pointer { }
 my class  xmlHashTablePtr            is repr('CPointer') { }
 my class  xmlNode                    is repr('CStruct')  { ... }
-my class  xmlNodePtr                 is repr('CPointer') is Pointer is export(:types) { }
+my class  xmlNodePtr                 is repr('CPointer') is Pointer is export(:types) { ... }
 my class  xmlNodeSet                 is repr('CStruct')  { ... }
 my class  xmlNs                      is repr('CStruct') is export(:types) { ... } 
 my class  xmlNsPtr                   is repr('CPointer') is Pointer is export(:types) { } 
@@ -55,11 +55,19 @@ my class  xmlParserInputBufferPtr    is repr('CPointer')  is export(:types) { }
 
 my role xmlNodeCasting is export(:types) {
     method getNodePtr {
+        return if self ~~ xmlNodePtr;
         _nc(xmlNodePtr, self);
     }
 
     method getNode {
         _nc(xmlNode, self);
+    }
+}
+
+my class xmlNodePtr does xmlNodeCasting { }
+my class xmlAttrPtr does xmlNodeCasting { 
+    method getAttr {
+        _nc(xmlAttr, self);
     }
 }
 
