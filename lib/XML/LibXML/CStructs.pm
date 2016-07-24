@@ -60,6 +60,8 @@ my role xmlNodeCasting is export(:types) {
     }
 
     method getNode {
+        # cw: Try and save a few cycles.
+        return self if self.^name eq 'xmlNode';
         _nc(xmlNode, self);
     }
 }

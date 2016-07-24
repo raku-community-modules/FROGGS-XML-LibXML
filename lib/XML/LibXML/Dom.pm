@@ -79,7 +79,15 @@ package XML::LibXML::Dom {
     sub _domReconcileNs($tree, $unused is rw) {
         sub xmlCopyNamespace(xmlNs) returns xmlNs is native('xml2') { * }
 
-        if  $tree.ns.defined   
+        # cw: The use of can() here is a HACK. But we have so many
+        #     things trying to imitate the xmlNode clas that ARE
+        #     NOT, it's warranted. 
+        #
+        #     In the case of an xmlDtd masquerating as an xmlNode, 
+        #     calling .ns, would reallt be a call to .notations!
+        #     So wouldn't "$tree.ns.defined" be an orange to 
+        #     "$tree_dtd.notations.defined"?
+        if  $tree.can('ns') && $tree.ns.defined   
             && ($tree.type == XML_ELEMENT_NODE || 
                 $tree.type == XML_ATTRIBUTE_NODE) {
             my $ns = xmlSearchNs($tree.doc, $tree.parent, $tree.ns.uri);
@@ -149,7 +157,10 @@ package XML::LibXML::Dom {
         sub xmlCopyDtd(Pointer) returns Pointer is native('xml2') { * }
         sub xmlDocCopyNode(xmlNode, xmlDoc, int32) returns xmlNode is native('xml2') { * }
 
-        my xmlNode $return_node = $n ~~ xmlNodePtr ?? 
+        # cw: Yet another place where type checking will cause rakudo to
+        #     run endlessly.
+        #my xmlNode $return_node = $n ~~ xmlNodePtr ?? 
+        my $return_node = $n ~~ xmlNodePtr ?? 
             $n.getNode !! $n;
 
         if $move {
@@ -436,14 +447,22 @@ package XML::LibXML::Dom {
     }
 
     #sub domAddNodeToList(xmlNode $cur, xmlNode $leader, xmlNode $followup) 
-    sub domAddNodeToList($cur, $leader, $followup) is export {
+    sub domAddNodeToList($_cur, $_leader, $_followup) is export {
+        # cw: In this situation, any one of the parameters might
+        #     be either an object, or its associated pointer. 
+        #     We need to normalize this so we have a sane initial
+        #     condition.
+        my $cur = $_cur.getNode;
+        my $leader = $_leader.getNode;
+        my $followup = $_followup.getNode;
+
         my ($c1, $c2, $p);
 
         if $cur.defined {
             $c1 = $c2 = $cur;
         
             if $leader.defined {
-                $p = $leader.parent.getNode;
+                $p = $leader.getNode.parent.getNode;
             }
             elsif $followup.defined {
                 $p = $followup.parent.getNode;
@@ -462,7 +481,7 @@ package XML::LibXML::Dom {
                 $c2 = $cur.last.getNode;
             }
             else {
-                setObjAttr($cur, '$!parent', $p);
+                setObjAttr($cur, '$!parent', $p.getNodePtr);
             }
 
             if  $c1.defined && 
@@ -470,19 +489,19 @@ package XML::LibXML::Dom {
                 +$c1.getNodePtr != +$leader.getNodePtr
             {
                 if $leader.defined {
-                    setObjAttr($leader, '$!next', $c1);
-                    setObjAttr($c1, '$!prev', $leader);
+                    setObjAttr($leader, '$!next', $c1.getNodePtr);
+                    setObjAttr($c1, '$!prev', $leader.getNodePtr);
                 } 
                 elsif $p.defined {
-                    setObjAttr($p, '$!children', $c1);
+                    setObjAttr($p, '$!children', $c1.getNodePtr);
                 }
 
                 if $followup.defined {
-                    setObjAttr($followup, '$!prev', $c2);
-                    setObjAttr($c2, '$!next', $followup);
+                    setObjAttr($followup, '$!prev', $c2.getNodePtr);
+                    setObjAttr($c2, '$!next', $followup.getNodePtr);
                 }
                 elsif $p.defined {
-                    setObjAttr($p, '$!last', $c2);
+                    setObjAttr($p, '$!last', $c2.getNodePtr);
                 }
             }
             return 1;
@@ -491,7 +510,9 @@ package XML::LibXML::Dom {
     }
 
     sub domInsertBefore($node, $new, $ref) is export {
-        return if +$new.getNodePtr == +$ref.getNodePtr;
+        return $new
+            if  $new.defined && $ref.defined &&
+                +$new.getNodePtr == +$ref.getNodePtr;
         return unless $node.defined && $new.defined;
 
         if $ref.defined {
