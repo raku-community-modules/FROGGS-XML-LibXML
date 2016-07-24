@@ -182,8 +182,8 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     method isSameNode($n) {
         return False unless $n.defined;
         
-        my $n1 = _nc(Pointer, self);
-        my $n2 = _nc(Pointer, $n);
+        my $n1 = self ~~ Pointer ?? self !! _nc(Pointer, self);
+        my $n2 =   $n ~~ Pointer ??   $n !! _nc(Pointer, $n);
         return +$n1 == +$n2;
     }
 
@@ -708,6 +708,22 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             }
             $elem = $elem.next.getNode;
         }
+    }
+
+    method insertBefore($node, $refnode) {
+        my $r = domInsertBefore(self, $node, $refnode);
+        return unless $r.defined;
+
+        DomSetIntSubset(self.doc, $r) if $r.type == XML_DTD_NODE;
+        # Fix owner: $r and $self
+    }
+
+    method insertAfter($node, $refnode) {
+        my $r = domInsertAfter(self, $node, $refnode);
+        return unless $r.defined;
+
+        DomSetIntSubset(self.doc, $r) if $r.type == XML_DTD_NODE;
+        # Fix owner: $r and self
     }
 
 }

@@ -65,6 +65,7 @@ my role xmlNodeCasting is export(:types) {
 }
 
 my class xmlNodePtr does xmlNodeCasting { }
+
 my class xmlAttrPtr does xmlNodeCasting { 
     method getAttr {
         _nc(xmlAttr, self);

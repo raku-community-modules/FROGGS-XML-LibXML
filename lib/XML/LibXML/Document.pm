@@ -524,7 +524,7 @@ method removeInternalSubset {
 
     xmlUnlinkNode($dtd.getNodePtr);
     setObjAttr(self, '$!intSubset', xmlDtdPtr, :what(xmlDoc));
-    $dtd;
+    _nc(XML::LibXML::DTD, $dtd);
 }
 
 method removeExternalSubset {
