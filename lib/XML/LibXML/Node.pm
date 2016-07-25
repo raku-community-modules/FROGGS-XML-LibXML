@@ -756,6 +756,90 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         $ret;
     }
 
+    method replaceNode($node) {
+        return if domIsParent(self, $node);
+        
+        #owner = PmmOWNERPO(PmmPROXYNODE(self));
+        my $ret;
+        if self.type != XML_ATTRIBUTE_NODE {
+            # cw: -YYY- We may need to worry about self.parent
+            $ret = domReplaceChild(
+                self.parent.getNode, $node.getNode , self.getNode
+            );
+        }
+        else {
+            $ret = xmlReplaceNode( self, $node );
+        }
+        if  $ret.defined {
+            domReparentRemovedNode($ret);
+            
+            #RETVAL = PmmNodeToSv(ret, PmmOWNERPO(PmmPROXYNODE(ret)));
+            if $node.type == XML_DTD_NODE {
+                DomSetIntSubset($node.doc, $node);
+            }
+            #if ( nNode->_private != NULL ) {
+            #    PmmFixOwner(PmmPROXYNODE(nNode), owner);
+            #}
+        }
+        else {
+            # cw: Again, is this fatal, or should this be something 
+            #     we can catch?
+            warn "replacement failed";
+            return;
+        }
+        $ret;
+    }
+
+    method addSibling($node) {
+        sub xmlAddSibling(xmlNode, xmlNode) returns xmlNode is native('xml2') { * }
+        sub xmlCopyNode(xmlNode, int32)     returns xmlNode is native('xml2') { * }
+
+        if $node.type == XML_DOCUMENT_FRAG_NODE {
+            # cw: This does NOT sound fatal.
+            warn "Adding document fragments with addSibling not yet supported!";
+            return;
+        }
+        #owner = PmmOWNERPO(PmmPROXYNODE(self));
+
+        my $ret;
+        if  self.type == XML_TEXT_NODE  && 
+            $node.type == XML_TEXT_NODE &&
+            self.name eq $node.name
+        {
+            # As a result of text merging, the added node may be freed.
+            my $copy = xmlCopyNode($node, 0);
+            $ret = xmlAddSibling(self.getNode, $copy);
+
+            if $ret.defined {
+                #RETVAL = PmmNodeToSv(ret, owner);
+
+                # Unlink original node.
+                xmlUnlinkNode($node.getNodePtr);
+                domReparentRemovedNode($node);
+            }
+            else {
+                xmlFreeNode($copy);
+                return;
+            }
+        }
+        else {
+            $ret = xmlAddSibling( self, $node );
+
+            if $ret.defined {
+                #RETVAL = PmmNodeToSv(ret, owner);
+                if ($node.type == XML_DTD_NODE) {
+                    DomSetIntSubset(self.doc, $node);
+                }
+                #PmmFixOwner(SvPROXYNODE(RETVAL), owner);
+            }
+            else {
+                return;    
+            }
+        }
+
+        $ret;
+    }
+
 }
 
 class XML::LibXML::Node does XML::LibXML::Nodish {

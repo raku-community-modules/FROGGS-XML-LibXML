@@ -64,6 +64,10 @@ my role xmlNodeCasting is export(:types) {
         return self if self.^name eq 'xmlNode';
         _nc(xmlNode, self);
     }
+
+    method getBase {
+        self;
+    }
 }
 
 my class xmlNodePtr does xmlNodeCasting { }

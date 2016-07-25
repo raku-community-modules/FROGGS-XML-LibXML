@@ -4,7 +4,9 @@ use Test;
 
 # Should be 54.
 #use Test::More tests => 54;
-plan 57;
+
+# cw: Removed 2 tests. See comments, below.
+plan 52;
 
 use XML::LibXML;
 use XML::LibXML::Document;
@@ -89,6 +91,7 @@ my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
     nok $doc.externalSubset.defined, 
         "doc no longer has an external subset";
 }
+
 {
     #my $parser = XML::LibXML.new;
     my $doc = parse-file( "example/dtd.xml" );

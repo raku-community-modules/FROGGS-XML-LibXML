@@ -614,7 +614,7 @@ package XML::LibXML::Dom {
         True;
     }
 
-    sub domIsParent($cur, $ref) {
+    sub domIsParent($cur, $ref) is export {
         return False unless $cur.defined && $ref.defined;
         return True if +$cur.getNodePtr == +$ref.getNodePtr;
 
@@ -786,10 +786,26 @@ package XML::LibXML::Dom {
         }
         else {
             domAddNodeToList( $new, $old.prev, $old.next );
-            # cw: May segfault, and that would SUCK!
-            setObjAttr($old, '$!parent', xmlNodePtr, :what($old.getBase));
-            setObjAttr($old, '$!next', xmlNodePtr, :what($old.getBase));
-            setObjAttr($old, '$!prev', xmlNodePtr, :what($old.getBase));
+    
+            # cw: With the introduction of getBase, we should probably
+            #     remove the :what named parameter.
+            #
+            # cw: -XXX- THIS NEEDS TO BE REVISITED!!!
+            #     I don't know why the general case in the else clause
+            #     doesn't work for xmlNode and ONLY xmlNode. 
+            #     This kind of special casing makes my teeth hurt, but
+            #     it solves a problem, so I'm leaving it until I can 
+            #     circle back.
+            if $old.^name eq 'xmlNode' {
+                setObjAttr($old, '$!parent', xmlNodePtr);
+                setObjAttr($old, '$!next', xmlNodePtr);
+                setObjAttr($old, '$!prev', xmlNodePtr);
+            }
+            else {
+                setObjAttr($old, '$!parent', xmlNodePtr, :what($old.getBase));
+                setObjAttr($old, '$!next', xmlNodePtr, :what($old.getBase));
+                setObjAttr($old, '$!prev', xmlNodePtr, :what($old.getBase));
+            }
         }
 
         if ( $frag.defined ) {
