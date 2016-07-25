@@ -30,6 +30,10 @@ class XML::LibXML::DTD is xmlDtd is repr('CStruct') {
 		xmlDtd.new;
 	}
 
+	method getBase {
+		xmlDtd;
+	}
+
 	# cw: -YYY- This is extraneous because xmlDtd has getPtr().
 	#     Will circle back and remove it, later.
 	method getDtdPtr {

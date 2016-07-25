@@ -23,6 +23,10 @@ method new($name) {
 	xmlNewNode(xmlNs, $name);
 }
 
+method getBase {
+	xmlElement;
+}
+
 method type() {
 	xmlElementType(
     	nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlElement, '$!type'))

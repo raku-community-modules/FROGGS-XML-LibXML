@@ -36,6 +36,10 @@ method getDoc {
     _nc(xmlDoc, self);
 }
 
+method getBase {
+    xmlDoc;
+}
+
 method process-xincludes {
     sub xmlXIncludeProcessFlags(xmlDoc, int32) returns int32 is native('xml2') { * }
     xmlXIncludeProcessFlags(self, 0)

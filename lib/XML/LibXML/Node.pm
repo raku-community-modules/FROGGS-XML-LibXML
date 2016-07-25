@@ -726,12 +726,46 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         # Fix owner: $r and self
     }
 
+    method replaceChild($node, $repnode) {
+        if self.type == XML_DOCUMENT_NODE {
+            given $node.type {
+                when XML_ELEMENT_NODE {
+                    warn "replaceChild with an element on a document node not supported yet!";
+                    return;
+                }
+
+                when XML_DOCUMENT_FRAG_NODE {
+                    warn "replaceChild with a document fragment node on a document node not supported yet!";
+                    return;
+                }
+
+                when XML_TEXT_NODE | XML_CDATA_SECTION_NODE {
+                    warn "replaceChild with a text node not supported on a document node!";
+                    return;
+                }
+            }
+        }
+
+        my $ret = domReplaceChild(self, $node, $repnode);
+        return unless $ret.defined;
+
+        domReparentRemovedNode($ret);
+        if ($node.type == XML_DTD_NODE) {
+            DomSetIntSubset($node.doc, $node);
+        }
+        $ret;
+    }
+
 }
 
 class XML::LibXML::Node does XML::LibXML::Nodish {
 
     method name() {
         self._name();
+    }
+
+    method getBase {
+        xmlNode;
     }
     
     #~ multi method Str() {

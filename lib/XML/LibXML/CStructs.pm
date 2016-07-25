@@ -20,7 +20,7 @@ my native xmlBufferAllocationScheme  is repr('P6int') is Int is nativesize(32) i
 my native xmlChar                    is repr('P6int') is Int is nativesize(8) is unsigned is export(:types) { }
 my class  xmlDictPtr                 is repr('CPointer') { }
 my class  xmlDtd                     is repr('CStruct')  is export(:types) { ... }  
-my class  xmlDtdPtr                  is repr('CPointer') is export(:types) { }
+my class  xmlDtdPtr                  is repr('CPointer') is export(:types) { ... }
 my class  xmlDoc                     is repr('CStruct')  is export(:types) { ... }
 my class  xmlDocPtr                  is repr('CPointer') is Pointer is export(:types) { }
 my class  xmlError                   is repr('CStruct')  { ... }
@@ -55,7 +55,7 @@ my class  xmlParserInputBufferPtr    is repr('CPointer')  is export(:types) { }
 
 my role xmlNodeCasting is export(:types) {
     method getNodePtr {
-        return if self ~~ xmlNodePtr;
+        return self if self.^name eq 'xmlNodePtr';
         _nc(xmlNodePtr, self);
     }
 
@@ -67,6 +67,25 @@ my role xmlNodeCasting is export(:types) {
 }
 
 my class xmlNodePtr does xmlNodeCasting { }
+
+my class xmlDtdPtr  does xmlNodeCasting { 
+    method getDtd {
+        _nc(xmlDtd, self);
+    }
+
+    method getP {
+        _nc(Pointer, self);
+    } 
+
+    # cw: This will all need to be straightened out.
+    #     I don't like all of the casting that's being
+    #     thrown arouond.
+    method isSameNode(xmlDtdPtr:D: $n) {
+        return False unless $n.defined;
+        my $np = $n ~~ Pointer ?? $n !! $n.getP;
+        +self.getP == +$np;
+    }
+}
 
 my class xmlAttrPtr does xmlNodeCasting { 
     method getAttr {
@@ -172,7 +191,11 @@ my class xmlDtd is export(:types) {
     has Str              $.SystemID;   # URI for a SYSTEM or PUBLIC DTD
     has OpaquePointer    $.pentities;  # Hash table for param entities if any
 
-    method getPtr() {
+    method getP{
+        nativecast(Pointer, self);
+    }
+
+    method getPtr {
         nativecast(xmlDtdPtr, self);
     }
 

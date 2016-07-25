@@ -205,6 +205,7 @@ package XML::LibXML::Dom {
             # cw: -YYY- There WAS an endless loop issue here.
             domReconcileNs($return_node);
         }
+        $return_node;
     }
 
     #sub domGetAttrNode(xmlNode $n, Str $a) is export {
@@ -484,8 +485,8 @@ package XML::LibXML::Dom {
                 setObjAttr($cur, '$!parent', $p.getNodePtr);
             }
 
-            if  $c1.defined && 
-                $c2.defined && 
+            if  $c1.defined     && 
+                $leader.defined && 
                 +$c1.getNodePtr != +$leader.getNodePtr
             {
                 if $leader.defined {
@@ -702,19 +703,115 @@ package XML::LibXML::Dom {
     # cw: New DOM manipulation subs that really should be somewhere 
     #     else.
     sub DomSetIntSubset($doc, $ref) is export {
-        my $old_dtd = $doc.intSubset;
-        return unless +$ref.getNodePtr != +$old_dtd.getNodePtr;
-        
-        if $old_dtd.defined {
-            xmlUnlinkNode($old_dtd);
+        if $ref.defined {
+            # cw: Should ALWAYS be xmlDtdPtr;
+            my $old_dtd = $doc.intSubset;
+            # cw: -YYY- Should really get this straight, in the past, 
+            #     op< =:= > did not reliably test equivalence of 
+            #     repr('CPointer') objects which is why the strategy 
+            #     used in isSameNode() was developed. Howevere that 
+            #     stragegy is not working here, for some reason. 
+            #
+            #     "Invocant requires an instance of type xmlNodePtr, 
+            #      but a type object was passed.  Did you forget a .new?
+            #      in method Numeric..."
+            #
+            #     But how am I encoutering a type object when both 
+            #     scalars say they are defined?!?
+            return if   $ref.defined && $old_dtd.defined &&
+                        #$ref.getDtdPtr =:= $old_dtd;
+                        $old_dtd.isSameNode($ref);
+            
+            if $old_dtd.defined {
+                xmlUnlinkNode($old_dtd.getNodePtr);
 
-            # cw: -XXX- 
-            #if (PmmPROXYNODE(old_dtd) == NULL) {
-            #    xmlFreeDtd((xmlDtdPtr)old_dtd);
-            #}
+                # cw: -XXX- 
+                #if (PmmPROXYNODE(old_dtd) == NULL) {
+                #    xmlFreeDtd((xmlDtdPtr)old_dtd);
+                #}
+            }
         }
 
-        setObjAttr($doc, '$!intSubset', $ref.getDtdPtr);
+        setObjAttr(
+            $doc, 
+            '$!intSubset', 
+            $ref.defined ??  $ref.getDtdPtr !! $ref
+        );
+    }
+
+    sub domReplaceChild($node, $_new, $old) is export {
+        return unless $node.defined;
+        return $_new if +$_new.getNodePtr == +$old.getNodePtr;
+
+        my $new = $_new;
+        unless $new.defined {
+            return domRemoveChild($node, $old);
+        }
+
+        unless $old.defined {
+            domAppendChild($node, $new);
+            return;
+        }
+
+        if  !( domTestHierarchy($node, $new) &&
+               domTestDocument($node, $new))
+        {
+            # cw: -YYY- Again, is this fatal?
+            warn "replaceChild: HIERARCHY_REQUEST_ERR\n";
+            return;
+        }
+
+        if +$new.doc.getNodePtr == +$node.doc.getNodePtr {
+            domUnlinkNode( $new );
+        }
+        else {
+            # WRONG_DOCUMENT_ERR - non conform implementation 
+            $new = domImportNode( $node.doc, $new, 1, 1 );
+        }
+
+        my ($frag, $frag_next);
+        if +$old.getNodePtr == +$node.children && 
+           +$old.getNodePtr == +$node.last 
+        {
+            domRemoveChild( $node, $old );
+            domAppendChild( $node, $new );
+        }
+        elsif $new.type == XML_DOCUMENT_FRAG_NODE &&
+              !$new.children.defined  
+        {
+            # want to replace with an empty fragment, then remove ... 
+            $frag = $new.children;
+            $frag_next = $old.next;
+            domRemoveChild( $node, $old );
+        }
+        else {
+            domAddNodeToList( $new, $old.prev, $old.next );
+            # cw: May segfault, and that would SUCK!
+            setObjAttr($old, '$!parent', xmlNodePtr, :what($old.getBase));
+            setObjAttr($old, '$!next', xmlNodePtr, :what($old.getBase));
+            setObjAttr($old, '$!prev', xmlNodePtr, :what($old.getBase));
+        }
+
+        if ( $frag.defined ) {
+            while ($frag && +$frag != +$frag_next ) {
+                domReconcileNs($frag.getNode);
+                $frag = $frag.getNode.next;
+            }
+        } elsif $new.type != XML_ENTITY_REF_NODE {
+            domReconcileNs($new);
+        }
+
+        return $old;
+    }
+
+    sub domRemoveChild($node, $old) {
+        return unless $node.defined && $old.defined;        
+        return if $old.type == any(XML_ATTRIBUTE_NODE, XML_NAMESPACE_DECL);
+        return if +$node.getNodePtr != +$old.parent;
+
+        domUnlinkNode( $old );
+        domReconcileNs( $old ) if $old.type == XML_ELEMENT_NODE;
+        $old ;
     }
 
 }

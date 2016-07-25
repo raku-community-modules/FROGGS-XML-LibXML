@@ -18,6 +18,10 @@ use NativeCall;
 # cw: Constantly calling refresh may kill performance... so is there a way to check
 #     if the underlying object really needs it?
 
+method getBase {
+    xmlAttr;
+}
+
 method name() {
     nqp::nativecallrefresh(self);
     self.ns && self.ns.name ?? self.ns.name ~ ':' ~ self.localname !! self.localname
