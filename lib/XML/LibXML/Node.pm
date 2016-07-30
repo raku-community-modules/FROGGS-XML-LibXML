@@ -641,22 +641,20 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         is aka<unlink>
         is aka<unlinkNode>
     {
+        DomReparentRemovedNode(self);
         xmlUnlinkNode(self.getNodePtr)
-            if self.type != any(XML_DOCUMENT_NODE, XML_DOCUMENT_FRAG_NODE);
-        domReparentRemovedNode(self);
+            if  self.type == XML_DOCUMENT_NODE       || 
+                self.type == XML_DOCUMENT_FRAG_NODE;
+        
     }
 
     method removeChild(XML::LibXML::Nodish:D: $old) {
-        return unless $old.defined;
-        return if $old.type == any(XML_ATTRIBUTE_NODE, XML_NAMESPACE_DECL);
-        return unless self.getNodePtr =:= $old.parent;
+        my $ret = domRemoveChild( self, $old );
+        return unless $ret.defined;
 
-        domUnlinkNode($old);
-        if $old.type == XML_ELEMENT_NODE {
-            domReconcileNs($old);
-        }
-        domReparentRemovedNode($old);
-        $old;
+        DomReparentRemovedNode($old);
+        #RETVAL = PmmNodeToSv(ret, NULL);
+        $ret;        
     }
 
     # cw: To my eyes, $deep looks like it does nothing in the p5 
@@ -749,7 +747,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         my $ret = domReplaceChild(self, $node, $repnode);
         return unless $ret.defined;
 
-        domReparentRemovedNode($ret);
+        DomReparentRemovedNode($ret);
         if ($node.type == XML_DTD_NODE) {
             DomSetIntSubset($node.doc, $node);
         }
@@ -771,7 +769,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             $ret = xmlReplaceNode( self, $node );
         }
         if  $ret.defined {
-            domReparentRemovedNode($ret);
+            DomReparentRemovedNode($ret);
             
             #RETVAL = PmmNodeToSv(ret, PmmOWNERPO(PmmPROXYNODE(ret)));
             if $node.type == XML_DTD_NODE {
@@ -815,7 +813,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
                 # Unlink original node.
                 xmlUnlinkNode($node.getNodePtr);
-                domReparentRemovedNode($node);
+                DomReparentRemovedNode($node);
             }
             else {
                 xmlFreeNode($copy);

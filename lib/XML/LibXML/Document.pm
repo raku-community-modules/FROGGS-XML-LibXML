@@ -421,12 +421,14 @@ method setDocumentElement($e) {
 
 method externalSubset(:$pointer) {
     $pointer ?? 
-        $.extSubset  !! _nc(XML::LibXML::DTD, $.extSubset);
+        $.extSubset  !! 
+        $.extSubset.defined ??_nc(XML::LibXML::DTD, $.extSubset) !! Nil;
 }
 
 method internalSubset(:$pointer) {
     $pointer ??
-        $.intSubset !! _nc(XML::LibXML::DTD, $.intSubset);
+        $.intSubset !! 
+        $.intSubset.defined ?? _nc(XML::LibXML::DTD, $.intSubset) !! Nil;
 }
 
 method createExternalSubset($pname, $extid, $sysid) {

@@ -60,10 +60,13 @@ my role xmlNodeCasting is export(:types) {
     }
 
     method getNode {
-        # cw: Try and save a few cycles.
         return self if self.^name eq 'xmlNode';
         _nc(xmlNode, self);
     }
+
+    method getP {
+        _nc(Pointer, self);
+    } 
 
     method getBase {
         self;
@@ -76,10 +79,6 @@ my class xmlDtdPtr  does xmlNodeCasting {
     method getDtd {
         _nc(xmlDtd, self);
     }
-
-    method getP {
-        _nc(Pointer, self);
-    } 
 
     # cw: This will all need to be straightened out.
     #     I don't like all of the casting that's being

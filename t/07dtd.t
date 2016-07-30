@@ -13,6 +13,10 @@ use XML::LibXML::Document;
 use XML::LibXML::Dtd;
 use XML::LibXML::Enums;
 
+# -XXX- Remove!
+use XML::LibXML::Subs;
+use XML::LibXML::CStructs :types;
+
 my $htmlPublic = "-//W3C//DTD XHTML 1.0 Transitional//EN";
 my $htmlSystem = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
 
@@ -252,8 +256,20 @@ sub test_remove_dtd {
     my $doc    = parse-file('example/dtd.xml');
     my $dtd    = $doc.internalSubset;
 
+    diag "T1 {$doc.intSubset.defined} {+$doc.intSubset.getP}";
+    diag "T1a {+$doc.intSubset.getDtd.doc.getP} {+$doc.getP} {+$dtd.doc.getP}";
+
     &remove_sub($doc, $dtd);
+
+    # cw: This is a gotcha. Is this due to scope limitations?
+    # -XXX- Testing only. REMOVE.
+    #setObjAttr($doc, '$!intSubset', xmlDtdPtr, :what(xmlDoc));
+
+    say "IS {$doc.intSubset.defined}";
+
     nok $doc.internalSubset.defined, "removed DTD via {$test_name}";
+    
+    diag "T2 {$doc.intSubset.defined} {+$doc.intSubset.getP}";
 }
 
 test_remove_dtd( "unbindNode", sub ($doc, $dtd) {
