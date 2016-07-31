@@ -645,7 +645,6 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         xmlUnlinkNode(self.getNodePtr)
             if  self.type == XML_DOCUMENT_NODE       || 
                 self.type == XML_DOCUMENT_FRAG_NODE;
-        
     }
 
     method removeChild(XML::LibXML::Nodish:D: $old) {
@@ -654,6 +653,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
         DomReparentRemovedNode($old);
         #RETVAL = PmmNodeToSv(ret, NULL);
+        nqp::nativecallrefresh(self);
         $ret;        
     }
 
@@ -706,6 +706,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             }
             $elem = $elem.next.getNode;
         }
+        nqp::nativecallrefresh(self);
     }
 
     method insertBefore($node, $refnode) {

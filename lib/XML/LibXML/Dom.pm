@@ -542,10 +542,9 @@ package XML::LibXML::Dom {
 
         if $frag.defined {
             $mynew = $frag;
-            while (
-                $frag.defined && 
-                ! +$frag.getNodePtr == +$ref.getNodePtr
-            ) {
+            while   $frag.defined && 
+                    +$frag.getNodePtr != +$ref.getNodePtr
+            {
                 domReconcileNs($frag);
                 $frag = $frag.getNode.next;
             }
