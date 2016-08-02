@@ -693,20 +693,10 @@ package XML::LibXML::Dom {
         if $ref.defined {
             # cw: Should ALWAYS be xmlDtdPtr;
             my $old_dtd = $doc.intSubset;
-            # cw: -YYY- Should really get this straight, in the past, 
-            #     op< =:= > did not reliably test equivalence of 
-            #     repr('CPointer') objects which is why the strategy 
-            #     used in isSameNode() was developed. Howevere that 
-            #     stragegy is not working here, for some reason. 
-            #
-            #     "Invocant requires an instance of type xmlNodePtr, 
-            #      but a type object was passed.  Did you forget a .new?
-            #      in method Numeric..."
-            #
-            #     But how am I encoutering a type object when both 
-            #     scalars say they are defined?!?
-            say "R1 {+$ref.getP}";
-            say "R2 {+$old_dtd.getP}" if $old_dtd.defined;
+
+            # cw: May have issues if the object has been
+            #     modified and nqp::nativecallrefresh() has not
+            #     been called on the backing repr('CStruct')
             return if   $ref.defined     && 
                         $old_dtd.defined &&
                         #$ref.getDtdPtr =:= $old_dtd;
@@ -721,8 +711,6 @@ package XML::LibXML::Dom {
                 #}
             }
         }
-
-        say "R {$ref.defined} / {$ref.^name} / {$doc.^name}";
  
         setObjAttr(
             $doc, 
@@ -730,18 +718,9 @@ package XML::LibXML::Dom {
             $ref.defined ?? $ref.getDtdPtr !! xmlDtdPtr
         );
         nqp::nativecallrefresh($doc);
-
-        say "MD {$doc.intSubset.defined}";
-        say "M {+$doc.intSubset.getP}" if $doc.intSubset.defined;
     }
 
     sub DomReparentRemovedNode($node) is export {
-
-        say "D {$node.doc.intSubset.defined}";
-        say "D {+$node.doc.intSubset.getP}" if $node.doc.intSubset.defined;
-        say "N {$node.defined}";
-        say "N {+$node.getP}" if $node.defined;
-
         given $node.type {
             when XML_ATTRIBUTE_NODE {
                 # Do nothing
@@ -761,18 +740,10 @@ package XML::LibXML::Dom {
             #     subset from the document.
 
             when XML_DTD_NODE {
-                say "N1 {+$node.doc.intSubset.getP}" 
-                    if $node.doc.intSubset.defined;
-                say "N2 {+$node.getP}";
-                say "N3 {$node.defined}";
-                say "N4 {+$node.doc.intSubset.getP == +$node.getP}"
-                    if $node.doc.intSubset.defined && $node.defined;
-
                 if  $node.doc.intSubset.defined &&
                     $node.defined               &&
                     +$node.doc.intSubset.getP == +$node.getP 
                 {
-                    say "Blank!";
                     DomSetIntSubset($node.doc, xmlDtdPtr);
                 }
             }

@@ -256,20 +256,8 @@ sub test_remove_dtd {
     my $doc    = parse-file('example/dtd.xml');
     my $dtd    = $doc.internalSubset;
 
-    diag "T1 {$doc.intSubset.defined} {+$doc.intSubset.getP}";
-    diag "T1a {+$doc.intSubset.getDtd.doc.getP} {+$doc.getP} {+$dtd.doc.getP}";
-
     remove_sub($doc, $dtd);
-
-    # cw: This is a gotcha. Is this due to scope limitations?
-    # -XXX- Testing only. REMOVE.
-    #setObjAttr($doc, '$!intSubset', xmlDtdPtr, :what(xmlDoc));
-    
-    say "IS {$doc.intSubset.defined}";
-
     nok $doc.internalSubset.defined, "removed DTD via {$test_name}";
-
-    diag "T2 {$doc.intSubset.defined} {$doc.intSubset.getP.gist}";
 }
 
 test_remove_dtd( "unbindNode", sub ($doc, $dtd) {
