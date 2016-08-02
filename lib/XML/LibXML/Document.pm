@@ -420,12 +420,14 @@ method setDocumentElement($e) {
 }
 
 method externalSubset(:$pointer) {
+    nqp::nativecallrefresh(self);
     $pointer ?? 
         $.extSubset  !! 
         $.extSubset.defined ??_nc(XML::LibXML::DTD, $.extSubset) !! Nil;
 }
 
 method internalSubset(:$pointer) {
+    nqp::nativecallrefresh(self);
     $pointer ??
         $.intSubset !! 
         $.intSubset.defined ?? _nc(XML::LibXML::DTD, $.intSubset) !! Nil;

@@ -264,7 +264,7 @@ sub test_remove_dtd {
     # cw: This is a gotcha. Is this due to scope limitations?
     # -XXX- Testing only. REMOVE.
     #setObjAttr($doc, '$!intSubset', xmlDtdPtr, :what(xmlDoc));
-
+    
     say "IS {$doc.intSubset.defined}";
 
     nok $doc.internalSubset.defined, "removed DTD via {$test_name}";

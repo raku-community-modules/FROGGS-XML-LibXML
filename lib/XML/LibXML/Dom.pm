@@ -4,6 +4,7 @@ use XML::LibXML::CStructs :types;
 
 package XML::LibXML::Dom {
 
+    use nqp;
     use NativeCall;
 
     use XML::LibXML::Enums;
@@ -557,10 +558,12 @@ package XML::LibXML::Dom {
     }
 
     sub domInsertAfter($node, $new, $ref) is export {
-        $ref.defined ??
-            domInsertBefore($node, $new, xmlNode) !!
-            domInsertBefore($node, $new, $ref.next.getNode)
-
+        domInsertBefore(
+            $node, 
+            $new, 
+            $ref.defined && $ref.next.defined ??
+                $ref.next.getNode !! xmlNode
+        );
     }
 
     sub domTestDocument($cur, $ref) {
@@ -726,6 +729,7 @@ package XML::LibXML::Dom {
             '$!intSubset', 
             $ref.defined ?? $ref.getDtdPtr !! xmlDtdPtr
         );
+        nqp::nativecallrefresh($doc);
 
         say "MD {$doc.intSubset.defined}";
         say "M {+$doc.intSubset.getP}" if $doc.intSubset.defined;
