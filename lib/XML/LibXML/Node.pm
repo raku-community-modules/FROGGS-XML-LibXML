@@ -182,8 +182,8 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     method isSameNode($n) {
         return False unless $n.defined;
         
-        my $n1 = self ~~ Pointer ?? self !! _nc(Pointer, self);
-        my $n2 =   $n ~~ Pointer ??   $n !! _nc(Pointer, $n);
+        my $n1 = self ~~ Pointer ?? self !! self.getP;
+        my $n2 =   $n ~~ Pointer ??   $n !!   $n.getP;
         return +$n1 == +$n2;
     }
 
@@ -745,12 +745,13 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             }
         }
 
+        my $repDoc = $repnode.doc;
         my $ret = domReplaceChild(self, $node, $repnode);
         return unless $ret.defined;
 
         DomReparentRemovedNode($ret);
         if ($node.type == XML_DTD_NODE) {
-            DomSetIntSubset($node.doc, $node);
+            DomSetIntSubset($repDoc, $node);
         }
         $ret;
     }
@@ -759,6 +760,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         return if domIsParent(self, $node);
         
         #owner = PmmOWNERPO(PmmPROXYNODE(self));
+        my $oldDoc = self.doc;
         my $ret;
         if self.type != XML_ATTRIBUTE_NODE {
             # cw: -YYY- We may need to worry about self.parent
@@ -774,7 +776,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
             
             #RETVAL = PmmNodeToSv(ret, PmmOWNERPO(PmmPROXYNODE(ret)));
             if $node.type == XML_DTD_NODE {
-                DomSetIntSubset($node.doc, $node);
+                DomSetIntSubset($oldDoc, $node);
             }
             #if ( nNode->_private != NULL ) {
             #    PmmFixOwner(PmmPROXYNODE(nNode), owner);

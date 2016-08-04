@@ -757,7 +757,7 @@ package XML::LibXML::Dom {
 
     sub domReplaceChild($node, $_new, $old) is export {
         return unless $node.defined;
-        return $_new if +$_new.getNodePtr == +$old.getNodePtr;
+        return $_new if +$_new.getP == +$old.getP;
 
         my $new = $_new;
         unless $new.defined {
@@ -766,7 +766,7 @@ package XML::LibXML::Dom {
 
         unless $old.defined {
             domAppendChild($node, $new);
-            return;
+            return $old;
         }
 
         if  !( domTestHierarchy($node, $new) &&
@@ -777,7 +777,7 @@ package XML::LibXML::Dom {
             return;
         }
 
-        if +$new.doc.getNodePtr == +$node.doc.getNodePtr {
+        if +$new.doc.getP == +$node.doc.getP {
             domUnlinkNode( $new );
         }
         else {
@@ -786,8 +786,8 @@ package XML::LibXML::Dom {
         }
 
         my ($frag, $frag_next);
-        if +$old.getNodePtr == +$node.children && 
-           +$old.getNodePtr == +$node.last 
+        if +$old.getP == +$node.children && 
+           +$old.getP == +$node.last 
         {
             domRemoveChild( $node, $old );
             domAppendChild( $node, $new );
@@ -825,7 +825,7 @@ package XML::LibXML::Dom {
         }
 
         if ( $frag.defined ) {
-            while ($frag && +$frag != +$frag_next ) {
+            while ($frag.defined && +$frag != +$frag_next ) {
                 domReconcileNs($frag.getNode);
                 $frag = $frag.getNode.next;
             }
