@@ -15,7 +15,9 @@ use XML::LibXML::Element;
 
 multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
 
-unit class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::Nodish;
+unit class XML::LibXML::Document is xmlDoc is repr('CStruct');
+
+also does XML::LibXML::Nodish;
 
 sub xmlNewDoc(Str)                            returns XML::LibXML::Document  is native('xml2') { * }
 sub xmlDocGetRootElement(xmlDoc)              returns XML::LibXML::Node      is native('xml2') { * }
@@ -221,43 +223,41 @@ method base-uri() {
     #~ The qualifiedName parameter is a String.
     #~ This function can raise an object that implements the DOMException interface.
 
+multi method elems() {
+    sub xmlChildElementCount(xmlDoc)           returns ulong      is native('xml2') { * }
+    xmlChildElementCount(self)
+}
 
+#method push($child) is aka<appendChild> {
+#    sub xmlAddChild(xmlDoc,  xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
+#    xmlAddChild(self, $child)
+#}
 
-    multi method elems() {
-        sub xmlChildElementCount(xmlDoc)           returns ulong      is native('xml2') { * }
-        xmlChildElementCount(self)
-    }
+multi method Str(:$format = 0) {
+    my $result = CArray[Str].new();
+    my $len    = CArray[int32].new();
+    $result[0] = "";
+    $len[0]    = 0;
+    #~ xmlDocDumpMemory(self, $result, $len);
+    xmlDocDumpFormatMemory(self, $result, $len, $format);
+    $result[0]
+}
 
-    method push($child) is aka<appendChild> {
-        sub xmlAddChild(xmlDoc,  xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
-        xmlAddChild(self, $child)
-    }
+#~ multi method Str(:$skip-xml-declaration) {
+    #~ self.list.grep({ !xmlIsBlankNode($_) })».Str.join
+    #~ self.list.grep({ $_.type != XML_DTD_NODE && !xmlIsBlankNode($_) })».Str(:!format).join: ''
+    #~ self.list».Str(:!format).join: ''
+        
+#~ }
 
-    multi method Str(:$format = 0) {
-        my $result = CArray[Str].new();
-        my $len    = CArray[int32].new();
-        $result[0] = "";
-        $len[0]    = 0;
-        #~ xmlDocDumpMemory(self, $result, $len);
-        xmlDocDumpFormatMemory(self, $result, $len, $format);
-        $result[0]
-    }
-
-    #~ multi method Str(:$skip-xml-declaration) {
-        #~ self.list.grep({ !xmlIsBlankNode($_) })».Str.join
-        #~ self.list.grep({ $_.type != XML_DTD_NODE && !xmlIsBlankNode($_) })».Str(:!format).join: ''
-        #~ self.list».Str(:!format).join: ''
-            
-    #~ }
-
-    method gist(XML::LibXML::Document:D:) {
-        my $result = CArray[Str].new();
-        my $len    = CArray[int32].new();
-        $result[0] = "";
-        $len[0]    = 0;
-        xmlDocDumpFormatMemory(self, $result, $len, 1);
-        $result[0]
-    }
+method gist(XML::LibXML::Document:D:) {
+    my $result = CArray[Str].new();
+    my $len    = CArray[int32].new();
+    $result[0] = "";
+    $len[0]    = 0;
+    xmlDocDumpFormatMemory(self, $result, $len, 1);
+    $result[0]
+}
 
 
 

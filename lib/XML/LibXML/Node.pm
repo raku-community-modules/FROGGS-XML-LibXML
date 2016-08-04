@@ -202,7 +202,10 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
     method push($child) is aka<appendChild> {
         sub xmlAddChild(xmlNode, xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
-        xmlAddChild(self.getNode(), $child);
+        xmlAddChild(self.getNode, $child.getNode);
+
+        # cw: Set doc's internalSubset if appending a DTD node.
+        DomSetIntSubset(self.doc, $child) if $child.type == XML_DTD_NODE;
     }
 
     # subclasses can override this if they have their own Str method.
