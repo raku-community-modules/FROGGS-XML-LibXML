@@ -8,30 +8,44 @@ use XML::LibXML::Subs;
 use XML::LibXML::Node;
 use XML::LibXML::Attr;
 use XML::LibXML::Dom;
+use XML::LibXML::Dtd;
 use XML::LibXML::Enums;
 use XML::LibXML::Error;
 use XML::LibXML::Element;
 
-multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
+multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
 
-unit class XML::LibXML::Document is xmlDoc is repr('CStruct') does XML::LibXML::Nodish;
+unit class XML::LibXML::Document is xmlDoc is repr('CStruct');
 
-sub xmlNewDoc(Str)                          returns XML::LibXML::Document  is native('xml2') { * }
-sub xmlDocGetRootElement(xmlDoc)            returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlDocSetRootElement(xmlDoc, xmlNode)   returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlNewNode(xmlNs, Str)                  returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlNewText(Str)                         returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlNewDocComment(xmlDoc, Str)           returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlNewCDataBlock(xmlDoc, Str, int32)    returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlReplaceNode(xmlNode, xmlNode)        returns XML::LibXML::Node      is native('xml2') { * }
-sub xmlNewDocProp(xmlDoc, Str, Str)         returns XML::LibXML::Attr      is native('xml2') { * }
-sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)  returns XML::LibXML::Node      is native('xml2') { * }
+also does XML::LibXML::Nodish;
+
+sub xmlNewDoc(Str)                            returns XML::LibXML::Document  is native('xml2') { * }
+sub xmlDocGetRootElement(xmlDoc)              returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlDocSetRootElement(xmlDoc, xmlNode)     returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewNode(xmlNs, Str)                    returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewText(Str)                           returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewDocComment(xmlDoc, Str)             returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewCDataBlock(xmlDoc, Str, int32)      returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlReplaceNode(xmlNode, xmlNode)          returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewDocProp(xmlDoc, Str, Str)           returns XML::LibXML::Attr      is native('xml2') { * }
+sub xmlNewDocNode(xmlDoc, xmlNs, Str, Str)    returns XML::LibXML::Node      is native('xml2') { * }
+sub xmlNewDtd(xmlNode, Str, Str, Str)         returns XML::LibXML::DTD       is native('xml2') { * }
+sub xmlGetIntSubset(xmlDoc)                   returns XML::LibXML::DTD       is native('xml2') { * }
+
+my &_nc = &nativecast;
+
+method getDoc {
+    _nc(xmlDoc, self);
+}
+
+method getBase {
+    xmlDoc;
+}
 
 method process-xincludes {
     sub xmlXIncludeProcessFlags(xmlDoc, int32) returns int32 is native('xml2') { * }
     xmlXIncludeProcessFlags(self, 0)
 }
-
 
 # Objects that implement the Document interface have all properties and functions of the Node interface as well as the properties and functions defined below.
 
@@ -209,43 +223,41 @@ method base-uri() {
     #~ The qualifiedName parameter is a String.
     #~ This function can raise an object that implements the DOMException interface.
 
+multi method elems() {
+    sub xmlChildElementCount(xmlDoc)           returns ulong      is native('xml2') { * }
+    xmlChildElementCount(self)
+}
 
+#method push($child) is aka<appendChild> {
+#    sub xmlAddChild(xmlDoc,  xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
+#    xmlAddChild(self, $child)
+#}
 
-    multi method elems() {
-        sub xmlChildElementCount(xmlDoc)           returns ulong      is native('xml2') { * }
-        xmlChildElementCount(self)
-    }
+multi method Str(:$format = 0) {
+    my $result = CArray[Str].new();
+    my $len    = CArray[int32].new();
+    $result[0] = "";
+    $len[0]    = 0;
+    #~ xmlDocDumpMemory(self, $result, $len);
+    xmlDocDumpFormatMemory(self, $result, $len, $format);
+    $result[0]
+}
 
-    method push($child) is aka<appendChild> {
-        sub xmlAddChild(xmlDoc,  xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
-        xmlAddChild(self, $child)
-    }
+#~ multi method Str(:$skip-xml-declaration) {
+    #~ self.list.grep({ !xmlIsBlankNode($_) })».Str.join
+    #~ self.list.grep({ $_.type != XML_DTD_NODE && !xmlIsBlankNode($_) })».Str(:!format).join: ''
+    #~ self.list».Str(:!format).join: ''
+        
+#~ }
 
-    multi method Str(:$format = 0) {
-        my $result = CArray[Str].new();
-        my $len    = CArray[int32].new();
-        $result[0] = "";
-        $len[0]    = 0;
-        #~ xmlDocDumpMemory(self, $result, $len);
-        xmlDocDumpFormatMemory(self, $result, $len, $format);
-        $result[0]
-    }
-
-    #~ multi method Str(:$skip-xml-declaration) {
-        #~ self.list.grep({ !xmlIsBlankNode($_) })».Str.join
-        #~ self.list.grep({ $_.type != XML_DTD_NODE && !xmlIsBlankNode($_) })».Str(:!format).join: ''
-        #~ self.list».Str(:!format).join: ''
-            
-    #~ }
-
-    method gist(XML::LibXML::Document:D:) {
-        my $result = CArray[Str].new();
-        my $len    = CArray[int32].new();
-        $result[0] = "";
-        $len[0]    = 0;
-        xmlDocDumpFormatMemory(self, $result, $len, 1);
-        $result[0]
-    }
+method gist(XML::LibXML::Document:D:) {
+    my $result = CArray[Str].new();
+    my $len    = CArray[int32].new();
+    $result[0] = "";
+    $len[0]    = 0;
+    xmlDocDumpFormatMemory(self, $result, $len, 1);
+    $result[0]
+}
 
 
 
@@ -377,10 +389,7 @@ method new-cdata-block(Str $cdata) {
 method createTextNode(Str $content) {
     my $newText = self.new-text($content);
     my $docfrag = self.new-doc-fragment();
-    xmlAddChild(
-        nativecast(xmlNodePtr, $docfrag), 
-        nativecast(xmlNodePtr, $newText)
-    );
+    xmlAddChild($docfrag.getNodePtr, $newText.getNodePtr);
 
     $newText;
 }
@@ -394,6 +403,7 @@ method setDocumentElement($e) {
         return;
     }
 
+    # cw: -YYY- check for 06elements failure here.
     domImportNode(self, $elem, 1, 1);
     my $oelem = xmlDocGetRootElement(self);
     if (!$oelem.defined || !$oelem._private.defined) {
@@ -407,4 +417,156 @@ method setDocumentElement($e) {
         #PmmFixOwner( SvPROXYNODE(proxy), PmmPROXYNODE(self));
         #    if $elem.private !=:= Pointer;
     }
+}
+
+method externalSubset(:$pointer) {
+    nqp::nativecallrefresh(self);
+    $pointer ?? 
+        $.extSubset  !! 
+        $.extSubset.defined ??_nc(XML::LibXML::DTD, $.extSubset) !! Nil;
+}
+
+method internalSubset(:$pointer) {
+    nqp::nativecallrefresh(self);
+    $pointer ??
+        $.intSubset !! 
+        $.intSubset.defined ?? _nc(XML::LibXML::DTD, $.intSubset) !! Nil;
+}
+
+method createExternalSubset($pname, $extid, $sysid) {
+    my $mypname;
+    $mypname = $pname.trim if $pname.defined;
+    return unless $mypname.defined && $mypname.chars;
+
+    _nc(
+        XML::LibXML::DTD,
+        xmlNewDtd(self.getNode, $pname, $extid, $sysid)
+    
+    );
+}
+
+method createInternalSubset($pname, $extid, $sysid) {
+    sub xmlCreateIntSubset(xmlDoc, Str, Str, Str) returns xmlDtd is native('xml2') { * };
+
+    my $mypname;
+    $mypname = $pname.trim if $pname.defined;
+    return unless $mypname.defined && $mypname.chars;
+
+    _nc(
+        XML::LibXML::DTD,
+        xmlCreateIntSubset(self, $pname, $extid, $sysid)
+    );
+}
+
+method setExternalSubset($extDtd) {
+    die "Lost DTD node" 
+        unless 
+            $extDtd.defined && 
+            ($extDtd ~~ xmlDtdPtr || $extDtd ~~ xmlDtd);
+
+    my $myExtDtd;
+    $myExtDtd = $extDtd !~~ XML::LibXML::DTD ??
+        _nc(XML::LibXML::DTD, $extDtd) !! $extDtd;
+    if  !$myExtDtd.doc.defined {
+        xmlSetTreeDoc($myExtDtd, self);
+    } 
+    else {
+        domImportNode(self, $myExtDtd.getNode, 1, 1);
+    }
+
+    if ($myExtDtd.isSameNode(self.intSubset)) {
+        xmlUnlinkNode($myExtDtd.getNode);
+        setObjAttr(self, '$!intSubset', xmlDtdPtr, :what(xmlDoc));
+    }
+
+    my $olddtd = _nc(xmlDtd, $.extSubset);
+    if ($olddtd && !$olddtd._private.defined) {
+        xmlFreeDtd($olddtd)
+    };
+    setObjAttr(self, '$!extSubset', $myExtDtd.getDtdPtr, :what(xmlDoc));
+}
+
+method setInternalSubset($intDtd) {
+    die "lost DTD node"
+        unless  $intDtd.defined && 
+                $intDtd ~~ xmlDtdPtr || $intDtd ~~ xmlDtd;
+
+    my $intDtd_o = $intDtd !~~ xmlDtd ??
+        _nc(XML::LIbXML::DTD, $intDtd) !! $intDtd;
+
+    return if $intDtd_o.isSameNode(self.intSubset);
+
+    unless self.isSameNode($intDtd_o.doc) {
+        # cw: What is the point of this? [ was originally
+        #     a croak() ]
+        #warn "can't import DTDs\n";
+        domImportNode(self, $intDtd_o.getNodePtr, 1, 1);
+    }
+
+    setObjAttr(self, '$!extSubset', xmlDtdPtr, :what(xmlDoc))
+        if $intDtd_o.isSameNode(self.extSubset);
+
+    my $olddtd = xmlGetIntSubset(self);
+    if $olddtd.defined {
+        xmlReplaceNode($olddtd.getNode, $intDtd_o.getNode);
+        unless $olddtd.private.defined {
+            xmlFreeDtd($olddtd.getNodePtr);
+        }
+    }
+    else {
+        if !self.children.defined {
+            xmlAddChild(self.getNodePtr, $intDtd_o.getNodePtr)
+        }
+        else {
+            xmlAddPrevSibling(
+                self.children.getNodePtr, $intDtd_o.getNodePtr
+            );
+        }
+    }
+    setObjAttr(self, '$!intSubset', $intDtd_o.getDtdPtr, :what(xmlDoc));
+}
+
+method removeInternalSubset {
+    my $dtd = xmlGetIntSubset(self);
+    return unless $dtd.defined;
+
+    xmlUnlinkNode($dtd.getNodePtr);
+    setObjAttr(self, '$!intSubset', xmlDtdPtr, :what(xmlDoc));
+    _nc(XML::LibXML::DTD, $dtd);
+}
+
+method removeExternalSubset {
+    my $dtd = self.extSubset;
+    return unless $dtd.defined;
+
+    $dtd = _nc(XML::LibXML::DTD, $dtd);
+    setObjAttr(self, '$!extSubset', xmlDtdPtr, :what(xmlDoc));
+    $dtd;
+}
+
+method createDTD($name, $extId, $sysId) {
+    my $dtd = xmlNewDtd(xmlNode, $name, $extId, $sysId);
+    # cw: Setting DTD attribute really should be part of DTD class.
+    setObjAttr($dtd, '$!doc', self, :what(xmlDtd));
+    $dtd;
+}
+
+method createEntityReference($pname) {
+    sub xmlNewReference(xmlDoc, Str) returns xmlNode is native('xml2') { * };
+
+    my xmlNode $newNode = xmlNewReference(self, $pname);
+    return unless $newNode.defined;
+
+    my $docfrag = self.new-doc-fragment;
+    xmlAddChild($docfrag.getNodePtr, $newNode.getNodePtr);
+    nativecast(XML::LibXML::Node, $newNode);
+}
+
+# cw: I can't tell the difference from the XS code.
+method validate is aka<is_valid> {
+    sub xmlValidateDocument(xmlValidCtxt is rw, xmlDoc) returns int32 is native('xml2') { * }
+
+    my xmlValidCtxt $ctxt = xmlValidCtxt.new;
+    $ctxt.reset;
+    xmlValidateDocument($ctxt, self);
 }

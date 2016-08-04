@@ -82,20 +82,25 @@ method parse(Str:D $str, Str :$uri, :$_flags) {
 
 # cw: This method is to fulfil testing requirements from 06elements. 
 method parse-string($str, :$url, :$flags) {
-    sub xmlReadDoc(Str, Str, Str, int32) returns xmlDoc is native('xml2') { * }
+    sub xmlReadDoc(Str, Str, Str, int32) returns xmlDocPtr is native('xml2') { * }
 
-    return unless $str.defined && $str.trim.chars;
+    die "Empty string in call to parse-string" 
+        unless $str.defined && $str.trim.chars;
 
     my $myurl   = $url.defined   ??  $url   !! Str;
     my $myflags = $flags.defined ?? +$flags !! 0;
 
     # cw: -YYY- Not worring about encoding at this time.
-    my $ret = xmlReadDoc($str, $url, Str, $myflags);
-    fail XML::LibXML::Error.get-last(self, :orig($str)) unless $ret;
+    my $ret = xmlReadDoc($str, $myurl, Str, $myflags);
+
+    # cw: Using fail() doesn't seem to be reliable, right now.
+    #fail XML::LibXML::Error.get-last(self, :orig($str)) 
+    #    unless $ret.defined;
+    die "Could not parse document!\n" unless $ret.defined;
     $ret;
 }
 
-multi method parse-file(Str $s, :$flags) {
+multi method parse-file(Str $s, :$flags = 0) {
     unless $s.chars && $s.IO.e {
         warn "Attempted to parse using" ~ (!$s.defined || !$s.chars) ??
             "null filename" !! "bad filename '{$s}'";
@@ -105,12 +110,14 @@ multi method parse-file(Str $s, :$flags) {
     # cw: Should we assume unicode, here or just use default?
     # cw: What about defined options? -- For now we set blank, but that might 
     #     come a-haunting in the future.
-    self.html ?? 
+    my $myflags = $flags.defined ?? +$flags !! 0;
+    my $ret = self.html ??
         #htmlCtxtReadFile(self, $s, "UTF8", self.options)
-        htmlCtxtReadFile(self, $s, Str, +$flags)
+        htmlCtxtReadFile(self, $s, Str, $myflags)
         !!
         #xmlCtxtReadFile(self, $s, "UTF8", self.options)
-        xmlCtxtReadFile(self, $s, Str, +$flags)
+        xmlCtxtReadFile(self, $s, Str, $myflags);
+    $ret.defined ?? $ret !! Nil;
 }
 
 method parse-xml-chunk($_xml) {

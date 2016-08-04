@@ -6,11 +6,13 @@ constant XML_XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace";
 constant XML_XMLNS_NS      = 'http://www.w3.org/2000/xmlns/';
 constant XML_XML_NS        = 'http://www.w3.org/XML/1998/namespace';
 
+my &_nc = &nativecast;
+
 my class CStruct is repr('CStruct') is export(:types) { }
 
 my class  xmlAttr                    is repr('CStruct')  { ... }
 my native xmlAttributeType           is repr('P6int') is Int is nativesize(32) is export(:types) { }
-my class  xmlAttrPtr                 is repr('CPointer') is export(:types) { }
+my class  xmlAttrPtr                 is repr('CPointer') is export(:types) { ... }
 my class  xmlAutomataPtr             is repr('CPointer') { }
 my class  xmlAutomataStatePtr        is repr('CPointer') { }
 my class  xmlBuffer                  is repr('CStruct')  { ... }
@@ -18,7 +20,7 @@ my native xmlBufferAllocationScheme  is repr('P6int') is Int is nativesize(32) i
 my native xmlChar                    is repr('P6int') is Int is nativesize(8) is unsigned is export(:types) { }
 my class  xmlDictPtr                 is repr('CPointer') { }
 my class  xmlDtd                     is repr('CStruct')  is export(:types) { ... }  
-my class  xmlDtdPtr                  is repr('CPointer') { }
+my class  xmlDtdPtr                  is repr('CPointer') is export(:types) { ... }
 my class  xmlDoc                     is repr('CStruct')  is export(:types) { ... }
 my class  xmlDocPtr                  is repr('CPointer') is Pointer is export(:types) { }
 my class  xmlError                   is repr('CStruct')  { ... }
@@ -26,7 +28,7 @@ my class  xmlElement                 is repr('CStruct')  { ... }
 my class  xmlElementPtr              is repr('CPointer') is Pointer { }
 my class  xmlHashTablePtr            is repr('CPointer') { }
 my class  xmlNode                    is repr('CStruct')  { ... }
-my class  xmlNodePtr                 is repr('CPointer') is Pointer is export(:types) { }
+my class  xmlNodePtr                 is repr('CPointer') is Pointer is export(:types) { ... }
 my class  xmlNodeSet                 is repr('CStruct')  { ... }
 my class  xmlNs                      is repr('CStruct') is export(:types) { ... } 
 my class  xmlNsPtr                   is repr('CPointer') is Pointer is export(:types) { } 
@@ -51,7 +53,52 @@ my class  xmlXPathTypePtr            is repr('CPointer') { }
 my class  xmlXPathVariableLookupFunc is repr('CPointer') { }
 my class  xmlParserInputBufferPtr    is repr('CPointer')  is export(:types) { }
 
+my role xmlNodeCasting is export(:types) {
+    method getNodePtr {
+        return self if self.^name eq 'xmlNodePtr';
+        _nc(xmlNodePtr, self);
+    }
+
+    method getNode {
+        return self if self.^name eq 'xmlNode';
+        _nc(xmlNode, self);
+    }
+
+    method getP {
+        _nc(Pointer, self);
+    } 
+
+    method getBase {
+        self;
+    }
+}
+
+my class xmlNodePtr does xmlNodeCasting { }
+
+my class xmlDtdPtr  does xmlNodeCasting { 
+    method getDtd {
+        _nc(xmlDtd, self);
+    }
+
+    # cw: This will all need to be straightened out.
+    #     I don't like all of the casting that's being
+    #     thrown arouond.
+    method isSameNode(xmlDtdPtr:D: $n) {
+        return False unless $n.defined;
+        my $np = $n ~~ Pointer ?? $n !! $n.getP;
+        +self.getP == +$np;
+    }
+}
+
+my class xmlAttrPtr does xmlNodeCasting { 
+    method getAttr {
+        _nc(xmlAttr, self);
+    }
+}
+
 my class xmlAttr is export(:types) {
+    also does xmlNodeCasting;
+
     has Pointer       $._private; # application data
     has int8              $.type; # (xmlElementType) XML_ATTRIBUTE_NODE, must be second !
     has Str          $.localname; # the name of the property
@@ -68,14 +115,6 @@ my class xmlAttr is export(:types) {
     method getAttrPtr() {
         nativecast(xmlAttrPtr, self);
     }
-
-    method getNodePtr() {
-        nativecast(xmlNodePtr, self);
-    }
-
-    method getNode() {
-        nativecast(xmlNode, self);
-    }
 }
 
 my class xmlBuffer is export(:types) {
@@ -87,6 +126,8 @@ my class xmlBuffer is export(:types) {
 }
 
 my class xmlDoc is export(:types) {
+    also does xmlNodeCasting;
+
     has OpaquePointer $._private; # application data
     has int8              $.type; # (xmlElementType) XML_DOCUMENT_NODE, must be second !
     has Str          $.localname; # name/filename/URI of the document
@@ -134,6 +175,8 @@ my class xmlError is export(:types) {
 }
 
 my class xmlDtd is export(:types) {
+    also does xmlNodeCasting;
+
     has OpaquePointer    $.private;  # application data
     has int8             $.type;  # xmlElementType type number, must be second!
     has Str              $.name;  # Element name
@@ -151,12 +194,22 @@ my class xmlDtd is export(:types) {
     has Str              $.SystemID;   # URI for a SYSTEM or PUBLIC DTD
     has OpaquePointer    $.pentities;  # Hash table for param entities if any
 
-    method getPtr() {
+    method getP{
+        nativecast(Pointer, self);
+    }
+
+    method getPtr {
         nativecast(xmlDtdPtr, self);
+    }
+
+    method setType($type) {
+        $!type = $type;
     }
 }
 
 my class xmlElement is export(:types) {
+    also does xmlNodeCasting;
+
     has OpaquePointer $.private;  # application data
     has int8             $.type;  # xmlElementType type number, must be second!
     has Str              $.name;  # Element name
@@ -178,6 +231,8 @@ my class xmlElement is export(:types) {
 }
 
 my class xmlNode is export(:types) {
+    also does xmlNodeCasting;
+
     has OpaquePointer   $._private; # application data
     has int8            $.type; # (xmlElementType) type number, must be second !
     has Str             $.localname; # name/filename/URI of the document
@@ -246,6 +301,13 @@ my class xmlValidCtxt is export(:types) {
     has Pointer               $.vstateTab; # array of validation states
     has xmlAutomataPtr               $.am; # the automata
     has xmlAutomataStatePtr       $.state; # used to build the automata
+
+    method reset {
+        $!nodeNr = 0;
+        $!vstateNr = 0;
+        #$!nodeTab = Pointer;
+        #$!vstateTab = Pointer;
+    }
 }
 
 my class xmlSAXHandler is export(:types) {

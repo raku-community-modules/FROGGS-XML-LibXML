@@ -9,7 +9,7 @@ unit class XML::LibXML::XPath is xmlXPathContext is repr('CStruct');
 
 use XML::LibXML::Subs;
 
-multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
+multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
 
 method new(xmlDoc $doc) {
 	sub xmlXPathNewContext(xmlDoc) returns XML::LibXML::XPath is native('xml2') { * }

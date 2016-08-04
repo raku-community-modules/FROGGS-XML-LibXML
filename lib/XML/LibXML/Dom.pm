@@ -4,6 +4,7 @@ use XML::LibXML::CStructs :types;
 
 package XML::LibXML::Dom {
 
+    use nqp;
     use NativeCall;
 
     use XML::LibXML::Enums;
@@ -79,7 +80,15 @@ package XML::LibXML::Dom {
     sub _domReconcileNs($tree, $unused is rw) {
         sub xmlCopyNamespace(xmlNs) returns xmlNs is native('xml2') { * }
 
-        if  $tree.ns.defined   
+        # cw: The use of can() here is a HACK. But we have so many
+        #     things trying to imitate the xmlNode clas that ARE
+        #     NOT, it's warranted. 
+        #
+        #     In the case of an xmlDtd masquerating as an xmlNode, 
+        #     calling .ns, would reallt be a call to .notations!
+        #     So wouldn't "$tree.ns.defined" be an orange to 
+        #     "$tree_dtd.notations.defined"?
+        if  $tree.can('ns') && $tree.ns.defined   
             && ($tree.type == XML_ELEMENT_NODE || 
                 $tree.type == XML_ATTRIBUTE_NODE) {
             my $ns = xmlSearchNs($tree.doc, $tree.parent, $tree.ns.uri);
@@ -97,7 +106,7 @@ package XML::LibXML::Dom {
                 # cw: -YYY- There WAS an endless loop here...          
                 if domRemoveNsDef($tree, $tree.ns) {
                     domAddNsDef($tree, $tree.ns);
-               } else {
+                } else {
                     setObjAttr($tree, '$!ns', xmlCopyNamespace($tree.ns));
                     domAddNsDef($tree, $tree.ns);
                 }
@@ -149,17 +158,20 @@ package XML::LibXML::Dom {
         sub xmlCopyDtd(Pointer) returns Pointer is native('xml2') { * }
         sub xmlDocCopyNode(xmlNode, xmlDoc, int32) returns xmlNode is native('xml2') { * }
 
-        my xmlNode $return_node = $n;
+        # cw: Yet another place where type checking will cause rakudo to
+        #     run endlessly.
+        #my xmlNode $return_node = $n ~~ xmlNodePtr ?? 
+        my $return_node = $n ~~ xmlNodePtr ?? 
+            $n.getNode !! $n;
 
         if $move {
-            $return_node = $n;
-            domUnlinkNode(_nc(xmlNodePtr, $n));
+            domUnlinkNode($n);            
         } 
         else {
             if ($n.type == XML_DTD_NODE) {
                 # cw: Pointer should be xmlDtd, but that hasn't been defined, yet.
                 $return_node = _nc(
-                    xmlNode, xmlCopyDtd(_nc(Pointer, $n));
+                    xmlNode, xmlCopyDtd($n.getNodePtr);
                 );
             } 
             else {
@@ -167,7 +179,10 @@ package XML::LibXML::Dom {
             }
         }
 
-        if $n.defined && $n.doc !=:= $d {
+        if  $n.defined && 
+            $d.defined && 
+            +$d.getNodePtr == +$n.getNode.doc.getNodePtr
+        {
             # cw: There is XS memory management code at this point that 
             #     I'm hoping we can ignore:
             # cw: The call below references the $!private attribute which
@@ -191,6 +206,7 @@ package XML::LibXML::Dom {
             # cw: -YYY- There WAS an endless loop issue here.
             domReconcileNs($return_node);
         }
+        $return_node;
     }
 
     #sub domGetAttrNode(xmlNode $n, Str $a) is export {
@@ -241,10 +257,12 @@ package XML::LibXML::Dom {
 
         while $i.defined {
             if $i.next =:= $ns {
-                $i.next = _nc(xmlNodePtr, $ns.next);
-                $ns.next = xmlNsPtr;
+                #$i.next = _nc(xmlNodePtr, $ns.next);
+                $i.next = $ns.next;
+                $ns.next = xmlNs;
                 return 1;
             }
+            #$i = _nc(xmlNode, $i.next);
             $i = $i.next;
         }
 
@@ -259,7 +277,9 @@ package XML::LibXML::Dom {
             !$n.defined || !($node.prev.defined || $node.parent.defined);
         
         if $node.type == XML_DTD_NODE {
-            xmlUnlinkNode($node);
+            xmlUnlinkNode(
+                $node !~~ xmlNodePtr ?? $node.getNodePtr !! $node 
+            );
             return;
         }
 
@@ -291,7 +311,7 @@ package XML::LibXML::Dom {
             }
 
             token namestartchar {
-                ':' | '_' | <[a..zA..Z]> | <[\x00C0 .. \x00D6]> |
+                ':' | '_' | <[a..zA..Z]> | <[\x00C0 .. \x00D6]>  |
                 <[\x00D8..\x00F6]> | <[\x00F8..\x02FF]> | <[\x0370..\x037D]> |
                 <[\x037F..\x1FFF]> | <[\x200C..\x200D]> | <[\x2070..\x218F]> |
                 <[\x2C00..\x2FEF]> | <[\x3001..\xD7FF]> | <[\xF900..\xFDCF]> |
@@ -413,11 +433,417 @@ package XML::LibXML::Dom {
         $node;
     }
 
-    sub domReparentRemovedNode($node) is export {
-        xmlAddChild(
-            _nc(xmlNodePtr, domNewDocFragment($node.doc)), 
-            _nc(xmlNodePtr, $node)
-        ) if $node.type != any(XML_ATTRIBUTE_NODE, XML_DTD_NODE);
+    #sub domAddNodeToList(xmlNode $cur, xmlNode $leader, xmlNode $followup) 
+    sub domAddNodeToList($_cur, $_leader, $_followup) is export {
+        # cw: In this situation, any one of the parameters might
+        #     be either an object, or its associated pointer. 
+        #     We need to normalize this so we have a sane initial
+        #     condition.
+        my $cur = $_cur.getNode;
+        my $leader = $_leader.getNode;
+        my $followup = $_followup.getNode;
+
+        my ($c1, $c2, $p);
+
+        if $cur.defined {
+            $c1 = $c2 = $cur;
+        
+            if $leader.defined {
+                $p = $leader.getNode.parent.getNode;
+            }
+            elsif $followup.defined {
+                $p = $followup.parent.getNode;
+            }
+            else {
+                return 0;
+            }
+
+            if $cur.type == XML_DOCUMENT_FRAG_NODE {
+                $c1 = $cur.children.getNode;
+                while ($c1.defined) {
+                    setObjAttr($c1, '$!parent', $p);
+                    $c1 = $c1.next.getNode;
+                }
+                $c1 = $cur.children.getNode;
+                $c2 = $cur.last.getNode;
+            }
+            else {
+                setObjAttr($cur, '$!parent', $p.getNodePtr);
+            }
+
+            if  $c1.defined     && 
+                $leader.defined && 
+                +$c1.getNodePtr != +$leader.getNodePtr
+            {
+                if $leader.defined {
+                    setObjAttr($leader, '$!next', $c1.getNodePtr);
+                    setObjAttr($c1, '$!prev', $leader.getNodePtr);
+                } 
+                elsif $p.defined {
+                    setObjAttr($p, '$!children', $c1.getNodePtr);
+                }
+
+                if $followup.defined {
+                    setObjAttr($followup, '$!prev', $c2.getNodePtr);
+                    setObjAttr($c2, '$!next', $followup.getNodePtr);
+                }
+                elsif $p.defined {
+                    setObjAttr($p, '$!last', $c2.getNodePtr);
+                }
+            }
+            return 1;
+        }
+        return 0;
+    }
+
+    sub domInsertBefore($node, $new, $ref) is export {
+        return $new
+            if  $new.defined && $ref.defined &&
+                +$new.getNodePtr == +$ref.getNodePtr;
+        return unless $node.defined && $new.defined;
+
+        if $ref.defined {
+            if !(+$ref.parent == +($node.getNodePtr)) || 
+               ($new.type == XML_DOCUMENT_FRAG_NODE &&
+                !$new.children.defined)
+            {
+                #cw: xmlGenericError?
+                return;
+            }
+        }
+
+        domAppendChild($node, $new) if !$node.children.defined;
+        if !(
+            domTestHierarchy($node, $new) && 
+            domTestDocument($node, $new)
+        ) {
+            warn "insertBefore/insertAfter: Hierarchy request error!";
+            return;
+        }
+
+        my $mynew = $new;
+        if +$node.doc.getNodePtr == +$new.doc.getNodePtr {
+            domUnlinkNode($mynew);
+        }
+        else {
+            $mynew = domImportNode($node.doc.getNode, $new, 1, 0);
+        }
+
+        my $frag;
+        if $new.type == XML_DOCUMENT_FRAG_NODE {
+            $frag = $new.children;
+        }
+
+        if !$ref.defined {
+            domAddNodeToList($new, $node.last, xmlNode);
+        }
+        else {
+            domAddNodeToList($new, $ref.prev, xmlNode);
+        }
+
+        if $frag.defined {
+            $mynew = $frag;
+            while   $frag.defined && 
+                    +$frag.getNodePtr != +$ref.getNodePtr
+            {
+                domReconcileNs($frag);
+                $frag = $frag.getNode.next;
+            }
+        }
+        elsif $new.type != XML_ENTITY_REF_NODE {
+            domReconcileNs($new);
+        }
+
+        $mynew;
+    }
+
+    sub domInsertAfter($node, $new, $ref) is export {
+        domInsertBefore(
+            $node, 
+            $new, 
+            $ref.defined && $ref.next.defined ??
+                $ref.next.getNode !! xmlNode
+        );
+    }
+
+    sub domTestDocument($cur, $ref) {
+        if $cur.type == XML_DOCUMENT_NODE {
+            return False if $ref.type == any(
+                XML_ATTRIBUTE_NODE,
+                XML_ELEMENT_NODE,
+                XML_ENTITY_NODE,
+                XML_ENTITY_REF_NODE,
+                XML_TEXT_NODE,
+                XML_CDATA_SECTION_NODE,
+                XML_NAMESPACE_DECL
+            );
+        }
+        True;
+    }
+
+    sub domTestHierarchy($cur, $ref) {
+        return False unless $cur.defined && $ref.defined;
+
+        if ($cur.type == XML_ATTRIBUTE_NODE) {
+            return True if $ref.type == any(
+                XML_TEXT_NODE,
+                XML_ENTITY_REF_NODE
+            );
+            return False;
+        }
+
+        return False if $ref.type == any(
+            XML_ATTRIBUTE_NODE;
+            XML_DOCUMENT_NODE
+        );
+
+        return False if domIsParent($cur, $ref);
+        True;
+    }
+
+    sub domIsParent($cur, $ref) is export {
+        return False unless $cur.defined && $ref.defined;
+        return True if +$cur.getNodePtr == +$ref.getNodePtr;
+
+        # cw: When comparing known pointers, this is easier.
+        return False if  
+            +($cur.doc.getNodePtr) != +($ref.doc.getNodePtr)   ||
+            +$cur.parent == +($cur.doc.getNodePtr)             ||
+            !$ref.children.defined                             ||
+            !$cur.parent.defined;
+
+        return True if $ref.type == XML_DOCUMENT_NODE;
+
+        my $helper = $cur;
+        while ( 
+            $helper.defined && 
+            +$helper.getNodePtr != +$cur.doc.getNodePtr ) 
+        {
+            return True if +$helper.getNodePtr == +$ref.getNodePtr;
+            $helper = $helper.parent.getNode;
+        }
+        False;
+    }
+
+    sub domAppendChild($node, $new) {
+        return $new unless $node.defined;
+        
+        if !(  domTestHierarchy($node, $new) &&
+               domTestDocument($node, $new) )
+        {
+            # cw: Unknown if this is fatal.
+            warn "appendChild: HIERARCHY_REQUEST_ERR\n";
+            return;
+        }
+
+        # cw: Direct comparison of pointers.
+        my $mynew = $new;
+        if +$new.doc == $node.doc {
+            domUnlinkNode($new);
+        }
+        else {
+            warn "WRONG_DOCUMENT_ERR - non conform implementation\n";
+            # xmlGenericError(xmlGenericErrorContext,"WRONG_DOCUMENT_ERR\n"); 
+            $mynew = domImportNode($node.doc.getNode, $new, 1, 0);
+        }
+
+        my $frag;
+        if $node.children.defined {
+            $frag = $mynew.children
+                if $mynew.type == XML_DOCUMENT_FRAG_NODE;
+            domAddNodeToList( $mynew, $node.last.getNode, xmlNode );
+        }
+        elsif $mynew.type == XML_DOCUMENT_FRAG_NODE {
+            my $c1;
+            setObjAttr($node, '$!children', $mynew.children);
+            $c1 = $frag = $mynew.children;
+
+            while ( $c1.defined ) {
+                setObjAttr($c1.getNode, '$!parent', $node.getNodePtr);
+                $c1 = $c1.getNode.next;
+            }
+            setObjAttr($node, '$!last', $mynew.last);
+            setObjAttr($mynew, '$!last', xmlNodePtr);
+            setObjAttr($mynew, '$!children', xmlNodePtr);
+        }
+        else {
+            setObjAttr($node, '$!children', $mynew.getNodePtr);
+            setObjAttr($node, '$!last', $mynew.getNodePtr);
+            setObjAttr($mynew, '$!parent', $node.getNodePtr);
+        }
+
+        if $frag.defined {
+            # reconcile nodes in fragment.
+            $mynew = $frag;
+            while ($frag.defined) {
+                domReconcileNs($frag);
+                $frag = $frag.next.getNode;
+            }
+        }
+        elsif $mynew.type != XML_ENTITY_REF_NODE {
+            domReconcileNs($mynew);
+        }
+
+        $mynew;
+    }
+
+    # cw: New DOM manipulation subs that really should be somewhere 
+    #     else.
+    sub DomSetIntSubset($doc, $ref) is export {
+        if $ref.defined {
+            # cw: Should ALWAYS be xmlDtdPtr;
+            my $old_dtd = $doc.intSubset;
+
+            # cw: May have issues if the object has been
+            #     modified and nqp::nativecallrefresh() has not
+            #     been called on the backing repr('CStruct')
+            return if   $ref.defined     && 
+                        $old_dtd.defined &&
+                        #$ref.getDtdPtr =:= $old_dtd;
+                        +$ref.getP == +$old_dtd.getP;
+            
+            if $old_dtd.defined {
+                xmlUnlinkNode($old_dtd.getNodePtr);
+
+                # cw: -XXX- 
+                #if (PmmPROXYNODE(old_dtd) == NULL) {
+                #    xmlFreeDtd((xmlDtdPtr)old_dtd);
+                #}
+            }
+        }
+ 
+        setObjAttr(
+            $doc, 
+            '$!intSubset', 
+            $ref.defined ?? $ref.getDtdPtr !! xmlDtdPtr
+        );
+        nqp::nativecallrefresh($doc);
+    }
+
+    sub DomReparentRemovedNode($node) is export {
+        given $node.type {
+            when XML_ATTRIBUTE_NODE {
+                # Do nothing
+            }
+
+            # cw: Well here is where those proxy nodes would come in handy.
+            #     Right now there is no way to tell the owner of the removed
+            #     node that one of their children is gone.
+            #     
+            #     This would force an entire tree search to properly correct
+            #     this problem. Or a separate data structure like what was
+            #     implemented in the P5 version. Will need to think on this.
+            #_domFixOwner($node, $frag);
+
+            # cw: Doesn't really solve the problem but might make it pass
+            #     the test. Special case DTD nodes, so we remove the internal
+            #     subset from the document.
+
+            when XML_DTD_NODE {
+                if  $node.doc.intSubset.defined &&
+                    $node.defined               &&
+                    +$node.doc.intSubset.getP == +$node.getP 
+                {
+                    DomSetIntSubset($node.doc, xmlDtdPtr);
+                }
+            }
+
+            default {
+                my $frag = domNewDocFragment($node.doc);
+                xmlAddChild($frag.getNodePtr, $node.getNodePtr);    
+            }
+        }
+    }
+
+    sub domReplaceChild($node, $_new, $old) is export {
+        return unless $node.defined;
+        return $_new if +$_new.getP == +$old.getP;
+
+        my $new = $_new;
+        unless $new.defined {
+            return domRemoveChild($node, $old);
+        }
+
+        unless $old.defined {
+            domAppendChild($node, $new);
+            return $old;
+        }
+
+        if  !( domTestHierarchy($node, $new) &&
+               domTestDocument($node, $new))
+        {
+            # cw: -YYY- Again, is this fatal?
+            warn "replaceChild: HIERARCHY_REQUEST_ERR\n";
+            return;
+        }
+
+        if +$new.doc.getP == +$node.doc.getP {
+            domUnlinkNode( $new );
+        }
+        else {
+            # WRONG_DOCUMENT_ERR - non conform implementation 
+            $new = domImportNode( $node.doc, $new, 1, 1 );
+        }
+
+        my ($frag, $frag_next);
+        if +$old.getP == +$node.children && 
+           +$old.getP == +$node.last 
+        {
+            domRemoveChild( $node, $old );
+            domAppendChild( $node, $new );
+        }
+        elsif $new.type == XML_DOCUMENT_FRAG_NODE &&
+              !$new.children.defined  
+        {
+            # want to replace with an empty fragment, then remove ... 
+            $frag = $new.children;
+            $frag_next = $old.next;
+            domRemoveChild( $node, $old );
+        }
+        else {
+            domAddNodeToList( $new, $old.prev, $old.next );
+    
+            # cw: With the introduction of getBase, we should probably
+            #     remove the :what named parameter.
+            #
+            # cw: -XXX- THIS NEEDS TO BE REVISITED!!!
+            #     I don't know why the general case in the else clause
+            #     doesn't work for xmlNode and ONLY xmlNode. 
+            #     This kind of special casing makes my teeth hurt, but
+            #     it solves a problem, so I'm leaving it until I can 
+            #     circle back.
+            if $old.^name eq 'xmlNode' {
+                setObjAttr($old, '$!parent', xmlNodePtr);
+                setObjAttr($old, '$!next', xmlNodePtr);
+                setObjAttr($old, '$!prev', xmlNodePtr);
+            }
+            else {
+                setObjAttr($old, '$!parent', xmlNodePtr, :what($old.getBase));
+                setObjAttr($old, '$!next', xmlNodePtr, :what($old.getBase));
+                setObjAttr($old, '$!prev', xmlNodePtr, :what($old.getBase));
+            }
+        }
+
+        if ( $frag.defined ) {
+            while ($frag.defined && +$frag != +$frag_next ) {
+                domReconcileNs($frag.getNode);
+                $frag = $frag.getNode.next;
+            }
+        } elsif $new.type != XML_ENTITY_REF_NODE {
+            domReconcileNs($new);
+        }
+
+        $old;
+    }
+
+    sub domRemoveChild($node, $old) is export {
+        return unless $node.defined && $old.defined;        
+        return if $old.type == any(XML_ATTRIBUTE_NODE, XML_NAMESPACE_DECL);
+        return if +$node.getP != +$old.parent.getP;
+
+        domUnlinkNode( $old );
+        domReconcileNs( $old ) if $old.type == XML_ELEMENT_NODE;
+        $old;
     }
 
 }

@@ -9,7 +9,7 @@ use XML::LibXML::Enums;
 use XML::LibXML::Node;
 use XML::LibXML::Subs;
 
-multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
+multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
 
 class XML::LibXML::Text is XML::LibXML::Node is repr('CStruct') {
 	

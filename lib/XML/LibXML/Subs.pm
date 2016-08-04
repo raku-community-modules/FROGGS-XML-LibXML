@@ -7,9 +7,9 @@ use XML::LibXML::CStructs :types;
 
 #multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
 
-sub setObjAttr($obj, $attr, $val) is export {
+sub setObjAttr($obj, $attr, $val, :$what = $obj.WHAT) is export {
     nqp::bindattr(
-        nqp::decont($obj), $obj.WHAT, $attr, nqp::decont($val)
+        nqp::decont($obj), $what, $attr, nqp::decont($val)
     );
 }
 
@@ -53,17 +53,21 @@ sub xmlDocDumpFormatMemory(xmlDoc, CArray, CArray, int32)                       
 sub xmlNodeDump(xmlBuffer, xmlDoc, xmlNode, int32, int32)                             returns int32  is native('xml2') is export { * }
 sub xmlC14NDocDumpMemory(xmlDoc, xmlNodeSet, int32, CArray[Str], int32, CArray[Str])  returns int32  is native('xml2') is export { * }
 
-sub xmlKeepBlanksDefault(int32)              returns int32      is native('xml2') is export { * }
+sub xmlKeepBlanksDefault(int32)               returns int32      is native('xml2') is export { * }
 sub xmlIsBlankNode(xmlNode)                  returns int32      is native('xml2') is export { * }
 sub xmlUnlinkNode(xmlNodePtr)                                   is native('xml2') is export { * }
-sub xmlUnsetProp(xmlNode, Str)               returns int32      is native('xml2') is export { * }
+sub xmlUnsetProp(xmlNode, Str)                returns int32      is native('xml2') is export { * }
 #~ multi xmlChildElementCount(xmlNode)          returns ulong      is native('xml2') is export { * }
 #~ multi xmlChildElementCount(xmlDoc)           returns ulong      is native('xml2') is export { * }
-sub xmlReplaceNode(xmlNode, xmlNode)         returns xmlNode    is native('xml2') is export { * }
+sub xmlReplaceNode(xmlNode, xmlNode)          returns xmlNode    is native('xml2') is export { * }
 sub xmlSetTreeDoc(xmlNode, xmlDoc) 								is native('xml2') is export { * }
-sub xmlAddChild(xmlNodePtr, xmlNodePtr)      returns xmlNodePtr is native('xml2') is export { * }
-sub xmlNodeGetContent(xmlNode)               returns Str        is native('xml2') is export { * }
+sub xmlAddChild(xmlNodePtr, xmlNodePtr)       returns xmlNodePtr is native('xml2') is export { * }
+sub xmlAddPrevSibling(xmlNodePtr, xmlNodePtr) returns xmlNodePtr is native('xml2') is export { * }
+sub xmlAddNextSibling(xmlNodePtr, xmlNodePtr) returns xmlNodePtr is native('xml2') is export { * }
+sub xmlNodeGetContent(xmlNode)                returns Str        is native('xml2') is export { * }
 sub xmlFreeNodeList(xmlNodePtr)									is native('xml2') is export { * }
 
 # Memory
-sub xmlFree(OpaquePointer) is native('xml2') is export { * }
+sub xmlFree(OpaquePointer)  is native('xml2') is export { * }
+sub xmlFreeDtd(xmlDtdPtr)   is native('xml2') is export { * }
+sub xmlFreeNode(xmlNodePtr) is native('xml2') is export { * }

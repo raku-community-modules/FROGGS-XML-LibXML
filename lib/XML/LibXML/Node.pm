@@ -11,7 +11,8 @@ use XML::LibXML::XPath;
 
 class XML::LibXML::Node is xmlNode is repr('CStruct') { ... }
 
-multi trait_mod:<is>(Routine $r, :$aka!) is export { $r.package.^add_method($aka, $r) };
+multi trait_mod:<is>(Routine $r, :$aka!) { $r.package.^add_method($aka, $r) };
+
 my &_nc = &nativecast;
 
 role XML::LibXML::Nodish does XML::LibXML::C14N {
@@ -39,7 +40,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         #~ xmlNodeGetBase(self.doc, self)
     #~ }
 
-    method type() {
+    method type() is aka<nodeType> {
         xmlElementType(nqp::p6box_i(nqp::getattr_i(nqp::decont(self), xmlNode, '$!type')));
     }
 
@@ -69,6 +70,10 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
                     !! self.localname
             }
         }
+    }
+
+    method nodeName is aka<getName> {
+        return self._name;
     }
 
     method attrs() {
@@ -175,17 +180,11 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
     }
 
     method isSameNode($n) {
-        my $n1 = _nc(Pointer, self);
-        my $n2 = _nc(Pointer, $n);
+        return False unless $n.defined;
+        
+        my $n1 = self ~~ Pointer ?? self !! self.getP;
+        my $n2 =   $n ~~ Pointer ??   $n !!   $n.getP;
         return +$n1 == +$n2;
-    }
-
-    method getNode() {
-        return _nc(xmlNode, self);
-    }
-
-    method getNodePtr() {
-        return _nc(xmlNodePtr, self);
     }
 
     method getContent() {
@@ -203,7 +202,10 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
     method push($child) is aka<appendChild> {
         sub xmlAddChild(xmlNode, xmlNode)  returns XML::LibXML::Node  is native('xml2') { * }
-        xmlAddChild(self.getNode(), $child);
+        xmlAddChild(self.getNode, $child.getNode);
+
+        # cw: Set doc's internalSubset if appending a DTD node.
+        DomSetIntSubset(self.doc, $child) if $child.type == XML_DTD_NODE;
     }
 
     # subclasses can override this if they have their own Str method.
@@ -497,7 +499,7 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
 
         # cw: ?????
         #PmmFixOwner( SvPROXYNODE(RETVAL), NULL );
-        return $retVal;
+        nativecast(XML::LibXML::Node, $ret);
     }
 
     #method setAttributeNodeNS(xmlAttr $an!) {
@@ -642,22 +644,204 @@ role XML::LibXML::Nodish does XML::LibXML::C14N {
         is aka<unlink>
         is aka<unlinkNode>
     {
+        DomReparentRemovedNode(self);
         xmlUnlinkNode(self.getNodePtr)
-            if self.type != any(XML_DOCUMENT_NODE, XML_DOCUMENT_FRAG_NODE);
-        domReparentRemovedNode(self);
+            if  self.type == XML_DOCUMENT_NODE       || 
+                self.type == XML_DOCUMENT_FRAG_NODE;
     }
 
     method removeChild(XML::LibXML::Nodish:D: $old) {
-        return unless $old.defined;
-        return if $old.type == any(XML_ATTRIBUTE_NODE, XML_NAMESPACE_DECL);
-        return unless self.getNodePtr =:= $old.parent;
+        my $ret = domRemoveChild( self, $old );
+        return unless $ret.defined;
 
-        domUnlinkNode($old);
-        if $old.type == XML_ELEMENT_NODE {
-            domReconcileNs($old);
+        DomReparentRemovedNode($old);
+        #RETVAL = PmmNodeToSv(ret, NULL);
+        nqp::nativecallrefresh(self);
+        $ret;        
+    }
+
+    # cw: To my eyes, $deep looks like it does nothing in the p5 
+    #     version
+    method cloneCommon($c) {
+        unless self.type == XML_DTD_NODE {
+            if self.doc.defined {
+                xmlSetTreeDoc($c.getNodePtr, self.doc.getNodePtr);
+            }
+            my $newDoc = domNewDocFragment();
+            xmlAddChild($c.getNodePtr, $newDoc.getNodePtr);
         }
-        domReparentRemovedNode($old);
-        $old;
+    }
+
+    method firstChild {
+        _nc(XML::LibXML::Node, self.children);
+    }
+
+    method previousSibling {
+        _nc(XML::LibXML::Node, self.prev);
+    }
+
+    method hasAttributes {
+        return False 
+            if self.type == XML_ATTRIBUTE_NODE || 
+               self.type == XML_DTD_NODE;
+
+        self.properties.defined
+    }
+
+    method removeChildNodes {
+        my $frag = domNewDocFragment();
+        my $elem = self.children.getNode;
+
+        while ($elem) {
+            xmlUnlinkNode($elem.getNodePtr);
+            if $elem.type == any(XML_ATTRIBUTE_NODE, XML_DTD_NODE) {
+                xmlFreeNode($elem.getNodePtr);
+            } 
+            else {
+                if $frag.children.defined {
+                    domAddNodeToList($elem, $frag.last.getNode, xmlNode);
+                }
+                else {
+                    setObjAttr($frag, '$!children', $elem, :what(xmlNode));
+                    setObjAttr($frag, '$!last', $elem, :what(xmlNode));
+                    setObjAttr($elem, '$!paren', $frag);
+                }
+            }
+            $elem = $elem.next.getNode;
+        }
+        nqp::nativecallrefresh(self);
+    }
+
+    method insertBefore($node, $refnode) {
+        my $r = domInsertBefore(self, $node, $refnode);
+        return unless $r.defined;
+
+        DomSetIntSubset(self.doc, $r) if $r.type == XML_DTD_NODE;
+        # Fix owner: $r and $self
+    }
+
+    method insertAfter($node, $refnode) {
+        my $r = domInsertAfter(self, $node, $refnode);
+        return unless $r.defined;
+
+        DomSetIntSubset(self.doc, $r) if $r.type == XML_DTD_NODE;
+        # Fix owner: $r and self
+    }
+
+    method replaceChild($node, $repnode) {
+        if self.type == XML_DOCUMENT_NODE {
+            given $node.type {
+                when XML_ELEMENT_NODE {
+                    warn "replaceChild with an element on a document node not supported yet!";
+                    return;
+                }
+
+                when XML_DOCUMENT_FRAG_NODE {
+                    warn "replaceChild with a document fragment node on a document node not supported yet!";
+                    return;
+                }
+
+                when XML_TEXT_NODE | XML_CDATA_SECTION_NODE {
+                    warn "replaceChild with a text node not supported on a document node!";
+                    return;
+                }
+            }
+        }
+
+        my $repDoc = $repnode.doc;
+        my $ret = domReplaceChild(self, $node, $repnode);
+        return unless $ret.defined;
+
+        DomReparentRemovedNode($ret);
+        if ($node.type == XML_DTD_NODE) {
+            DomSetIntSubset($repDoc, $node);
+        }
+        $ret;
+    }
+
+    method replaceNode($node) {
+        return if domIsParent(self, $node);
+        
+        #owner = PmmOWNERPO(PmmPROXYNODE(self));
+        my $oldDoc = self.doc;
+        my $ret;
+        if self.type != XML_ATTRIBUTE_NODE {
+            # cw: -YYY- We may need to worry about self.parent
+            $ret = domReplaceChild(
+                self.parent.getNode, $node.getNode , self.getNode
+            );
+        }
+        else {
+            $ret = xmlReplaceNode( self, $node );
+        }
+        if  $ret.defined {
+            DomReparentRemovedNode($ret);
+            
+            #RETVAL = PmmNodeToSv(ret, PmmOWNERPO(PmmPROXYNODE(ret)));
+            if $node.type == XML_DTD_NODE {
+                DomSetIntSubset($oldDoc, $node);
+            }
+            #if ( nNode->_private != NULL ) {
+            #    PmmFixOwner(PmmPROXYNODE(nNode), owner);
+            #}
+        }
+        else {
+            # cw: Again, is this fatal, or should this be something 
+            #     we can catch?
+            warn "replacement failed";
+            return;
+        }
+        $ret;
+    }
+
+    method addSibling($node) {
+        sub xmlAddSibling(xmlNode, xmlNode) returns xmlNode is native('xml2') { * }
+        sub xmlCopyNode(xmlNode, int32)     returns xmlNode is native('xml2') { * }
+
+        if $node.type == XML_DOCUMENT_FRAG_NODE {
+            # cw: This does NOT sound fatal.
+            warn "Adding document fragments with addSibling not yet supported!";
+            return;
+        }
+        #owner = PmmOWNERPO(PmmPROXYNODE(self));
+
+        my $ret;
+        if  self.type == XML_TEXT_NODE  && 
+            $node.type == XML_TEXT_NODE &&
+            self.name eq $node.name
+        {
+            # As a result of text merging, the added node may be freed.
+            my $copy = xmlCopyNode($node, 0);
+            $ret = xmlAddSibling(self.getNode, $copy);
+
+            if $ret.defined {
+                #RETVAL = PmmNodeToSv(ret, owner);
+
+                # Unlink original node.
+                xmlUnlinkNode($node.getNodePtr);
+                DomReparentRemovedNode($node);
+            }
+            else {
+                xmlFreeNode($copy);
+                return;
+            }
+        }
+        else {
+            $ret = xmlAddSibling( self, $node );
+
+            if $ret.defined {
+                #RETVAL = PmmNodeToSv(ret, owner);
+                if ($node.type == XML_DTD_NODE) {
+                    DomSetIntSubset(self.doc, $node);
+                }
+                #PmmFixOwner(SvPROXYNODE(RETVAL), owner);
+            }
+            else {
+                return;    
+            }
+        }
+
+        $ret;
     }
 
 }
@@ -666,6 +850,10 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
 
     method name() {
         self._name();
+    }
+
+    method getBase {
+        xmlNode;
     }
     
     #~ multi method Str() {
@@ -684,5 +872,35 @@ class XML::LibXML::Node does XML::LibXML::Nodish {
             #~ !! self.Str(:!format)
     #~ }
 
+
+    method cloneNode {
+        # P6 clone NYI, so we have to do it the hard way.
+        # other nodes will almost certianly have to implement their
+        # own versions that *must* call callwith at the end.
+        my $c;
+        # cw: Oh, I had no idea how ugly this was going to turn out.
+        $c = XML::LibXML::New(
+            :_private($._private),
+            :type($.type),
+            :localname($.localname),
+            :children($.children),
+            :last($.last),
+            :parent($.parent),
+            :next($.next),
+            :prev($.prev),
+            :doc($.doc),
+            :ns($.ns),
+            :value($.value),
+            :properties($.properties),
+            :nsDef($.nsDef),
+            :psvi($.psvi),
+            :line($.line),
+            :extra($.extra)
+        );
+        return unless $c.defined;
+
+        self.cloneCommon($c);
+        $c;
+    }
 }
 
